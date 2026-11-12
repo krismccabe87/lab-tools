@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lab.krismccabe.com/schemas/agent-impact-guardrail.v1.json",
+  "title": "Agent-Impact Guardrail Policy",
+  "description": "Machine-readable guardrail policy exported by Agent-Impact (https://lab.krismccabe.com/agent-impact/), describing the Blast Radius and Irreversibility assessment for a single AI-agent action against a Salesforce object, and the guardrails that should gate it.",
+  "type": "object",
+  "required": ["$schema", "generatedAt", "target", "metrics", "guardrails"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "const": "https://lab.krismccabe.com/schemas/agent-impact-guardrail.v1.json"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp of when this policy was generated, in the user's browser."
+    },
+    "target": {
+      "type": "object",
+      "description": "The object and action this policy governs.",
+      "required": ["object", "action", "batchSize", "activeFlowCount", "hasSideEffects"],
+      "additionalProperties": false,
+      "properties": {
+        "object": {
+          "type": "string",
+          "description": "The Salesforce SObject API name the agent action targets."
+        },
+        "action": {
+          "type": "string",
+          "enum": ["READ", "CREATE", "UPDATE", "DELETE", "BULK_EXECUTE", "EXTERNAL_API"],
+          "description": "The type of action the agent is about to perform."
+        },
+        "batchSize": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of records touched in a single execution."
+        },
+        "activeFlowCount": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Count of active record-triggered Flows on the target object, factored into the Blast Radius score as an automation force multiplier."
+        },
+        "hasSideEffects": {
+          "type": "boolean",
+          "description": "Whether the action triggers external side effects (webhooks, emails, third-party API calls) that cannot be undone by rolling back the record."
+        }
+      }
+    },
+    "metrics": {
+      "type": "object",
+      "description": "The computed risk metrics for this action.",
+      "required": ["blastRadiusScore", "irreversibilityIndex", "riskTier"],
+      "additionalProperties": false,
+      "properties": {
+        "blastRadiusScore": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "0-100 score combining the action's base severity, the target object's cascade-delete/standard-child/lookup exposure, active automation, and batch size."
+        },
+        "irreversibilityIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "0-100% estimate of how hard this action is to undo, from hard deletes, external side effects, and cascade-delete dependencies."
+        },
+        "riskTier": {
+          "type": "string",
+          "enum": ["LOW", "MEDIUM", "HIGH", "CRITICAL"],
+          "description": "LOW (score < 20), MEDIUM (20-44), HIGH (45-74, requires human-in-the-loop), CRITICAL (score >= 75 or irreversibility >= 70%, mandatory human approval and batch size restriction)."
+        }
+      }
+    },
+    "guardrails": {
+      "type": "object",
+      "description": "The enforceable guardrails derived from the metrics above.",
+      "required": ["humanApprovalRequired", "batchSizeRestricted", "maxBatchSize"],
+      "additionalProperties": false,
+      "properties": {
+        "humanApprovalRequired": {
+          "type": "boolean",
+          "description": "True when riskTier is HIGH or CRITICAL — the action must not proceed without explicit human confirmation."
+        },
+        "batchSizeRestricted": {
+          "type": "boolean",
+          "description": "True when riskTier is CRITICAL — the action should be limited to maxBatchSize per execution."
+        },
+        "maxBatchSize": {
+          "type": ["integer", "null"],
+          "description": "The enforced maximum batch size when batchSizeRestricted is true, otherwise null."
+        }
+      }
+    }
+  }
+}

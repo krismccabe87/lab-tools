@@ -1,0 +1,463 @@
+[
+  {
+    "id": "s",
+    "letter": "S",
+    "name": "Supply Chain &amp; Vendor Trust",
+    "intro": "The moment you build on someone else's model, API, plugin, or MCP server (a way for your AI to connect to outside tools), their risk becomes yours &mdash; whether or not you ever agreed to that in writing.",
+    "maps": "OWASP LLM04:2026 Supply Chain &middot; CSA AICM Supply Chain Management, Transparency &amp; Accountability domain &middot; NIST AI RMF GOVERN 6.1&ndash;6.2",
+    "deployNotes": {
+      "api": "Your entire security posture here depends on one vendor's practices &mdash; you own the choice, but not the control.",
+      "rag": "You're trusting both the model vendor and whatever you're retrieving from &mdash; two supply chains, not one.",
+      "finetune": "Your fine-tuning data becomes part of the vendor's model &mdash; check what happens to it if you ever leave.",
+      "selfhost": "You own this pillar directly now &mdash; there's no vendor to fall back on if something in the model or its components turns out to be compromised.",
+      "agents": "Every tool or plugin your agent can call is now part of your supply chain, whether you chose it carefully or not."
+    },
+    "questions": [
+      {
+        "id": "S1",
+        "q": "How do you vet the AI models and vendors you build on?",
+        "levels": [
+          "No vendor risk review &mdash; we started using it because it worked.",
+          "An informal check (read their marketing or docs) before adopting a new model or vendor.",
+          "A <b>documented</b> vendor risk checklist covering data handling, security certifications, and model provenance.",
+          "A <b>formal</b> vendor risk assessment, reviewed by security or legal, with contractual data-use terms, required before adoption.",
+          "All of the above, plus a <b>contractual right to be notified</b> of material model or subprocessor changes, with continuous monitoring and a defined re-review trigger when they happen."
+        ],
+        "nextSteps": [
+          "Before adopting your next AI vendor or model, read through what they publish about their security practices and data handling &mdash; even an informal check is better than none.",
+          "Write down a short checklist every new AI vendor gets checked against &mdash; how they handle data, what security certifications they hold, where the model came from &mdash; so the check doesn't depend on one person remembering to do it.",
+          "Get security or legal to formally sign off on new AI vendors before adoption, with data-use terms written into the contract, not just assumed.",
+          "Add a contractual right to be told about material changes &mdash; subprocessor swaps, model version updates, incident disclosures &mdash; and set a trigger for re-checking the vendor when that happens."
+        ],
+        "rationale": "If a vendor's model turns out to be compromised, poorly secured, or trained on data you shouldn't be using, none of your other controls matter &mdash; you've already built on their weakness.",
+        "ownerRole": "GRC",
+        "crosswalk": "NIST AI RMF GOVERN 6.1 (policies for third-party AI risk) &middot; OWASP LLM04:2026 Supply Chain &middot; CSA AICM Supply Chain domain",
+        "liveCheck": {
+          "label": "Check live advisories for your AI stack",
+          "url": "https://lab.krismccabe.com/flare/",
+          "note": "Flare &mdash; a free companion tool that checks the specific AI packages and SDKs you depend on against live OSV.dev advisories. Vetting a vendor once isn't the same as knowing whether something you already depend on has a disclosed vulnerability right now."
+        }
+      },
+      {
+        "id": "S2",
+        "q": "Do you know exactly what happens to the data you send to your AI provider(s)?",
+        "levels": [
+          "Not sure &mdash; we haven't checked.",
+          "We read the vendor's privacy policy once, some time ago.",
+          "We've <b>confirmed contractually</b> whether our data is used to train their model, and opted out if needed.",
+          "Data-processing terms are <b>documented per vendor</b>, reviewed annually, and mapped to our own data classification policy.",
+          "The above, plus <b>automated tracking</b> of which data flows to which vendor/model, with terms version-controlled and alerts on changes."
+        ],
+        "nextSteps": [
+          "Find and read the privacy policy or data-processing terms for every AI tool your company currently sends data to.",
+          "Get written, contractual confirmation of whether your data trains the vendor's model, and opt out if your policy requires it.",
+          "Document each vendor's data-handling terms in one place, review them once a year, and match them against how you classify your own data.",
+          "Set up automatic tracking of which data flows to which AI vendor or model, keep the terms version-controlled, and get alerted when a vendor changes them."
+        ],
+        "rationale": "Data you send to an AI vendor can be used to train their model, shared with their own subprocessors (a vendor's own vendors), or kept longer than you expect &mdash; and by the time you find out, it may be too late to undo.",
+        "ownerRole": "Legal & Privacy",
+        "crosswalk": "NIST AI RMF GOVERN 6.1 &middot; CSA AICM Data Security &amp; Privacy Lifecycle Management domain &middot; Databricks DASF data risk category"
+      },
+      {
+        "id": "S3",
+        "q": "If a third-party plugin, tool, or MCP server your AI can call turns out to be compromised, what happens?",
+        "levels": [
+          "We don't have a list of what tools or plugins our AI can call.",
+          "We have a list, but no permission boundaries &mdash; any connected tool gets full access.",
+          "Tools are <b>individually scoped and permissioned</b>, but we haven't tested what a compromised one could actually do.",
+          "Least-privilege scoping per tool, <b>validated</b> via a tabletop or red-team exercise (deliberately trying to break it).",
+          "Least-privilege scoping, <b>automated permission audits</b>, and a tested kill-switch to instantly revoke one tool's access."
+        ],
+        "nextSteps": [
+          "Write down every tool, plugin, and connected service your AI systems can currently call &mdash; you can't limit what you haven't listed.",
+          "Give each connected tool its own limited permissions instead of full access, so a compromised tool can only do what it specifically needs to do.",
+          "Run a tabletop exercise or a red-team test to actually check what a compromised tool could do with the access it currently has.",
+          "Add automated permission audits and a tested kill-switch so a compromised tool's access can be cut off immediately, not just in theory."
+        ],
+        "rationale": "An AI agent is only as trustworthy as the weakest tool it's allowed to call &mdash; a single compromised plugin can hand an attacker everything the agent has permission to touch.",
+        "ownerRole": "Platform Engineering",
+        "crosswalk": "OWASP ASI04:2026 Agentic Supply Chain Compromise &middot; NIST AI RMF GOVERN 6.2 (contingency for third-party failures) &middot; MITRE ATLAS Initial Access / AI Model Access tactics"
+      }
+    ]
+  },
+  {
+    "id": "h",
+    "letter": "H",
+    "name": "Human Oversight &amp; Governance",
+    "intro": "This is the framework's ceiling pillar &mdash; see the scoring methodology above. No amount of technical sophistication substitutes for someone actually owning the risk.",
+    "maps": "NIST AI RMF GOVERN function &middot; ISO/IEC 42001 Clause 5 (Leadership) &middot; EU AI Act Article 14 (Human Oversight)",
+    "deployNotes": {
+      "api": "It's easy to assume the vendor is handling governance &mdash; they aren't; you're still accountable for how it's used.",
+      "rag": "Governance needs to cover both the model's behavior and the data you're feeding it, not just one or the other.",
+      "finetune": "Someone needs to own decisions about what goes into the fine-tuning data, not just how the model is used.",
+      "selfhost": "There's no vendor's terms of service to lean on &mdash; your own governance is the only governance that exists.",
+      "agents": "Autonomous action raises the stakes on oversight &mdash; decisions are being made and acted on without a human in the moment."
+    },
+    "questions": [
+      {
+        "id": "H1",
+        "q": "Who owns AI security and risk decisions in your organization?",
+        "levels": [
+          "No one specifically &mdash; it falls to whoever built the thing.",
+          "Someone has informally taken it on, but it isn't their assigned job.",
+          "A <b>named owner or role</b> with documented responsibility, but no formal charter or budget.",
+          "A formal governance body or role with <b>documented authority</b> and a defined reporting line.",
+          "The above, plus a <b>track record of actually blocking or delaying a launch</b> over a risk it identified."
+        ],
+        "nextSteps": [
+          "Ask someone on your team to start informally taking responsibility for AI risk decisions, even before it's an official part of their role.",
+          "Name a specific owner or role for AI security and risk decisions, and write down what they're responsible for.",
+          "Turn that into a formal role or governance body with documented authority and a clear line to report up to.",
+          "Give that owner enough real authority that they've actually blocked or delayed a launch over a risk they identified &mdash; not just written policy that's never been tested."
+        ],
+        "rationale": "Without a named owner, AI risk decisions get made by whoever built the feature &mdash; which means no one is accountable when something goes wrong, and no one has the authority to say no beforehand.",
+        "ownerRole": "AI Governance",
+        "crosswalk": "NIST AI RMF GOVERN 1.1&ndash;1.3 (policy, accountability, risk tolerance) &middot; ISO/IEC 42001 Clause 5 (Leadership) &middot; CSA AICM Governance, Risk &amp; Compliance domain"
+      },
+      {
+        "id": "H2",
+        "q": "Do you maintain an inventory of the AI systems, models, and agents in use across your organization?",
+        "levels": [
+          "No inventory &mdash; new AI use often happens without anyone else knowing.",
+          "An informal, incomplete list someone maintains manually.",
+          "A <b>documented inventory</b>, but it's updated irregularly and has known gaps.",
+          "A maintained, reasonably complete inventory <b>reviewed on a set cadence</b>.",
+          "The above, plus <b>active discovery</b> of AI tools nobody registered &mdash; e.g. via network activity or spend records &mdash; not just tracking the ones you already know about, feeding a new-system approval workflow."
+        ],
+        "nextSteps": [
+          "Start a simple list of every AI tool, model, or agent you know is in use &mdash; it doesn't need to be complete yet, it needs to exist.",
+          "Assign someone to own and update that list on a regular basis, and document how new AI use gets added to it.",
+          "Put that inventory on a set review cadence (e.g. quarterly) so it stops silently going stale between updates.",
+          "Add active discovery &mdash; checking for AI tools nobody registered, for example through network activity or spend records &mdash; so the inventory catches what you don't already know about, not just what you do."
+        ],
+        "rationale": "You cannot secure, assess, or govern an AI system you don't know exists &mdash; and most companies are missing more of their AI footprint than they realize, because a one-time list goes stale within weeks.",
+        "ownerRole": "AI Governance",
+        "crosswalk": "NIST AI RMF MAP function (system context documentation) &middot; ISO/IEC 42001 Clause 6.1.4 (AI system impact assessment established) &middot; CSA AICM Governance, Risk &amp; Compliance domain"
+      },
+      {
+        "id": "H3",
+        "q": "For decisions where an AI's output could meaningfully affect a person &mdash; a hiring screen, a credit decision, a support resolution &mdash; is there a human in the loop?",
+        "levels": [
+          "No &mdash; the AI's output is used directly, with no review step.",
+          "A human technically reviews it, but in practice always rubber-stamps it.",
+          "A <b>defined human-review requirement</b> exists for high-stakes categories, but isn't consistently followed.",
+          "An <b>enforced</b> review gate for defined high-stakes categories, with disclosure to affected users that AI was involved.",
+          "The above, plus <b>tracking how often reviewers actually override</b> the AI's decision &mdash; and treating a very low override rate in a high-stakes category as a warning sign the review has become a formality, not a safeguard."
+        ],
+        "nextSteps": [
+          "Add a manual review step before AI output is used directly in any decision that meaningfully affects a person &mdash; even an inconsistent one is a start.",
+          "Write down which categories of decisions require human review, and what the reviewer is actually supposed to check for.",
+          "Make that review requirement mandatory &mdash; not optional &mdash; for the high-stakes categories you defined, and tell affected users when AI was involved in a decision about them.",
+          "Start tracking how often reviewers actually change the AI's decision. If that override rate is very low in a category where mistakes are plausible, treat it as a warning sign that review has become a formality, not a safeguard."
+        ],
+        "rationale": "A human review step that always approves provides the appearance of oversight with none of the protection &mdash; and regulators, and your own risk exposure, both treat that very differently once anyone looks closely.",
+        "ownerRole": "Legal & Privacy",
+        "crosswalk": "EU AI Act Article 14 (Human Oversight) &middot; Article 50 (transparency &mdash; disclosing AI involvement) &middot; NIST AI RMF MANAGE 4.1 (appeal &amp; override mechanisms) &middot; Gartner AI TRiSM Explainability &amp; Model Monitoring pillar"
+      }
+    ]
+  },
+  {
+    "id": "i",
+    "letter": "I",
+    "name": "Identity, Access &amp; Agency",
+    "intro": "The more autonomy an AI system has &mdash; sending emails, executing code, moving money &mdash; the more this pillar matters, and the faster a small mistake compounds.",
+    "maps": "OWASP LLM03:2026 Excessive Agency &middot; OWASP ASI Top 10 for Agentic Applications &middot; CSA AICM Identity &amp; Access Management domain",
+    "deployNotes": {
+      "api": "Your exposure here is mostly about who inside your company can use the vendor's tool, and with what data.",
+      "rag": "Add a question: what can the retrieval step reach that a user shouldn't be able to see through the AI?",
+      "finetune": "Access to the fine-tuning data itself needs the same scrutiny as access to the model's output.",
+      "selfhost": "You're responsible for every layer of access control &mdash; infrastructure, model, and application &mdash; with nothing to fall back on.",
+      "agents": "This is the highest-stakes pillar for this pattern &mdash; an agent that can act on its own is only as safe as the limits placed on what it's allowed to do."
+    },
+    "questions": [
+      {
+        "id": "I1",
+        "q": "What can your AI actually do on its own &mdash; send emails, execute code, make purchases, modify records &mdash; without a human approving each action?",
+        "levels": [
+          "We haven't inventoried this, or we're not sure.",
+          "We know what it can do, but it runs on <b>broad standing permissions</b> (e.g. a shared admin-level API key).",
+          "<b>Scoped, least-privilege credentials</b> per AI system or agent &mdash; each with its own distinct, revocable identity, not a shared key &mdash; documented.",
+          "The above, plus a <b>hard cap on consequential actions</b> &mdash; spend limits, approval gates for irreversible steps.",
+          "The above, plus <b>automatic suspension</b> if the agent's behavior deviates from an expected pattern."
+        ],
+        "nextSteps": [
+          "List out exactly what each AI system or agent is currently able to do without a human approving it first.",
+          "Replace shared, broad-access credentials with scoped, limited-permission credentials for each individual AI system or agent &mdash; give each one its own identity instead of a shared key.",
+          "Set hard limits on consequential actions &mdash; spending caps, required approval for anything irreversible &mdash; so a mistake or compromise has a ceiling.",
+          "Add automatic suspension when an agent's behavior deviates from what's expected, instead of relying only on limits it might be tricked into using anyway."
+        ],
+        "rationale": "The more a system can do without asking, the more expensive a single mistake or a single compromise becomes &mdash; this is about limiting how much damage is possible before anyone gets a chance to stop it.",
+        "ownerRole": "Platform Engineering",
+        "crosswalk": "OWASP LLM03:2026 Excessive Agency &middot; OWASP ASI03:2026 Agent Identity &amp; Privilege Abuse &middot; CSA AICM Identity &amp; Access Management domain"
+      },
+      {
+        "id": "I2",
+        "q": "If someone (or something) hijacks your AI's instructions via a prompt injection, how far could it actually get?",
+        "levels": [
+          "Unknown &mdash; never tested.",
+          "We've thought about it but never actually tried to break it.",
+          "We've tested it <b>informally</b> and found gaps we haven't fixed yet.",
+          "We've tested it &mdash; adversarial or red-team testing &mdash; and <b>closed the gaps</b> we found.",
+          "We test this on a <b>recurring cadence</b>, not just once, and track the \"blast radius\" of a successful injection as a metric."
+        ],
+        "nextSteps": [
+          "Spend some time actually trying to make your AI system do something it shouldn't, using deliberately misleading input &mdash; just to see what happens.",
+          "Do a more structured, informal test of what a hijacked instruction could actually achieve, and write down what you find.",
+          "Run a real adversarial or red-team test, and close the specific gaps it finds before calling this done.",
+          "Repeat that testing on a recurring schedule, and track how far a successful hijack could get as a number you watch over time, not a one-time pass or fail."
+        ],
+        "rationale": "If someone can hijack your AI's instructions and you don't know how far that gets them, you're relying on hope instead of a tested boundary.",
+        "ownerRole": "Security Engineering",
+        "crosswalk": "OWASP LLM01:2026 Prompt Injection &middot; OWASP ASI01:2026 Agent Goal Hijack &middot; MITRE ATLAS Privilege Escalation tactic (LLM Jailbreak technique)"
+      },
+      {
+        "id": "I3",
+        "q": "How is access to your AI system(s) authenticated and authorized, for both internal and any external/customer users?",
+        "levels": [
+          "No authentication, or a shared credential everyone uses.",
+          "Basic authentication, but the same access level for everyone.",
+          "<b>Role-based access control</b> matching AI permissions to job function.",
+          "The above, plus <b>logged, auditable access</b> and a periodic access review.",
+          "The above, plus <b>automatically removing access</b> when someone leaves or a system is retired, and alerting on unusual access patterns."
+        ],
+        "nextSteps": [
+          "Put basic authentication in place if your AI system doesn't already require one &mdash; a shared login is not a control.",
+          "Move from one access level for everyone to role-based access that matches each person's or system's actual job.",
+          "Start logging access to the AI system and review who has access on a regular schedule.",
+          "Automate removing access when someone leaves or a system is retired, and add alerting for unusual access patterns."
+        ],
+        "rationale": "If everyone &mdash; or everything &mdash; has the same level of access to your AI system, you have no way to contain a mistake or a compromise to the person or system that caused it.",
+        "ownerRole": "Security Engineering",
+        "crosswalk": "CSA AICM Identity &amp; Access Management domain &middot; NIST AI RMF GOVERN function"
+      }
+    ]
+  },
+  {
+    "id": "e",
+    "letter": "E",
+    "name": "Evaluation &amp; Robustness",
+    "intro": "Everything in this pillar answers one question: has anyone actually tried to break it, or are you only confident because no one's tried yet?",
+    "maps": "OWASP LLM01:2026 Prompt Injection &middot; MITRE ATLAS evasion &amp; poisoning tactics &middot; NIST AI RMF MEASURE function",
+    "deployNotes": {
+      "api": "You can't test the model itself, but you can and should test how your application behaves around it.",
+      "rag": "Test the retrieval step specifically &mdash; a poisoned or manipulated source document is a different failure mode than a bad prompt.",
+      "finetune": "Fine-tuning can change model behavior in ways the vendor's own testing never anticipated &mdash; your own testing has to cover the gap.",
+      "selfhost": "There's no vendor evaluation to rely on at all &mdash; everything here is on your team.",
+      "agents": "Test what the agent does when things go wrong, not just when everything works &mdash; that's where the real risk lives."
+    },
+    "questions": [
+      {
+        "id": "E1",
+        "q": "How do you defend against prompt injection and jailbreak attempts?",
+        "levels": [
+          "No specific defenses &mdash; user input goes straight to the model.",
+          "Basic input filtering or a keyword blocklist only.",
+          "System-prompt hardening and output validation are in place, but <b>never adversarially tested</b>.",
+          "Defenses are in place and <b>validated</b> via adversarial or red-team testing at least once.",
+          "Defenses are validated via adversarial testing on a <b>recurring cadence</b>, with results tracked over time."
+        ],
+        "nextSteps": [
+          "Add basic input filtering as a first layer of defense, even a simple keyword check, rather than sending user input straight to the model.",
+          "Harden your system instructions and add output validation, even if you haven't tested them against a deliberate attempt to break them yet.",
+          "Actually try to break your own defenses &mdash; an adversarial or red-team test &mdash; at least once, and fix what you find.",
+          "Repeat that testing on a recurring schedule and track the results over time, so you know if your defenses are holding up as the AI system changes."
+        ],
+        "rationale": "A defense that's never been tested against a real attempt to break it is a guess, not a control &mdash; and the gap between the two only shows up during an actual incident.",
+        "ownerRole": "Security Engineering",
+        "crosswalk": "OWASP LLM01:2026 Prompt Injection &middot; MITRE ATLAS Privilege Escalation (LLM Jailbreak) &amp; Defense Evasion tactics"
+      },
+      {
+        "id": "E2",
+        "q": "How do you validate that the AI's outputs are accurate and safe before they reach a user or downstream system?",
+        "levels": [
+          "No validation &mdash; output is used or shown as-is.",
+          "Occasional spot-checking by a person.",
+          "<b>Automated checks</b> for defined failure modes &mdash; someone's personal information leaking out, offensive content, broken formatting.",
+          "The above, plus a <b>defined process</b> for handling and logging failures.",
+          "The above, plus a <b>feedback loop</b> &mdash; logged failures actively improve the prompt, model, or guardrails."
+        ],
+        "nextSteps": [
+          "Start spot-checking AI output by hand, even occasionally, instead of using or showing it completely unchecked.",
+          "Add automated checks for the failure modes you're most worried about &mdash; private information leaking out, offensive content, broken formatting.",
+          "Write down what happens when a check fails &mdash; who's notified, what gets logged, what the fallback behavior is.",
+          "Feed the failures you log back into improving the prompt, the model, or the guardrails, so the same mistake gets less likely over time instead of just being caught over and over."
+        ],
+        "rationale": "Unchecked AI output reaching a user or another system is a direct path for private information, false statements, or malformed data to cause real harm before anyone notices.",
+        "ownerRole": "Security Engineering",
+        "crosswalk": "OWASP LLM10:2026 Improper Output Handling &middot; OWASP LLM07:2026 Misinformation &middot; NIST AI RMF MEASURE 2.11 (evaluation of failure modes)"
+      },
+      {
+        "id": "E3",
+        "q": "Have you tested what happens when the AI is given deliberately adversarial, malformed, or out-of-scope input?",
+        "levels": [
+          "No.",
+          "Informally, by a developer, once.",
+          "A <b>defined test suite</b> exists but isn't run regularly.",
+          "A defined adversarial test suite runs <b>before each significant change or release</b>.",
+          "<b>Continuous, automated</b> adversarial testing is integrated into the deployment pipeline and blocks release on regression."
+        ],
+        "nextSteps": [
+          "Have a developer spend an hour deliberately sending strange, malformed, or out-of-scope input to see what breaks.",
+          "Turn that into a written test suite you can run again, even if it's not part of your regular process yet.",
+          "Run that test suite before every significant change or release, not just once.",
+          "Automate it into your deployment process so a regression actually blocks a release, instead of relying on someone remembering to run it."
+        ],
+        "rationale": "Real users and real attackers will eventually send your AI system something it was never designed to handle &mdash; the only question is whether you find that out before or after it matters.",
+        "ownerRole": "Security Engineering",
+        "crosswalk": "NIST AI RMF MEASURE function &middot; CSA AICM Model Development Security (MDS) domain &middot; MITRE ATLAS (the attack taxonomy under test)"
+      }
+    ]
+  },
+  {
+    "id": "l",
+    "letter": "L",
+    "name": "Logging, Detection &amp; Response",
+    "intro": "Every other pillar is about prevention. This one is about what happens on the day prevention fails &mdash; because eventually, it will.",
+    "maps": "NIST AI RMF MANAGE function &middot; CSA AICM Security Incident Management domain &middot; MITRE ATLAS objectives-phase tactics",
+    "deployNotes": {
+      "api": "Your visibility is limited to what the vendor's tool logs and shares with you &mdash; know that boundary before you rely on it.",
+      "rag": "Log what was retrieved and used to answer each query, not just the final response &mdash; that's often where the real story is.",
+      "finetune": "Watch for behavior changes after each fine-tuning update &mdash; that's when new failure modes are most likely to appear.",
+      "selfhost": "You need full-stack logging and response capability &mdash; there's no vendor incident-response team to escalate to.",
+      "agents": "Detection here means watching what the agent actually did, not just what it was asked to do &mdash; the two can diverge fast."
+    },
+    "questions": [
+      {
+        "id": "L1",
+        "q": "If your AI system were being actively misused right now &mdash; someone extracting your system prompt, or an agent going off-script &mdash; would you know?",
+        "levels": [
+          "No visibility &mdash; we wouldn't know unless someone told us.",
+          "We have logs, but no one is watching them.",
+          "Logs are reviewed <b>periodically, manually</b>, after the fact.",
+          "<b>Automated alerting</b> on defined abuse or anomaly patterns.",
+          "The above, plus a <b>documented on-call/response process</b> specifically for AI incidents."
+        ],
+        "nextSteps": [
+          "Turn on logging for your AI systems if it isn't already, even if nobody's reviewing it yet &mdash; you can't review what isn't recorded.",
+          "Assign someone to periodically review those logs by hand, even if it's not automated yet.",
+          "Set up automated alerts for the abuse or anomaly patterns you're most worried about, instead of relying on someone remembering to check.",
+          "Write down what happens after an alert fires &mdash; who's on call, what they do first &mdash; specifically for AI incidents, not folded into a generic process."
+        ],
+        "rationale": "If you'd only find out about misuse because someone happened to notice and tell you, you don't have detection &mdash; you have luck.",
+        "ownerRole": "Security Engineering",
+        "crosswalk": "CSA AICM Security Incident Management domain &middot; MITRE ATLAS Exfiltration &amp; Impact tactics (what you'd be detecting) &middot; NIST AI RMF MANAGE 4.1"
+      },
+      {
+        "id": "L2",
+        "q": "Do you have an incident response plan specifically covering AI failure modes, not just general IT or security incidents?",
+        "levels": [
+          "No AI-specific plan.",
+          "We'd improvise using our general IT incident process.",
+          "A <b>documented plan</b> exists but hasn't been tested.",
+          "A documented, <b>tested</b> plan (tabletop or real incident) covering AI-specific scenarios &mdash; model rollback, kill-switch, disclosure obligations.",
+          "The above, plus <b>defined recovery-time targets</b> and a track record of using the plan in a real or simulated incident."
+        ],
+        "nextSteps": [
+          "Start a basic written outline of what your team would actually do if a specific AI system started misbehaving &mdash; even a rough draft beats improvising.",
+          "Turn that into a documented plan covering AI-specific scenarios &mdash; model rollback, kill-switch use, who needs to be told and when.",
+          "Test that plan &mdash; a tabletop exercise is enough to start &mdash; instead of leaving it untested until a real incident forces the first run-through.",
+          "Set target recovery times for the plan, and build a track record of actually using it, in a drill or a real incident, not just having it on file."
+        ],
+        "rationale": "Improvising your response during a real AI incident &mdash; deciding on the spot whether to roll back a model or notify anyone &mdash; costs time you don't have while the problem is still happening.",
+        "ownerRole": "Incident Response",
+        "crosswalk": "NIST AI RMF MANAGE 4.1 (post-deployment monitoring, decommissioning, change management) &middot; CSA AICM Security Incident Management domain &middot; Databricks DASF operational risk category"
+      },
+      {
+        "id": "L3",
+        "q": "Can you roll back or disable a specific AI model, agent, or feature quickly if something goes wrong?",
+        "levels": [
+          "No &mdash; removing it would require a full deployment or code change.",
+          "Technically possible, but it would take significant time and effort under pressure.",
+          "A defined rollback mechanism exists but has <b>never been tested</b>.",
+          "A <b>tested kill-switch or rollback</b> mechanism exists for each AI system in production.",
+          "The above, plus <b>automatic triggers</b> &mdash; not just manual ones &mdash; for defined severe conditions."
+        ],
+        "nextSteps": [
+          "Figure out, on paper, what it would actually take to disable or roll back each AI system you run today &mdash; this alone usually reveals the gap.",
+          "Build a defined rollback mechanism for at least your highest-risk AI system, even if it's manual and untested so far.",
+          "Actually test that rollback mechanism once, end to end, so you know it works before you need it under pressure.",
+          "Extend a tested kill-switch or rollback to every AI system in production, and add automatic triggers &mdash; not just manual ones &mdash; for the most severe, well-defined conditions."
+        ],
+        "rationale": "If disabling a misbehaving AI system requires a full deployment cycle, the damage keeps happening for as long as that takes &mdash; which, under pressure, is longer than anyone wants it to be.",
+        "ownerRole": "Incident Response",
+        "crosswalk": "NIST AI RMF MANAGE 4.1 &middot; Databricks DASF v3.0 agentic mitigation controls (least privilege, sandboxing, human oversight) &middot; OWASP ASI08:2026 Cascading Agent Failures"
+      }
+    ]
+  },
+  {
+    "id": "d",
+    "letter": "D",
+    "name": "Data &amp; Privacy",
+    "intro": "AI systems remember things in ways that are hard to audit and harder to undo. This pillar is about whether you actually know what yours knows.",
+    "maps": "OWASP LLM02:2026 Sensitive Information Disclosure &middot; NIST AI RMF MAP function &middot; CSA AICM Data Security &amp; Privacy Lifecycle domain",
+    "deployNotes": {
+      "api": "Know exactly what data leaves your systems and reaches the vendor with every request &mdash; that's your real exposure.",
+      "rag": "The data you retrieve is exposed the moment it's pulled in, even if it was never meant to leave its original system.",
+      "finetune": "Anything in your fine-tuning data can potentially resurface in the model's output &mdash; treat it with the same care as production data.",
+      "selfhost": "You control data handling completely, which means every privacy failure is unambiguously yours to answer for.",
+      "agents": "An agent that can read and act on data across multiple systems has a much larger footprint of what it could expose than a single-purpose tool."
+    },
+    "questions": [
+      {
+        "id": "D1",
+        "q": "Do you know exactly what data went into training, fine-tuning, or is retrieved (RAG) by your AI system?",
+        "levels": [
+          "No, or it isn't tracked.",
+          "General awareness, but nothing documented.",
+          "<b>Documented data sources</b>, but no classification of what's sensitive.",
+          "Documented and <b>classified</b> &mdash; personal information, confidential, public &mdash; with access controls matching classification.",
+          "The above, plus <b>automatic scanning</b> for sensitive data before ingestion."
+        ],
+        "nextSteps": [
+          "Start documenting, even roughly, what data sources feed each AI system &mdash; training data, fine-tuning data, or what it retrieves live.",
+          "Turn that general awareness into a written, documented list of sources for each AI system.",
+          "Classify what you've documented &mdash; personal information, confidential, public &mdash; and match access controls to that classification.",
+          "Add automatic scanning for sensitive data before it's allowed into training, fine-tuning, or retrieval sources, instead of relying on manual classification alone."
+        ],
+        "rationale": "If you don't know what data trained or feeds your AI system, you can't tell a regulator, a customer, or your own leadership what it actually knows &mdash; or whether it should.",
+        "ownerRole": "Data",
+        "crosswalk": "OWASP LLM05:2026 Data &amp; Model Poisoning &middot; NIST AI RMF MAP function (data characterization) &middot; CSA AICM Data Security &amp; Privacy Lifecycle Management domain"
+      },
+      {
+        "id": "D2",
+        "q": "Could your AI system leak sensitive information it was trained on or has access to, in its responses?",
+        "levels": [
+          "Untested, unknown.",
+          "We assume it's fine because we haven't seen it happen.",
+          "We've tested for this <b>informally</b>.",
+          "We've tested for this <b>systematically</b> &mdash; deliberately probing whether original sensitive data can be extracted &mdash; and implemented mitigations.",
+          "Systematic testing on a <b>recurring cadence</b>, with output filtering as a backstop control."
+        ],
+        "nextSteps": [
+          "Spend some time actually trying to get your AI system to reveal something it shouldn't, rather than assuming it won't.",
+          "Turn that into a slightly more structured, even if still informal, round of testing, and write down what you find.",
+          "Run a systematic test for data leakage and put mitigations in place for what you find.",
+          "Repeat that testing on a recurring schedule, and add output filtering as a backstop in case a leak slips through despite the mitigations."
+        ],
+        "rationale": "An AI system can repeat something sensitive it saw during training or has access to without anyone asking it to &mdash; and \"we haven't seen it happen\" is not the same as \"it can't happen.\"",
+        "ownerRole": "Security Engineering",
+        "crosswalk": "OWASP LLM02:2026 Sensitive Information Disclosure &middot; OWASP LLM09:2026 Vector &amp; Embedding Weaknesses &middot; MITRE ATLAS Exfiltration tactic"
+      },
+      {
+        "id": "D3",
+        "q": "If someone asked you to delete their personal data from your AI system, could you actually do it &mdash; including from training data, embeddings, logs, and any fine-tuned model?",
+        "levels": [
+          "No idea how we'd even do that.",
+          "We could delete it from our primary database, but we're not sure about the AI-specific stores &mdash; embeddings, logs, fine-tuned weights.",
+          "A <b>documented process</b> exists, but it's manual and slow.",
+          "A defined, <b>tested process</b> covers all AI-specific data stores, not just the primary database.",
+          "An <b>automated process</b> handles this across all data stores within a defined time limit, with an audit trail proving completion."
+        ],
+        "nextSteps": [
+          "Get a straight answer from your team on what it would actually take to delete someone's data from every AI-specific store &mdash; training data, embeddings, logs, fine-tuned models &mdash; even if the honest answer today is \"we don't know.\"",
+          "Write down a process for deleting data from those AI-specific stores, even if it's manual and slow to start.",
+          "Test that process end to end and confirm it actually covers every AI-specific store, not just your primary database.",
+          "Automate the process across all data stores, set a defined time limit for completing it, and keep an audit trail proving it happened."
+        ],
+        "rationale": "A deletion request you can only partly fulfill &mdash; from the database but not from the AI-specific stores &mdash; leaves personal data sitting somewhere you told someone it was gone.",
+        "ownerRole": "Legal & Privacy",
+        "crosswalk": "CSA AICM Data Security &amp; Privacy Lifecycle Management domain &middot; NIST AI RMF MAP function"
+      }
+    ]
+  }
+]

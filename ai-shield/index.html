@@ -1,0 +1,2161 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<!-- Apply a stored theme choice before first paint, so there's no flash
+     of the wrong theme while lab-theme.js is still loading. -->
+<script>
+(function(){try{var t=localStorage.getItem('lab-theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();
+</script>
+<!-- Google Analytics - only loads after cookie consent, see banner script below -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  function loadGoogleAnalytics(){
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-QE309XG3DJ';
+    document.head.appendChild(s);
+    gtag('js', new Date());
+    gtag('config', 'G-QE309XG3DJ');
+  }
+</script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI-SHIELD &mdash; AI Security &amp; Trust Maturity Assessment | Kris McCabe</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon-16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="description" content="A free 18-question maturity assessment for AI security and trust gaps across six pillars, with evidence-anchored scoring and a governance cap designed to resist self-assessment inflation." />
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Kris's Lab">
+<meta property="og:title" content="AI-SHIELD &mdash; AI Security &amp; Trust Maturity Assessment">
+<meta property="og:description" content="A free 18-question maturity assessment for AI security and trust gaps across six pillars, with evidence-anchored scoring designed to resist self-assessment inflation.">
+<meta property="og:url" content="https://lab.krismccabe.com/ai-shield/">
+<meta property="og:image" content="https://lab.krismccabe.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="AI-SHIELD &mdash; AI Security &amp; Trust Maturity Assessment">
+<meta name="twitter:description" content="A free 18-question maturity assessment for AI security and trust gaps across six pillars, with evidence-anchored scoring designed to resist self-assessment inflation.">
+<meta name="twitter:image" content="https://lab.krismccabe.com/og-image.png">
+<link rel="stylesheet" href="/assets/lab.css?v=6">
+<script src="/assets/lab-theme.js?v=1" defer></script>
+<style>
+  /* AI-SHIELD now follows the same light/dark toggle as the rest of the lab -
+     panel/surface tokens come straight from the shared lab.css palette.
+     --accent-soft is a local token for the pale-blue accent text this page
+     uses a lot (letters, step numbers, tags): #93C5FD reads fine on the
+     permanently-dark header/hero, but needs to fall back to the solid
+     --accent blue for contrast once panels can be light. */
+  body {
+    --accent-soft: var(--accent);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) body { --accent-soft: #93C5FD; }
+  }
+  :root[data-theme="dark"] body { --accent-soft: #93C5FD; }
+
+  /* The shared .eyebrow class assumes it's only ever used on the fixed-dark
+     hero (where #93C5FD is fine); this page also reuses it inside a panel,
+     which needs the theme-aware accent instead for contrast in light mode. */
+  .panel .eyebrow { color: var(--accent-soft); }
+
+  .lab-header-inner { max-width: 1080px; }
+
+  .hero { padding: 52px 24px 40px; }
+  .hero h1 { color: #fff; font-size: clamp(1.7rem, 4vw, 2.4rem); font-weight: 800; letter-spacing: -0.02em; margin: 0 0 14px; max-width: 660px; margin-left: auto; margin-right: auto; }
+  .hero p { color: #94A3B8; font-size: 16px; max-width: 580px; margin: 0 auto; }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 24px 20px 64px; }
+
+  .panel {
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.28);
+  }
+  .panel h2 { font-size: 19px; font-weight: 700; color: var(--text); margin: 0 0 4px; }
+  .panel .sub { font-size: 13px; color: var(--text-muted); margin: 0 0 20px; }
+  .panel h3 { color: var(--text); }
+
+  .toolbar {
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.28); padding: 16px 20px; margin-bottom: 20px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  }
+  .toolbar .progress-text { font-size: 13px; font-weight: 600; color: var(--text); }
+  .toolbar .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    border: 1px solid var(--border); background: var(--surface-3); color: var(--text);
+    font-family: inherit; font-size: 13px; font-weight: 600; padding: 9px 14px; border-radius: 8px;
+    cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn:hover:not(:disabled) { border-color: var(--accent); background: rgba(37,99,235,0.12); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover:not(:disabled) { background: var(--accent-hv); border-color: var(--accent-hv); }
+  .btn.small { font-size: 12px; padding: 7px 12px; }
+
+  .tabs { display: flex; gap: 4px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 6px; margin-bottom: 20px; box-shadow: 0 12px 40px rgba(0,0,0,0.28); }
+  .tab-btn {
+    flex: 1; border: none; background: transparent; font-family: inherit; font-size: 14px; font-weight: 700;
+    color: var(--text-muted); padding: 12px 8px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease;
+  }
+  .tab-btn.active { background: var(--accent); color: #fff; }
+  .tab-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ---------- Framework tab: pillar strip ---------- */
+  .pillar-strip {
+    display: grid; grid-template-columns: repeat(6, 1fr); gap: 1px;
+    background: var(--border); border: 1px solid var(--border); margin: 20px 0; border-radius: 12px; overflow: hidden;
+  }
+  @media (max-width: 860px) { .pillar-strip { grid-template-columns: repeat(3, 1fr); } }
+  .pillar-cell {
+    background: var(--surface-2); padding: 20px 14px; text-decoration: none; color: inherit;
+    display: flex; flex-direction: column; gap: 6px; transition: background 0.15s ease;
+  }
+  .pillar-cell:hover { background: var(--surface-3); text-decoration: none; }
+  .pillar-cell .letter { font-weight: 800; font-size: 1.9rem; color: var(--accent-soft); line-height: 1; }
+  .pillar-cell .ptext { display: flex; flex-direction: column; gap: 6px; }
+  .pillar-cell .pname { font-size: 12.5px; font-weight: 700; color: var(--text); line-height: 1.3; }
+  @media (max-width: 560px) {
+    .pillar-strip { grid-template-columns: 1fr; border-radius: 10px; }
+    .pillar-cell { flex-direction: row; align-items: center; gap: 16px; padding: 16px 18px; }
+    .pillar-cell .letter { font-size: 1.5rem; min-width: 26px; }
+  }
+  .pillar-cell .pscope { font-size: 11.5px; color: var(--text-muted); line-height: 1.4; }
+
+  .compare-scroll { overflow-x: auto; margin-top: 12px; border-radius: 10px; border: 1px solid var(--border); }
+  table.compare { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 620px; }
+  table.compare th, table.compare td { text-align: left; padding: 10px 13px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  table.compare th { font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; background: var(--surface-3); }
+  table.compare td { color: var(--text-muted); }
+  table.compare td.frame-name { font-weight: 700; white-space: nowrap; color: var(--text); }
+  table.compare tr:last-child td { border-bottom: none; }
+  table.compare tr.this-row td { background: rgba(37,99,235,0.12); }
+  table.compare tr.this-row td.frame-name { color: var(--accent-soft); }
+
+  .method-list { display: flex; flex-direction: column; gap: 18px; margin-top: 18px; }
+  .method-item { display: grid; grid-template-columns: 36px 1fr; gap: 14px; }
+  .method-item .step {
+    font-weight: 700; font-size: 13px; color: var(--accent-soft);
+    border: 1px solid var(--border); border-radius: 3px; width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center; background: var(--surface-3);
+  }
+  .method-item h3 { font-size: 14.5px; margin: 0 0 4px; }
+  .method-item p { color: var(--text-muted); font-size: 13.5px; line-height: 1.6; }
+  .formula {
+    font-family: ui-monospace, 'SFMono-Regular', Consolas, monospace; font-size: 12.5px; background: var(--surface-3);
+    border: 1px solid var(--border); border-left: 3px solid var(--accent); padding: 10px 14px;
+    margin-top: 8px; overflow-x: auto; color: var(--text-muted); border-radius: 0 6px 6px 0;
+  }
+
+  .band-track { display: flex; height: 8px; border-radius: 4px; overflow: hidden; margin: 18px 0 14px; }
+  .band-track div { flex: 1; }
+  .band-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  @media (max-width: 860px) { .band-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 560px) { .band-grid { grid-template-columns: 1fr; gap: 0; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; } }
+  .band-card { border: 1px solid var(--border); border-radius: 10px; padding: 14px; background: var(--surface-3); }
+  .band-card .range { font-size: 11px; color: var(--text-muted); }
+  .band-card .bname { font-weight: 800; font-size: 1.05rem; margin: 4px 0 6px; }
+  .band-card p { font-size: 12.5px; color: var(--text-muted); line-height: 1.5; margin: 0; }
+  @media (max-width: 560px) {
+    .band-card { border: none; border-radius: 0; border-bottom: 1px solid var(--border); display: flex; align-items: baseline; gap: 8px 10px; flex-wrap: wrap; padding: 16px 18px; }
+    .band-card:last-child { border-bottom: none; }
+    .band-card .bname { order: 1; margin: 0; }
+    .band-card .range { order: 2; }
+    .band-card p { order: 3; flex-basis: 100%; margin-top: 4px; }
+  }
+
+  .fw-question { border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; margin-top: 16px; background: var(--surface-3); }
+  .fw-question .qid { font-size: 11.5px; font-weight: 700; color: var(--accent-soft); letter-spacing: 0.03em; }
+  .fw-question h3 { font-size: 15.5px; margin: 6px 0 12px; color: var(--text); }
+  .fw-ladder { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .fw-rung { display: grid; grid-template-columns: 40px 1fr; border-top: 1px solid var(--border); }
+  .fw-rung:first-child { border-top: none; }
+  .fw-rung .lvl {
+    font-weight: 700; font-size: 13px; color: var(--text-muted);
+    display: flex; align-items: flex-start; justify-content: center; padding-top: 11px;
+    border-right: 1px solid var(--border); background: var(--surface-2);
+  }
+  .fw-rung.lvl-4 .lvl { color: var(--safe); }
+  .fw-rung .rtext { padding: 10px 14px; font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+  .fw-rung .rtext b { color: var(--text); font-weight: 600; }
+  .fw-crosswalk { margin-top: 10px; padding: 8px 12px; border-left: 2px solid var(--border); font-size: 11.5px; line-height: 1.6; color: var(--text-muted); }
+  .fw-crosswalk b { color: var(--text); font-weight: 600; }
+  .fw-why { margin-top: 8px; padding: 8px 12px; border-left: 2px solid var(--accent-soft); font-size: 12px; line-height: 1.6; color: var(--text-muted); background: rgba(147,197,253,0.06); }
+  .fw-why b { color: var(--text); font-weight: 600; }
+
+  /* Distinct from the static fw-why/fw-crosswalk notes - this one is
+     actionable (a real link to a companion tool), so it gets the accent
+     color rather than the neutral/soft-blue treatment used for reference
+     text. */
+  .fw-live-check { margin-top: 8px; padding: 8px 12px; border-left: 2px solid var(--accent); font-size: 12px; line-height: 1.6; color: var(--text-muted); background: rgba(37,99,235,0.07); }
+  .fw-live-check b { color: var(--text); font-weight: 600; }
+  .fw-live-check a { color: var(--accent-soft); font-weight: 600; text-decoration: none; white-space: nowrap; }
+  .fw-live-check a:hover { text-decoration: underline; }
+  .src-note { font-size: 11px; color: var(--text-muted); }
+  .section-h { color: var(--text); font-size: 14px; margin: 24px 0 12px; }
+  .section-h:first-of-type { margin-top: 0; }
+  .link-btn { background: none; border: none; color: var(--accent-soft); font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; padding: 4px 0; text-decoration: underline; }
+  .link-btn:hover { color: var(--text); }
+  .fw-pillar-head { display: flex; align-items: baseline; gap: 14px; margin: 32px 0 8px; }
+  .fw-pillar-head:first-child { margin-top: 8px; }
+  .fw-pillar-head .big-letter { font-weight: 800; font-size: 2.4rem; color: var(--accent-soft); line-height: 1; }
+  .fw-pillar-head h2 { margin: 0; font-size: 1.3rem; }
+  .fw-pillar-intro { color: var(--text-muted); font-size: 13.5px; max-width: 640px; margin-bottom: 6px; }
+  .fw-maps-to { font-size: 11.5px; color: var(--text-muted); border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 10px; }
+  .fw-maps-to b { color: var(--text); font-weight: 600; }
+
+  .sources-list { columns: 2; column-gap: 28px; margin-top: 14px; font-size: 13px; }
+  @media (max-width: 640px) { .sources-list { columns: 1; } }
+  .sources-list li { margin-bottom: 8px; break-inside: avoid; color: var(--text-muted); }
+  .sources-list a { color: var(--accent-soft); }
+
+  /* ---------- Assessment tab ---------- */
+  .deploy-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin-top: 14px; }
+  .deploy-option {
+    border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease; background: var(--surface-3);
+  }
+  .deploy-option:hover { border-color: var(--accent); }
+  .deploy-option.selected { border-color: var(--accent); background: rgba(37,99,235,0.14); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .deploy-option .d-name { font-weight: 700; font-size: 13.5px; color: var(--text); }
+  .deploy-option .d-desc { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+  .q-progress-track { height: 6px; background: var(--surface-3); border-radius: 3px; overflow: hidden; margin-bottom: 20px; }
+  .q-progress-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.25s ease; }
+  .pillar-tag {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent-soft); margin-bottom: 4px;
+  }
+  .question-card .q-num { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .question-card h3 { font-size: 17px; font-weight: 700; color: var(--text); margin: 4px 0 18px; }
+
+  .level-options { display: flex; flex-direction: column; gap: 8px; }
+  .level-option {
+    border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease; display: flex; gap: 12px; align-items: flex-start;
+    background: var(--surface-3);
+  }
+  .level-option:hover { border-color: var(--accent); }
+  .level-option.selected { border-color: var(--accent); background: rgba(37,99,235,0.16); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .level-option .lvl-badge {
+    flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--surface-2); color: var(--text-muted);
+    font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  }
+  .level-option.selected .lvl-badge { background: var(--accent); color: #fff; }
+  .level-option .lvl-text { font-size: 13px; color: var(--text-muted); }
+  .level-option .lvl-text b { color: var(--text); }
+
+  .q-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 10px; }
+  .q-nav .must-answer-note { font-size: 12px; color: var(--text-muted); order: 3; width: 100%; text-align: center; }
+  @media (max-width: 480px) {
+    .q-nav { flex-direction: column-reverse; }
+    .q-nav .must-answer-note { order: -1; margin-bottom: 4px; }
+    .q-nav .btn { width: 100%; justify-content: center; }
+  }
+
+  /* ---------- Results tab ---------- */
+  .score-hero { display: flex; align-items: center; gap: 24px; flex-wrap: wrap; padding: 8px 0 24px; }
+  .score-circle {
+    width: 116px; height: 116px; border-radius: 50%; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; flex-shrink: 0; border: 3px solid var(--band-color, var(--accent));
+    background: var(--surface-3);
+  }
+  .score-circle .num { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; color: var(--text); }
+  .score-circle .denom { font-size: 11px; color: var(--text-muted); }
+  .score-meta .band-pill {
+    display: inline-block; font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px;
+    margin-bottom: 8px; color: #0B1220;
+  }
+  .score-meta h3 { font-size: 20px; font-weight: 800; color: var(--text); margin: 0 0 6px; }
+  .score-meta p { font-size: 13.5px; color: var(--text-muted); margin: 0; max-width: 480px; }
+
+  .pillar-bars { display: flex; flex-direction: column; gap: 10px; margin: 8px 0 24px; }
+  .pillar-bar-row { display: grid; grid-template-columns: 160px 1fr 48px; align-items: center; gap: 12px; }
+  @media (max-width: 560px) { .pillar-bar-row { grid-template-columns: 90px 1fr 40px; } }
+  .pillar-bar-row .pb-label { font-size: 12.5px; font-weight: 700; color: var(--text); }
+  .pillar-bar-track { height: 10px; background: var(--surface-3); border-radius: 5px; overflow: hidden; }
+  .pillar-bar-fill { height: 100%; border-radius: 5px; }
+  .pillar-bar-row .pb-score { font-size: 12.5px; color: var(--text-muted); text-align: right; }
+
+  .gap-card {
+    border: 1px solid var(--border); border-left: 4px solid #DC2626; border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 10px; background: var(--risk-bg);
+  }
+  .gap-card.severity-improve { border-left-color: #EA580C; background: var(--amber-bg); }
+  .gap-card.severity-unknown { border-left-color: #64748B; background: rgba(100,116,139,0.12); }
+  .gap-card.severity-good { border-left-color: #16A34A; background: var(--safe-bg); }
+  .gap-card .gap-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .gap-card .gap-title { font-size: 13.5px; font-weight: 700; color: var(--risk); margin: 0 0 4px; }
+  .severity-improve .gap-title { color: var(--amber); }
+  .severity-unknown .gap-title { color: var(--text-muted); }
+  .gap-card .gap-badge {
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+    padding: 3px 8px; border-radius: 20px; background: rgba(0,0,0,0.25); color: var(--text-muted); flex-shrink: 0;
+  }
+  .gap-card .gap-desc { font-size: 12.5px; color: var(--text-muted); margin: 0 0 8px; }
+  .gap-card .gap-next, .gap-card .gap-why { font-size: 12px; line-height: 1.6; color: var(--text-muted); margin: 0 0 8px; }
+  .gap-card .gap-next b, .gap-card .gap-why b { color: var(--text); font-weight: 600; }
+  .gap-card .gap-delta { font-size: 11.5px; color: var(--accent-soft); margin: 0 0 10px; }
+  .gap-card .gap-delta-flat { color: var(--amber); }
+  .gap-card .gap-assign { display: flex; gap: 12px; flex-wrap: wrap; margin: 0 0 10px; }
+  .gap-card .gap-assign label { display: flex; flex-direction: column; gap: 4px; font-size: 11px; color: var(--text-muted); flex: 1; min-width: 140px; }
+  .gap-card .gap-assign input {
+    font-family: inherit; font-size: 12.5px; padding: 7px 10px; border-radius: 7px;
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+  }
+  .gap-card .gap-crosswalk { font-size: 11px; color: var(--text-muted); background: rgba(0,0,0,0.2); border-radius: 6px; padding: 8px 10px; }
+
+  .cap-banner {
+    border: 1px solid #EA580C; border-radius: 10px; padding: 14px 16px; margin: 0 0 20px;
+    background: var(--amber-bg); font-size: 13px; line-height: 1.7; color: var(--text);
+  }
+  .cap-banner b { color: var(--amber); }
+
+  .delta-banner {
+    border: 1px solid var(--accent); border-radius: 10px; padding: 14px 16px; margin: 0 0 20px;
+    background: rgba(37,99,235,0.1);
+  }
+  .delta-banner h3 { font-size: 13.5px; margin: 0 0 8px; color: var(--text); }
+  .delta-banner p { font-size: 12.5px; color: var(--text-muted); margin: 0 0 4px; }
+
+  .report-details { border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin: 0 0 20px; background: var(--surface-3); }
+  .rd-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 560px) { .rd-grid { grid-template-columns: 1fr; } }
+  .rd-grid label { display: flex; flex-direction: column; gap: 5px; font-size: 11.5px; color: var(--text-muted); }
+  .rd-grid input {
+    font-family: inherit; font-size: 13px; padding: 8px 10px; border-radius: 7px;
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+  }
+  .rd-note { font-size: 11px; color: var(--text-muted); margin: 10px 0 0; }
+
+  .export-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+
+  .benchmark-panel { border: 1px solid var(--border); border-radius: 10px; padding: 16px; margin: 24px 0 0; background: var(--surface-3); }
+  .benchmark-form { display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end; }
+  .benchmark-form label { display: flex; flex-direction: column; gap: 5px; font-size: 11.5px; color: var(--text-muted); flex: 1; min-width: 160px; }
+  .benchmark-form select {
+    font-family: inherit; font-size: 13px; padding: 8px 10px; border-radius: 7px;
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+  }
+  .bm-result { margin-top: 14px; padding: 12px 14px; border-radius: 8px; background: rgba(37,99,235,0.1); border: 1px solid var(--accent); font-size: 13px; color: var(--text); }
+  .bm-result p { margin: 0; }
+
+  .conflict-banner {
+    border: 1px solid #EA580C; border-radius: 10px; padding: 14px 16px; margin: 0 0 18px;
+    background: var(--amber-bg); font-size: 12.5px; line-height: 1.6; color: var(--text-muted);
+  }
+  .conflict-banner b { color: var(--amber); }
+  .conflict-banner ul { margin: 8px 0 0; padding-left: 18px; }
+
+  /* ---------- Assessment: start screen / portfolio ---------- */
+  #screen-start h2:first-child, #portfolio-wrap h2 { margin-top: 0; }
+  .name-input {
+    width: 100%; font-family: inherit; font-size: 14px; padding: 11px 14px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface-3); color: var(--text); margin-top: 10px;
+  }
+  .name-required-note { font-size: 12px; color: var(--risk); margin: 6px 0 0; }
+  .portfolio-list { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+  .portfolio-card {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; background: var(--surface-3);
+  }
+  .portfolio-card .pf-name { font-weight: 700; font-size: 13.5px; color: var(--text); }
+  .portfolio-card .pf-meta { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+  .portfolio-card .pf-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .portfolio-divider { display: flex; align-items: center; gap: 12px; margin: 24px 0 20px; color: var(--text-muted); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .portfolio-divider::before, .portfolio-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* ---------- Assessment: question flow extras ---------- */
+  .deploy-note { font-size: 12px; color: var(--text-muted); font-style: italic; margin: 0 0 14px; padding-left: 18px; }
+  .deploy-note li { margin-bottom: 3px; }
+  .deploy-note li:last-child { margin-bottom: 0; }
+  .alt-answers { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .alt-btn {
+    font-family: inherit; font-size: 12px; font-weight: 600; padding: 8px 12px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--surface-2); color: var(--text-muted); cursor: pointer;
+  }
+  .alt-btn:hover { border-color: var(--accent); }
+  .alt-btn.selected { border-color: var(--accent); background: rgba(37,99,235,0.16); color: var(--text); }
+  .evidence-box { margin-top: 14px; }
+  .evidence-box summary { font-size: 12px; color: var(--accent-soft); cursor: pointer; }
+  .evidence-box textarea, .evidence-box input {
+    display: block; width: 100%; font-family: inherit; font-size: 13px; margin-top: 8px;
+    padding: 8px 10px; border-radius: 7px; border: 1px solid var(--border); background: var(--surface-2); color: var(--text);
+  }
+  .evidence-box textarea { min-height: 60px; resize: vertical; }
+  .review-link-row { text-align: center; margin-top: 14px; }
+
+  /* ---------- Assessment: review screen ---------- */
+  #screen-review h2 { margin-top: 0; }
+  .review-list { display: flex; flex-direction: column; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; margin-top: 14px; }
+  .review-row {
+    display: grid; grid-template-columns: 40px 1fr auto; align-items: center; gap: 12px;
+    background: var(--surface-3); border: none; padding: 12px 14px; text-align: left; cursor: pointer;
+    font-family: inherit; color: var(--text);
+  }
+  .review-row:hover { background: var(--surface-2); }
+  .review-row .rr-id { font-weight: 700; font-size: 12px; color: var(--accent-soft); }
+  .review-row .rr-q { font-size: 12.5px; color: var(--text-muted); }
+  .review-row .rr-status { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
+  .review-row .rr-status.unanswered { background: rgba(100,116,139,0.2); color: var(--text-muted); }
+  .review-row .rr-status.critical { background: var(--risk-bg); color: var(--risk); }
+  .review-row .rr-status.partial { background: var(--amber-bg); color: var(--amber); }
+  .review-row .rr-status.good { background: var(--safe-bg); color: var(--safe); }
+  .review-row .rr-status.neutral { background: rgba(100,116,139,0.2); color: var(--text-muted); }
+  .review-row .rr-status.unknown { background: rgba(100,116,139,0.2); color: var(--text-muted); }
+  .review-actions { margin-top: 18px; }
+
+  .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); }
+  .empty-state p { font-size: 14px; max-width: 380px; margin: 0 auto; }
+
+  footer { max-width: 1080px; }
+  footer .disclaimer { max-width: 660px; }
+
+  @media (max-width: 640px) {
+    .score-hero { flex-direction: column; text-align: center; }
+    .panel { padding: 22px; }
+  }
+
+  #print-root { display: none; }
+  @media print {
+    body > *:not(#print-root) { display: none !important; }
+    #print-root { display: block !important; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }
+    @page { margin: 16mm 14mm; }
+    @page { @bottom-right { content: "Page " counter(page) " of " counter(pages); font-size: 9px; color: #94A3B8; } }
+  }
+  #print-root {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #1E293B; background: #fff; max-width: 720px; margin: 0 auto; padding: 20px;
+  }
+  #print-root h1 { color: #0F172A; font-size: 22px; font-weight: 800; margin: 0 0 8px; break-after: avoid-page; }
+  #print-root h2 { color: #2563EB; font-size: 16px; font-weight: 700; margin: 24px 0 4px; border-bottom: 1px solid #E2E8F0; padding-bottom: 4px; break-after: avoid-page; }
+  #print-root h3 { color: #0F172A; font-size: 13px; font-weight: 700; margin: 14px 0 4px; break-after: avoid-page; }
+  #print-root p, #print-root li { font-size: 12.5px; line-height: 1.6; margin: 0 0 8px; break-inside: avoid-page; }
+  #print-root .p-eyebrow { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #2563EB; margin: 0 0 6px; }
+  #print-root .p-identity { font-size: 11.5px; color: #64748B; margin: 0 0 4px; }
+  #print-root .print-page { break-after: page; }
+  #print-root .p-score-box { display: flex; align-items: baseline; gap: 8px; margin: 14px 0 10px; }
+  #print-root .p-score-num { font-size: 34px; font-weight: 800; }
+  #print-root .p-score-denom { font-size: 14px; font-weight: 700; color: #334155; }
+  #print-root .p-cap-note { border: 1px solid #EA580C; background: #FFEDD5; border-radius: 8px; padding: 10px 12px; margin: 10px 0; font-size: 12px; color: #7C2D12; }
+  #print-root .p-bars { margin: 8px 0 16px; }
+  #print-root .p-bar-row { display: grid; grid-template-columns: 190px 1fr 40px; align-items: center; gap: 10px; margin-bottom: 8px; }
+  #print-root .p-bar-label { font-size: 11.5px; font-weight: 700; color: #0F172A; }
+  #print-root .p-bar-track { height: 8px; background: #E2E8F0; border-radius: 4px; overflow: hidden; }
+  #print-root .p-bar-fill { height: 100%; background: #2563EB; }
+  #print-root .p-bar-score { font-size: 11.5px; color: #64748B; text-align: right; }
+  #print-root .p-gap { border-left: 3px solid #EA580C; background: #FFEDD5; padding: 8px 12px; margin-bottom: 8px; }
+  #print-root .p-gap-critical { border-left-color: #DC2626; background: #FEE2E2; }
+  #print-root .p-next, #print-root .p-owner { font-size: 11.5px; color: #334155; }
+  #print-root .p-crosswalk { font-size: 11px; color: #64748B; }
+  #print-root .p-footer { margin-top: 20px; padding-top: 10px; border-top: 1px solid #E2E8F0; font-size: 10.5px; color: #94A3B8; }
+  #print-root .onepager .p-lead { font-size: 13.5px; line-height: 1.7; margin: 12px 0 20px; }
+  #print-root .onepager .p-narrative { border-left: 3px solid #2563EB; background: #EFF6FF; padding: 10px 14px; margin-bottom: 10px; border-radius: 0 8px 8px 0; }
+  #print-root .onepager .p-narrative p { margin: 0 0 6px; }
+  #print-root .onepager .p-actions { padding-left: 20px; }
+  #print-root .onepager .p-actions li { margin-bottom: 8px; }
+
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "AI-SHIELD \u2014 AI Security & Trust Maturity Assessment",
+  "description": "A free 18-question maturity assessment for AI security and trust gaps across six pillars, with evidence-anchored scoring and a governance cap designed to resist self-assessment inflation.",
+  "url": "https://lab.krismccabe.com/ai-shield/",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Any (runs in browser)",
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "author": { "@type": "Person", "name": "Kris McCabe", "url": "https://krismccabe.com/" }
+}
+</script>
+<link rel="stylesheet" href="/assets/swiss.css?v=5">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to content</a>
+
+<div class="cookie-banner" id="cookie-banner" role="dialog" aria-label="Cookie consent">
+  <p>This site uses Google Analytics to understand how the tools are used. Nothing loads or is tracked until you accept.</p>
+  <div class="cookie-banner-actions">
+    <button type="button" id="cookie-decline" class="btn small">Decline</button>
+    <button type="button" id="cookie-accept" class="btn primary small">Accept</button>
+  </div>
+</div>
+<script>
+(function(){
+  var consent = localStorage.getItem('cookie-consent');
+  if (consent === 'granted') { loadGoogleAnalytics(); return; }
+  if (consent === 'denied') { return; }
+  var banner = document.getElementById('cookie-banner');
+  banner.style.display = 'flex';
+  document.getElementById('cookie-accept').addEventListener('click', function(){
+    localStorage.setItem('cookie-consent', 'granted');
+    banner.style.display = 'none';
+    loadGoogleAnalytics();
+  });
+  document.getElementById('cookie-decline').addEventListener('click', function(){
+    localStorage.setItem('cookie-consent', 'denied');
+    banner.style.display = 'none';
+  });
+})();
+</script>
+
+  <div id="print-root"></div>
+
+  <header class="lab-header">
+    <div class="lab-header-inner" style="display:flex; align-items:center; justify-content:space-between;">
+      <a class="lab-back" href="/">&#8592; Kris's Lab</a>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" aria-pressed="false">
+          <svg class="icon-sun" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.5"/>
+            <path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12h2.5M19 12h2.5M4.2 19.8l1.8-1.8M18 6l1.8-1.8"/>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 14.2A8.5 8.5 0 1 1 9.8 4a7 7 0 0 0 10.2 10.2Z"/>
+          </svg>
+        </button>
+        <span style="display:flex; align-items:center; gap:8px; color:#fff; font-weight:700; font-size:14px;">
+          <svg viewBox="0 0 40 40" width="20" height="20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M20 5 L33 12.5 L33 27.5 L20 35 L7 27.5 L7 12.5 Z" fill="none" stroke="#93C5FD" stroke-width="1.8" stroke-linejoin="round"/>
+            <circle cx="20" cy="23" r="2.2" fill="#2563EB"/>
+            <path d="M14.5 23 A5.5 5.5 0 0 0 25.5 23" stroke="#93C5FD" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="0.75"/>
+            <path d="M11 23 A9 9 0 0 0 29 23" stroke="#93C5FD" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.4"/>
+          </svg>
+          AI-SHIELD
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <div class="hero" id="main-content">
+    <svg viewBox="0 0 40 40" width="50" height="50" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="margin-bottom:16px;">
+      <path d="M20 5 L33 12.5 L33 27.5 L20 35 L7 27.5 L7 12.5 Z" fill="none" stroke="#93C5FD" stroke-width="1.6"/>
+      <circle cx="20" cy="23" r="2.4" fill="#2563EB"/>
+      <path d="M14 23 A6 6 0 0 0 26 23" stroke="#93C5FD" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.75"/>
+      <path d="M10 23 A10 10 0 0 0 30 23" stroke="#93C5FD" stroke-width="1.3" fill="none" stroke-linecap="round" opacity="0.4"/>
+    </svg>
+    <p class="eyebrow">AI-SHIELD &middot; Free tool by Kris McCabe</p>
+    <h1>How exposed is your AI, really?</h1>
+    <p>An 18-question maturity assessment across six pillars &mdash; Supply chain, Human oversight, Identity &amp; access, Evaluation, Logging, and Data &mdash; with evidence-anchored scoring and a governance cap designed to resist self-assessment inflation.</p>
+  </div>
+
+  <div class="wrap">
+
+    <div class="panel no-print" id="assessments-panel" style="padding:16px 20px; margin-bottom:12px;">
+      <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--text); cursor:pointer;">
+        <input type="checkbox" id="remember-toggle" checked> Remember my answers on this device (nothing leaves your browser)
+      </label>
+    </div>
+
+    <div class="toolbar no-print">
+      <span class="progress-text" id="progress-text">0 of 18 answered</span>
+      <div class="actions" id="toolbar-actions">
+        <button class="btn" id="new-assessment-btn">&#10133; New assessment</button>
+        <button class="btn" id="btn-load">&#128193; Load saved answers</button>
+        <button class="btn" id="btn-save">&#128190; Save answers</button>
+        <button class="btn" id="btn-import">&#128229; Import responses</button>
+      </div>
+      <input type="file" id="file-input" accept="application/json" style="display:none;" />
+      <input type="file" id="import-file-input" accept="application/json" style="display:none;" />
+    </div>
+
+    <div class="tabs no-print">
+      <button class="tab-btn active" data-tab="framework">The Framework</button>
+      <button class="tab-btn" data-tab="assessment">Take the Assessment</button>
+      <button class="tab-btn" data-tab="results" disabled id="tab-btn-results">Your Results</button>
+    </div>
+
+    <!-- FRAMEWORK TAB -->
+    <div class="tab-panel active" id="tab-framework">
+      <div class="panel">
+        <p class="eyebrow" style="margin-bottom:8px;">Why not just use what exists</p>
+        <h2>The frameworks are thorough. That's the problem.</h2>
+        <p style="font-size:13.5px; color:var(--text-muted); line-height:1.7; margin:0 0 12px;">Every major AI security framework published in the last two years &mdash; NIST's AI RMF, ISO/IEC 42001, the Cloud Security Alliance's 243-control AI Controls Matrix &mdash; is built for an organization with a security team and months to run an audit. AI-SHIELD is scoped differently on purpose: eighteen questions a person who actually built or operates the system can answer honestly in fifteen minutes.</p>
+        <div class="compare-scroll">
+          <table class="compare">
+            <thead><tr><th>Framework</th><th>What it actually is</th><th>Time to a score</th></tr></thead>
+            <tbody>
+              <tr><td class="frame-name">NIST AI RMF + GenAI Profile</td><td>72 subcategories across 19 categories</td><td>Weeks</td></tr>
+              <tr><td class="frame-name">ISO/IEC 42001</td><td>Certifiable management system, audit cycle</td><td>Months</td></tr>
+              <tr><td class="frame-name">CSA AI Controls Matrix</td><td>243 control objectives, 18 domains</td><td>Weeks</td></tr>
+              <tr><td class="frame-name">OWASP LLM / ASI Top 10</td><td>Ranked vulnerability lists, no score</td><td>N/A</td></tr>
+              <tr class="this-row"><td class="frame-name">AI-SHIELD</td><td>18-question self-assessment</td><td>~15&ndash;20 minutes</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Six pillars, one word</h2>
+        <p class="sub" style="margin-bottom:0;">Each pillar maps to a real, current body of work &mdash; condensed into three questions.</p>
+        <div class="pillar-strip" id="pillar-strip"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Scoring that resists checkbox theater</h2>
+        <p class="sub">Three design decisions push back on self-assessment inflation.</p>
+        <div class="method-list">
+          <div class="method-item">
+            <div class="step">1</div>
+            <div><h3>Answers describe evidence, not feelings</h3><p>Every level (0&ndash;4) describes a concrete, checkable state &mdash; a document that exists, a test that ran &mdash; not a vibe.</p></div>
+          </div>
+          <div class="method-item">
+            <div class="step">2</div>
+            <div><h3>One weak pillar caps the whole score</h3><p>Your <b>Human Oversight &amp; Governance</b> score acts as a ceiling: the overall score can't exceed it by more than one point.</p>
+              <div class="formula">Overall = min( average(S, H, I, E, L, D), &nbsp;H + 1 )</div>
+            </div>
+          </div>
+          <div class="method-item">
+            <div class="step">3</div>
+            <div><h3>A single zero is flagged regardless of the average</h3><p>Any question scored 0 &mdash; a total absence of a control &mdash; surfaces as a named <b>Critical Gap</b> in your results, independent of your overall score.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Five ratings, plainly named</h2>
+        <div class="band-track" id="band-track"></div>
+        <div class="band-grid" id="band-grid"></div>
+      </div>
+
+      <div class="panel" id="framework-detail-panel">
+        <h2>The full framework</h2>
+        <p class="sub">All eighteen questions, in detail, with the specific control each one maps to in other frameworks, and why each one matters in plain terms.</p>
+        <div id="framework-content"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Sources</h2>
+        <p class="sub" style="margin-bottom:0;">AI-SHIELD doesn't invent risks &mdash; it re-scopes real, current frameworks into something answerable in one sitting.</p>
+        <ul class="sources-list">
+          <li><a href="https://www.nist.gov/itl/ai-risk-management-framework" target="_blank" rel="noopener">NIST AI Risk Management Framework</a></li>
+          <li><a href="https://airc.nist.gov/airmf-resources/airmf/6-sec-profile" target="_blank" rel="noopener">NIST AI RMF Generative AI Profile (AI 600-1)</a></li>
+          <li><a href="https://genai.owasp.org/resource/owasp-genai-llm-top-10-2026/" target="_blank" rel="noopener">OWASP Top 10 for LLM Applications 2026</a></li>
+          <li><a href="https://owasp.org/www-project-top-10-for-large-language-model-applications/" target="_blank" rel="noopener">OWASP Top 10 for Agentic Applications (ASI)</a></li>
+          <li><a href="https://www.konfirmity.com/blog/iso-42001-requirements" target="_blank" rel="noopener">ISO/IEC 42001 requirements overview</a></li>
+          <li><a href="https://www.paloaltonetworks.com/cyberpedia/ai-trism" target="_blank" rel="noopener">Gartner AI TRiSM framework</a></li>
+          <li><a href="https://atlas.mitre.org./" target="_blank" rel="noopener">MITRE ATLAS</a></li>
+          <li><a href="https://safety.google/intl/en_in/safety/saif/" target="_blank" rel="noopener">Google Secure AI Framework (SAIF)</a></li>
+          <li><a href="https://www.databricks.com/resources/whitepaper/databricks-ai-security-framework-dasf" target="_blank" rel="noopener">Databricks AI Security Framework (DASF)</a></li>
+          <li><a href="https://cloudsecurityalliance.org/artifacts/ai-security-maturity-model" target="_blank" rel="noopener">CSA AI Security Maturity Model (AISMM)</a></li>
+          <li><a href="https://cloudsecurityalliance.org/artifacts/ai-controls-matrix-v1-1" target="_blank" rel="noopener">CSA AI Controls Matrix (AICM) v1.1</a></li>
+          <li><a href="https://www.rockcybermusings.com/p/ai-security-maturity-model-your-score-is-fiction" target="_blank" rel="noopener">"AI Security Maturity Model: Your Score Is Fiction"</a> <span class="src-note">(commentary that inspired this framework, not a standards body)</span></li>
+          <li><a href="https://seers.ai/blogs/eu-ai-act-risk-levels/" target="_blank" rel="noopener">EU AI Act risk classification tiers</a></li>
+          <li><a href="https://artificialintelligenceact.eu/article/14/" target="_blank" rel="noopener">EU AI Act Article 14 (Human Oversight)</a></li>
+          <li><a href="https://artificialintelligenceact.eu/article/50/" target="_blank" rel="noopener">EU AI Act Article 50 (Transparency Obligations)</a></li>
+        </ul>
+      </div>
+
+      <div class="panel no-print" style="text-align:center;">
+        <p style="font-size:14px; color:var(--text-muted); margin:0 0 14px;">Ready to see where you stand?</p>
+        <button class="btn primary" id="start-assessment-btn">Take the assessment &rarr;</button>
+      </div>
+    </div>
+
+    <!-- ASSESSMENT TAB -->
+    <div class="tab-panel" id="tab-assessment">
+
+      <div class="panel" id="screen-start">
+        <div id="portfolio-wrap" style="display:none;">
+          <h2>Your assessments</h2>
+          <p class="sub">Saved on this device only &mdash; nothing leaves your browser.</p>
+          <div id="portfolio-list" class="portfolio-list"></div>
+          <div class="portfolio-divider"><span>or start a new one</span></div>
+        </div>
+        <h2>Name this assessment</h2>
+        <p class="sub">Give it a name so you can keep it separate from other systems you assess later &mdash; e.g. "Customer support agent, production". Assessing several AI systems separately is more honest than blending them into one score.</p>
+        <input type="text" id="assessment-name-input" class="name-input" placeholder="e.g. Customer support agent, production">
+        <p class="name-required-note" id="name-required-note" style="display:none;">Give this assessment a name to continue.</p>
+        <h2 style="margin-top:28px;">How do you primarily use AI?</h2>
+        <p class="sub">Select all that apply &mdash; most systems aren't just one of these. This sets a short context note under each pillar as you go; it doesn't skip or hide any questions.</p>
+        <div class="deploy-grid" id="deploy-grid"></div>
+        <div style="margin-top:24px; text-align:center;">
+          <button class="btn primary" id="begin-assessment-btn">Begin assessment &rarr;</button>
+        </div>
+      </div>
+
+      <div class="panel" id="screen-questions" style="display:none;">
+        <div id="questions-container"></div>
+      </div>
+
+      <div class="panel" id="screen-review" style="display:none;"></div>
+
+    </div>
+
+    <!-- RESULTS TAB -->
+    <div class="tab-panel" id="tab-results">
+      <div class="panel" id="results-panel-content" aria-live="polite">
+        <div class="empty-state"><p>Answer all 18 questions to see your results.</p></div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="links">
+      <a href="/flare/" target="_blank" rel="noopener">Flare &mdash; live AI stack exposure checker &rarr;</a>
+      <a href="/recoverly/" target="_blank" rel="noopener">Recoverly &mdash; data recovery maturity assessment &rarr;</a>
+      <a href="/redline/" target="_blank" rel="noopener">Redline &mdash; the True Cost of Downtime calculator &rarr;</a>
+      <a href="/schema-explorer/" target="_blank" rel="noopener">Schema Explorer &mdash; what breaks if you delete this? &rarr;</a>
+      <a href="/agent-impact/" target="_blank" rel="noopener">Agent-Impact &mdash; AI agent Blast Radius &amp; guardrail simulator &rarr;</a>
+      <a href="https://krismccabe.com" target="_blank" rel="noopener">krismccabe.com</a>
+    </div>
+    <p class="disclaimer">AI-SHIELD is released as open source under the MIT License &mdash; free to use, copy, adapt, and build on. It is provided "as is," without warranty of any kind. The framework, its scoring model, and any assessment produced with it are indicative tools to aid your own thinking &mdash; not a certified audit, a substitute for professional security or legal advice, or a guarantee of compliance with any law, regulation, or standard it references. Use it entirely at your own risk. To the fullest extent permitted by law, the author accepts no liability for any loss, damage, or harm of any kind arising from its use. Nothing here is saved to a server &mdash; your answers stay in your browser unless you choose to save them yourself, with one exception: if you explicitly opt in to the "See how you compare" feature on the Results tab, your overall score, band, per-pillar scores, deployment pattern, industry, and organisation size (never your answers, evidence, owner names, or organisation name) are sent to an anonymous aggregate on a server the author controls, solely to compute a comparison percentile. AI-SHIELD references NIST, ISO/IEC, OWASP, MITRE, the Cloud Security Alliance, Gartner, Google, Databricks, and the EU AI Act for context; it is not endorsed by, certified by, or affiliated with any of them, nor with Salesforce or any other named vendor.</p>
+  </footer>
+
+<script>
+  // ---------------------------------------------------------------
+  // DATA
+  // ---------------------------------------------------------------
+
+  const PILLARS = [
+  {
+    "id": "s",
+    "letter": "S",
+    "name": "Supply Chain &amp; Vendor Trust",
+    "intro": "The moment you build on someone else's model, API, plugin, or MCP server (a way for your AI to connect to outside tools), their risk becomes yours &mdash; whether or not you ever agreed to that in writing.",
+    "maps": "OWASP LLM04:2026 Supply Chain &middot; CSA AICM Supply Chain Management, Transparency &amp; Accountability domain &middot; NIST AI RMF GOVERN 6.1&ndash;6.2",
+    "deployNotes": {
+      "api": "Your entire security posture here depends on one vendor's practices &mdash; you own the choice, but not the control.",
+      "rag": "You're trusting both the model vendor and whatever you're retrieving from &mdash; two supply chains, not one.",
+      "finetune": "Your fine-tuning data becomes part of the vendor's model &mdash; check what happens to it if you ever leave.",
+      "selfhost": "You own this pillar directly now &mdash; there's no vendor to fall back on if something in the model or its components turns out to be compromised.",
+      "agents": "Every tool or plugin your agent can call is now part of your supply chain, whether you chose it carefully or not."
+    },
+    "questions": [
+      {
+        "id": "S1",
+        "q": "How do you vet the AI models and vendors you build on?",
+        "levels": [
+          "No vendor risk review &mdash; we started using it because it worked.",
+          "An informal check (read their marketing or docs) before adopting a new model or vendor.",
+          "A <b>documented</b> vendor risk checklist covering data handling, security certifications, and model provenance.",
+          "A <b>formal</b> vendor risk assessment, reviewed by security or legal, with contractual data-use terms, required before adoption.",
+          "All of the above, plus a <b>contractual right to be notified</b> of material model or subprocessor changes, with continuous monitoring and a defined re-review trigger when they happen."
+        ],
+        "nextSteps": [
+          "Before adopting your next AI vendor or model, read through what they publish about their security practices and data handling &mdash; even an informal check is better than none.",
+          "Write down a short checklist every new AI vendor gets checked against &mdash; how they handle data, what security certifications they hold, where the model came from &mdash; so the check doesn't depend on one person remembering to do it.",
+          "Get security or legal to formally sign off on new AI vendors before adoption, with data-use terms written into the contract, not just assumed.",
+          "Add a contractual right to be told about material changes &mdash; subprocessor swaps, model version updates, incident disclosures &mdash; and set a trigger for re-checking the vendor when that happens."
+        ],
+        "rationale": "If a vendor's model turns out to be compromised, poorly secured, or trained on data you shouldn't be using, none of your other controls matter &mdash; you've already built on their weakness.",
+        "ownerRole": "GRC",
+        "crosswalk": "NIST AI RMF GOVERN 6.1 (policies for third-party AI risk) &middot; OWASP LLM04:2026 Supply Chain &middot; CSA AICM Supply Chain domain",
+        "liveCheck": {
+          "label": "Check live advisories for your AI stack",
+          "url": "https://lab.krismccabe.com/flare/",
+          "note": "Flare &mdash; a free companion tool that checks the specific AI packages and SDKs you depend on against live OSV.dev advisories. Vetting a vendor once isn't the same as knowing whether something you already depend on has a disclosed vulnerability right now."
+        }
+      },
+      {
+        "id": "S2",
+        "q": "Do you know exactly what happens to the data you send to your AI provider(s)?",
+        "levels": [
+          "Not sure &mdash; we haven't checked.",
+          "We read the vendor's privacy policy once, some time ago.",
+          "We've <b>confirmed contractually</b> whether our data is used to train their model, and opted out if needed.",
+          "Data-processing terms are <b>documented per vendor</b>, reviewed annually, and mapped to our own data classification policy.",
+          "The above, plus <b>automated tracking</b> of which data flows to which vendor/model, with terms version-controlled and alerts on changes."
+        ],
+        "nextSteps": [
+          "Find and read the privacy policy or data-processing terms for every AI tool your company currently sends data to.",
+          "Get written, contractual confirmation of whether your data trains the vendor's model, and opt out if your policy requires it.",
+          "Document each vendor's data-handling terms in one place, review them once a year, and match them against how you classify your own data.",
+          "Set up automatic tracking of which data flows to which AI vendor or model, keep the terms version-controlled, and get alerted when a vendor changes them."
+        ],
+        "rationale": "Data you send to an AI vendor can be used to train their model, shared with their own subprocessors (a vendor's own vendors), or kept longer than you expect &mdash; and by the time you find out, it may be too late to undo.",
+        "ownerRole": "Legal & Privacy",
+        "crosswalk": "NIST AI RMF GOVERN 6.1 &middot; CSA AICM Data Security &amp; Privacy Lifecycle Management domain &middot; Databricks DASF data risk category"
+      },
+      {
+        "id": "S3",
+        "q": "If a third-party plugin, tool, or MCP server your AI can call turns out to be compromised, what happens?",
+        "levels": [
+          "We don't have a list of what tools or plugins our AI can call.",
+          "We have a list, but no permission boundaries &mdash; any connected tool gets full access.",
+          "Tools are <b>individually scoped and permissioned</b>, but we haven't tested what a compromised one could actually do.",
+          "Least-privilege scoping per tool, <b>validated</b> via a tabletop or red-team exercise (deliberately trying to break it).",
+          "Least-privilege scoping, <b>automated permission audits</b>, and a tested kill-switch to instantly revoke one tool's access."
+        ],
+        "nextSteps": [
+          "Write down every tool, plugin, and connected service your AI systems can currently call &mdash; you can't limit what you haven't listed.",
+          "Give each connected tool its own limited permissions instead of full access, so a compromised tool can only do what it specifically needs to do.",
+          "Run a tabletop exercise or a red-team test to actually check what a compromised tool could do with the access it currently has.",
+          "Add automated permission audits and a tested kill-switch so a compromised tool's access can be cut off immediately, not just in theory."
+        ],
+        "rationale": "An AI agent is only as trustworthy as the weakest tool it's allowed to call &mdash; a single compromised plugin can hand an attacker everything the agent has permission to touch.",
+        "ownerRole": "Platform Engineering",
+        "crosswalk": "OWASP ASI04:2026 Agentic Supply Chain Compromise &middot; NIST AI RMF GOVERN 6.2 (contingency for third-party failures) &middot; MITRE ATLAS Initial Access / AI Model Access tactics"
+      }
+    ]
+  },
+  {
+    "id": "h",
+    "letter": "H",
+    "name": "Human Oversight &amp; Governance",
+    "intro": "This is the framework's ceiling pillar &mdash; see the scoring methodology above. No amount of technical sophistication substitutes for someone actually owning the risk.",
+    "maps": "NIST AI RMF GOVERN function &middot; ISO/IEC 42001 Clause 5 (Leadership) &middot; EU AI Act Article 14 (Human Oversight)",
+    "deployNotes": {
+      "api": "It's easy to assume the vendor is handling governance &mdash; they aren't; you're still accountable for how it's used.",
+      "rag": "Governance needs to cover both the model's behavior and the data you're feeding it, not just one or the other.",
+      "finetune": "Someone needs to own decisions about what goes into the fine-tuning data, not just how the model is used.",
+      "selfhost": "There's no vendor's terms of service to lean on &mdash; your own governance is the only governance that exists.",
+      "agents": "Autonomous action raises the stakes on oversight &mdash; decisions are being made and acted on without a human in the moment."
+    },
+    "questions": [
+      {
+        "id": "H1",
+        "q": "Who owns AI security and risk decisions in your organization?",
+        "levels": [
+          "No one specifically &mdash; it falls to whoever built the thing.",
+          "Someone has informally taken it on, but it isn't their assigned job.",
+          "A <b>named owner or role</b> with documented responsibility, but no formal charter or budget.",
+          "A formal governance body or role with <b>documented authority</b> and a defined reporting line.",
+          "The above, plus a <b>track record of actually blocking or delaying a launch</b> over a risk it identified."
+        ],
+        "nextSteps": [
+          "Ask someone on your team to start informally taking responsibility for AI risk decisions, even before it's an official part of their role.",
+          "Name a specific owner or role for AI security and risk decisions, and write down what they're responsible for.",
+          "Turn that into a formal role or governance body with documented authority and a clear line to report up to.",
+          "Give that owner enough real authority that they've actually blocked or delayed a launch over a risk they identified &mdash; not just written policy that's never been tested."
+        ],
+        "rationale": "Without a named owner, AI risk decisions get made by whoever built the feature &mdash; which means no one is accountable when something goes wrong, and no one has the authority to say no beforehand.",
+        "ownerRole": "AI Governance",
+        "crosswalk": "NIST AI RMF GOVERN 1.1&ndash;1.3 (policy, accountability, risk tolerance) &middot; ISO/IEC 42001 Clause 5 (Leadership) &middot; CSA AICM Governance, Risk &amp; Compliance domain"
+      },
+      {
+        "id": "H2",
+        "q": "Do you maintain an inventory of the AI systems, models, and agents in use across your organization?",
+        "levels": [
+          "No inventory &mdash; new AI use often happens without anyone else knowing.",
+          "An informal, incomplete list someone maintains manually.",
+          "A <b>documented inventory</b>, but it's updated irregularly and has known gaps.",
+          "A maintained, reasonably complete inventory <b>reviewed on a set cadence</b>.",
+          "The above, plus <b>active discovery</b> of AI tools nobody registered &mdash; e.g. via network activity or spend records &mdash; not just tracking the ones you already know about, feeding a new-system approval workflow."
+        ],
+        "nextSteps": [
+          "Start a simple list of every AI tool, model, or agent you know is in use &mdash; it doesn't need to be complete yet, it needs to exist.",
+          "Assign someone to own and update that list on a regular basis, and document how new AI use gets added to it.",
+          "Put that inventory on a set review cadence (e.g. quarterly) so it stops silently going stale between updates.",
+          "Add active discovery &mdash; checking for AI tools nobody registered, for example through network activity or spend records &mdash; so the inventory catches what you don't already know about, not just what you do."
+        ],
+        "rationale": "You cannot secure, assess, or govern an AI system you don't know exists &mdash; and most companies are missing more of their AI footprint than they realize, because a one-time list goes stale within weeks.",
+        "ownerRole": "AI Governance",
+        "crosswalk": "NIST AI RMF MAP function (system context documentation) &middot; ISO/IEC 42001 Clause 6.1.4 (AI system impact assessment established) &middot; CSA AICM Governance, Risk &amp; Compliance domain"
+      },
+      {
+        "id": "H3",
+        "q": "For decisions where an AI's output could meaningfully affect a person &mdash; a hiring screen, a credit decision, a support resolution &mdash; is there a human in the loop?",
+        "levels": [
+          "No &mdash; the AI's output is used directly, with no review step.",
+          "A human technically reviews it, but in practice always rubber-stamps it.",
+          "A <b>defined human-review requirement</b> exists for high-stakes categories, but isn't consistently followed.",
+          "An <b>enforced</b> review gate for defined high-stakes categories, with disclosure to affected users that AI was involved.",
+          "The above, plus <b>tracking how often reviewers actually override</b> the AI's decision &mdash; and treating a very low override rate in a high-stakes category as a warning sign the review has become a formality, not a safeguard."
+        ],
+        "nextSteps": [
+          "Add a manual review step before AI output is used directly in any decision that meaningfully affects a person &mdash; even an inconsistent one is a start.",
+          "Write down which categories of decisions require human review, and what the reviewer is actually supposed to check for.",
+          "Make that review requirement mandatory &mdash; not optional &mdash; for the high-stakes categories you defined, and tell affected users when AI was involved in a decision about them.",
+          "Start tracking how often reviewers actually change the AI's decision. If that override rate is very low in a category where mistakes are plausible, treat it as a warning sign that review has become a formality, not a safeguard."
+        ],
+        "rationale": "A human review step that always approves provides the appearance of oversight with none of the protection &mdash; and regulators, and your own risk exposure, both treat that very differently once anyone looks closely.",
+        "ownerRole": "Legal & Privacy",
+        "crosswalk": "EU AI Act Article 14 (Human Oversight) &middot; Article 50 (transparency &mdash; disclosing AI involvement) &middot; NIST AI RMF MANAGE 4.1 (appeal &amp; override mechanisms) &middot; Gartner AI TRiSM Explainability &amp; Model Monitoring pillar"
+      }
+    ]
+  },
+  {
+    "id": "i",
+    "letter": "I",
+    "name": "Identity, Access &amp; Agency",
+    "intro": "The more autonomy an AI system has &mdash; sending emails, executing code, moving money &mdash; the more this pillar matters, and the faster a small mistake compounds.",
+    "maps": "OWASP LLM03:2026 Excessive Agency &middot; OWASP ASI Top 10 for Agentic Applications &middot; CSA AICM Identity &amp; Access Management domain",
+    "deployNotes": {
+      "api": "Your exposure here is mostly about who inside your company can use the vendor's tool, and with what data.",
+      "rag": "Add a question: what can the retrieval step reach that a user shouldn't be able to see through the AI?",
+      "finetune": "Access to the fine-tuning data itself needs the same scrutiny as access to the model's output.",
+      "selfhost": "You're responsible for every layer of access control &mdash; infrastructure, model, and application &mdash; with nothing to fall back on.",
+      "agents": "This is the highest-stakes pillar for this pattern &mdash; an agent that can act on its own is only as safe as the limits placed on what it's allowed to do."
+    },
+    "questions": [
+      {
+        "id": "I1",
+        "q": "What can your AI actually do on its own &mdash; send emails, execute code, make purchases, modify records &mdash; without a human approving each action?",
+        "levels": [
+          "We haven't inventoried this, or we're not sure.",
+          "We know what it can do, but it runs on <b>broad standing permissions</b> (e.g. a shared admin-level API key).",
+          "<b>Scoped, least-privilege credentials</b> per AI system or agent &mdash; each with its own distinct, revocable identity, not a shared key &mdash; documented.",
+          "The above, plus a <b>hard cap on consequential actions</b> &mdash; spend limits, approval gates for irreversible steps.",
+          "The above, plus <b>automatic suspension</b> if the agent's behavior deviates from an expected pattern."
+        ],
+        "nextSteps": [
+          "List out exactly what each AI system or agent is currently able to do without a human approving it first.",
+          "Replace shared, broad-access credentials with scoped, limited-permission credentials for each individual AI system or agent &mdash; give each one its own identity instead of a shared key.",
+          "Set hard limits on consequential actions &mdash; spending caps, required approval for anything irreversible &mdash; so a mistake or compromise has a ceiling.",
+          "Add automatic suspension when an agent's behavior deviates from what's expected, instead of relying only on limits it might be tricked into using anyway."
+        ],
+        "rationale": "The more a system can do without asking, the more expensive a single mistake or a single compromise becomes &mdash; this is about limiting how much damage is possible before anyone gets a chance to stop it.",
+        "ownerRole": "Platform Engineering",
+        "crosswalk": "OWASP LLM03:2026 Excessive Agency &middot; OWASP ASI03:2026 Agent Identity &amp; Privilege Abuse &middot; CSA AICM Identity &amp; Access Management domain"
+      },
+      {
+        "id": "I2",
+        "q": "If someone (or something) hijacks your AI's instructions via a prompt injection, how far could it actually get?",
+        "levels": [
+          "Unknown &mdash; never tested.",
+          "We've thought about it but never actually tried to break it.",
+          "We've tested it <b>informally</b> and found gaps we haven't fixed yet.",
+          "We've tested it &mdash; adversarial or red-team testing &mdash; and <b>closed the gaps</b> we found.",
+          "We test this on a <b>recurring cadence</b>, not just once, and track the \"blast radius\" of a successful injection as a metric."
+        ],
+        "nextSteps": [
+          "Spend some time actually trying to make your AI system do something it shouldn't, using deliberately misleading input &mdash; just to see what happens.",
+          "Do a more structured, informal test of what a hijacked instruction could actually achieve, and write down what you find.",
+          "Run a real adversarial or red-team test, and close the specific gaps it finds before calling this done.",
+          "Repeat that testing on a recurring schedule, and track how far a successful hijack could get as a number you watch over time, not a one-time pass or fail."
+        ],
+        "rationale": "If someone can hijack your AI's instructions and you don't know how far that gets them, you're relying on hope instead of a tested boundary.",
+        "ownerRole": "Security Engineering",
+        "crosswalk": "OWASP LLM01:2026 Prompt Injection &middot; OWASP ASI01:2026 Agent Goal Hijack &middot; MITRE ATLAS Privilege Escalation tactic (LLM Jailbreak technique)"
+      },
+      {
+        "id": "I3",
+        "q": "How is access to your AI system(s) authenticated and authorized, for both internal and any external/customer users?",
+        "levels": [
+          "No authentication, or a shared credential everyone uses.",
+          "Basic authentication, but the same access level for everyone.",
+          "<b>Role-based access control</b> matching AI permissions to job function.",
+          "The above, plus <b>logged, auditable access</b> and a periodic access review.",
+          "The above, plus <b>automatically removing access</b> when someone leaves or a system is retired, and alerting on unusual access patterns."
+        ],
+        "nextSteps": [
+          "Put basic authentication in place if your AI system doesn't already require one &mdash; a shared login is not a control.",
+          "Move from one access level for everyone to role-based access that matches each person's or system's actual job.",
+          "Start logging access to the AI system and review who has access on a regular schedule.",
+          "Automate removing access when someone leaves or a system is retired, and add alerting for unusual access patterns."
+        ],
+        "rationale": "If everyone &mdash; or everything &mdash; has the same level of access to your AI system, you have no way to contain a mistake or a compromise to the person or system that caused it.",
+        "ownerRole": "Security Engineering",
+        "crosswalk": "CSA AICM Identity &amp; Access Management domain &middot; NIST AI RMF GOVERN function"
+      }
+    ]
+  },
+  {
+    "id": "e",
+    "letter": "E",
+    "name": "Evaluation &amp; Robustness",
+    "intro": "Everything in this pillar answers one question: has anyone actually tried to break it, or are you only confident because no one's tried yet?",
+    "maps": "OWASP LLM01:2026 Prompt Injection &middot; MITRE ATLAS evasion &amp; poisoning tactics &middot; NIST AI RMF MEASURE function",
+    "deployNotes": {
+      "api": "You can't test the model itself, but you can and should test how your application behaves around it.",
+      "rag": "Test the retrieval step specifically &mdash; a poisoned or manipulated source document is a different failure mode than a bad prompt.",
+      "finetune": "Fine-tuning can change model behavior in ways the vendor's own testing never anticipated &mdash; your own testing has to cover the gap.",
+      "selfhost": "There's no vendor evaluation to rely on at all &mdash; everything here is on your team.",
+      "agents": "Test what the agent does when things go wrong, not just when everything works &mdash; that's where the real risk lives."
+    },
+    "questions": [
+      {
+        "id": "E1",
+        "q": "How do you defend against prompt injection and jailbreak attempts?",
+        "levels": [
+          "No specific defenses &mdash; user input goes straight to the model.",
+          "Basic input filtering or a keyword blocklist only.",
+          "System-prompt hardening and output validation are in place, but <b>never adversarially tested</b>.",
+          "Defenses are in place and <b>validated</b> via adversarial or red-team testing at least once.",
+          "Defenses are validated via adversarial testing on a <b>recurring cadence</b>, with results tracked over time."
+        ],
+        "nextSteps": [
+          "Add basic input filtering as a first layer of defense, even a simple keyword check, rather than sending user input straight to the model.",
+          "Harden your system instructions and add output validation, even if you haven't tested them against a deliberate attempt to break them yet.",
+          "Actually try to break your own defenses &mdash; an adversarial or red-team test &mdash; at least once, and fix what you find.",
+          "Repeat that testing on a recurring schedule and track the results over time, so you know if your defenses are holding up as the AI system changes."
+        ],
+        "rationale": "A defense that's never been tested against a real attempt to break it is a guess, not a control &mdash; and the gap between the two only shows up during an actual incident.",
+        "ownerRole": "Security Engineering",
+        "crosswalk": "OWASP LLM01:2026 Prompt Injection &middot; MITRE ATLAS Privilege Escalation (LLM Jailbreak) &amp; Defense Evasion tactics"
+      },
+      {
+        "id": "E2",
+        "q": "How do you validate that the AI's outputs are accurate and safe before they reach a user or downstream system?",
+        "levels": [
+          "No validation &mdash; output is used or shown as-is.",
+          "Occasional spot-checking by a person.",
+          "<b>Automated checks</b> for defined failure modes &mdash; someone's personal information leaking out, offensive content, broken formatting.",
+          "The above, plus a <b>defined process</b> for handling and logging failures.",
+          "The above, plus a <b>feedback loop</b> &mdash; logged failures actively improve the prompt, model, or guardrails."
+        ],
+        "nextSteps": [
+          "Start spot-checking AI output by hand, even occasionally, instead of using or showing it completely unchecked.",
+          "Add automated checks for the failure modes you're most worried about &mdash; private information leaking out, offensive content, broken formatting.",
+          "Write down what happens when a check fails &mdash; who's notified, what gets logged, what the fallback behavior is.",
+          "Feed the failures you log back into improving the prompt, the model, or the guardrails, so the same mistake gets less likely over time instead of just being caught over and over."
+        ],
+        "rationale": "Unchecked AI output reaching a user or another system is a direct path for private information, false statements, or malformed data to cause real harm before anyone notices.",
+        "ownerRole": "Security Engineering",
+        "crosswalk": "OWASP LLM10:2026 Improper Output Handling &middot; OWASP LLM07:2026 Misinformation &middot; NIST AI RMF MEASURE 2.11 (evaluation of failure modes)"
+      },
+      {
+        "id": "E3",
+        "q": "Have you tested what happens when the AI is given deliberately adversarial, malformed, or out-of-scope input?",
+        "levels": [
+          "No.",
+          "Informally, by a developer, once.",
+          "A <b>defined test suite</b> exists but isn't run regularly.",
+          "A defined adversarial test suite runs <b>before each significant change or release</b>.",
+          "<b>Continuous, automated</b> adversarial testing is integrated into the deployment pipeline and blocks release on regression."
+        ],
+        "nextSteps": [
+          "Have a developer spend an hour deliberately sending strange, malformed, or out-of-scope input to see what breaks.",
+          "Turn that into a written test suite you can run again, even if it's not part of your regular process yet.",
+          "Run that test suite before every significant change or release, not just once.",
+          "Automate it into your deployment process so a regression actually blocks a release, instead of relying on someone remembering to run it."
+        ],
+        "rationale": "Real users and real attackers will eventually send your AI system something it was never designed to handle &mdash; the only question is whether you find that out before or after it matters.",
+        "ownerRole": "Security Engineering",
+        "crosswalk": "NIST AI RMF MEASURE function &middot; CSA AICM Model Development Security (MDS) domain &middot; MITRE ATLAS (the attack taxonomy under test)"
+      }
+    ]
+  },
+  {
+    "id": "l",
+    "letter": "L",
+    "name": "Logging, Detection &amp; Response",
+    "intro": "Every other pillar is about prevention. This one is about what happens on the day prevention fails &mdash; because eventually, it will.",
+    "maps": "NIST AI RMF MANAGE function &middot; CSA AICM Security Incident Management domain &middot; MITRE ATLAS objectives-phase tactics",
+    "deployNotes": {
+      "api": "Your visibility is limited to what the vendor's tool logs and shares with you &mdash; know that boundary before you rely on it.",
+      "rag": "Log what was retrieved and used to answer each query, not just the final response &mdash; that's often where the real story is.",
+      "finetune": "Watch for behavior changes after each fine-tuning update &mdash; that's when new failure modes are most likely to appear.",
+      "selfhost": "You need full-stack logging and response capability &mdash; there's no vendor incident-response team to escalate to.",
+      "agents": "Detection here means watching what the agent actually did, not just what it was asked to do &mdash; the two can diverge fast."
+    },
+    "questions": [
+      {
+        "id": "L1",
+        "q": "If your AI system were being actively misused right now &mdash; someone extracting your system prompt, or an agent going off-script &mdash; would you know?",
+        "levels": [
+          "No visibility &mdash; we wouldn't know unless someone told us.",
+          "We have logs, but no one is watching them.",
+          "Logs are reviewed <b>periodically, manually</b>, after the fact.",
+          "<b>Automated alerting</b> on defined abuse or anomaly patterns.",
+          "The above, plus a <b>documented on-call/response process</b> specifically for AI incidents."
+        ],
+        "nextSteps": [
+          "Turn on logging for your AI systems if it isn't already, even if nobody's reviewing it yet &mdash; you can't review what isn't recorded.",
+          "Assign someone to periodically review those logs by hand, even if it's not automated yet.",
+          "Set up automated alerts for the abuse or anomaly patterns you're most worried about, instead of relying on someone remembering to check.",
+          "Write down what happens after an alert fires &mdash; who's on call, what they do first &mdash; specifically for AI incidents, not folded into a generic process."
+        ],
+        "rationale": "If you'd only find out about misuse because someone happened to notice and tell you, you don't have detection &mdash; you have luck.",
+        "ownerRole": "Security Engineering",
+        "crosswalk": "CSA AICM Security Incident Management domain &middot; MITRE ATLAS Exfiltration &amp; Impact tactics (what you'd be detecting) &middot; NIST AI RMF MANAGE 4.1"
+      },
+      {
+        "id": "L2",
+        "q": "Do you have an incident response plan specifically covering AI failure modes, not just general IT or security incidents?",
+        "levels": [
+          "No AI-specific plan.",
+          "We'd improvise using our general IT incident process.",
+          "A <b>documented plan</b> exists but hasn't been tested.",
+          "A documented, <b>tested</b> plan (tabletop or real incident) covering AI-specific scenarios &mdash; model rollback, kill-switch, disclosure obligations.",
+          "The above, plus <b>defined recovery-time targets</b> and a track record of using the plan in a real or simulated incident."
+        ],
+        "nextSteps": [
+          "Start a basic written outline of what your team would actually do if a specific AI system started misbehaving &mdash; even a rough draft beats improvising.",
+          "Turn that into a documented plan covering AI-specific scenarios &mdash; model rollback, kill-switch use, who needs to be told and when.",
+          "Test that plan &mdash; a tabletop exercise is enough to start &mdash; instead of leaving it untested until a real incident forces the first run-through.",
+          "Set target recovery times for the plan, and build a track record of actually using it, in a drill or a real incident, not just having it on file."
+        ],
+        "rationale": "Improvising your response during a real AI incident &mdash; deciding on the spot whether to roll back a model or notify anyone &mdash; costs time you don't have while the problem is still happening.",
+        "ownerRole": "Incident Response",
+        "crosswalk": "NIST AI RMF MANAGE 4.1 (post-deployment monitoring, decommissioning, change management) &middot; CSA AICM Security Incident Management domain &middot; Databricks DASF operational risk category"
+      },
+      {
+        "id": "L3",
+        "q": "Can you roll back or disable a specific AI model, agent, or feature quickly if something goes wrong?",
+        "levels": [
+          "No &mdash; removing it would require a full deployment or code change.",
+          "Technically possible, but it would take significant time and effort under pressure.",
+          "A defined rollback mechanism exists but has <b>never been tested</b>.",
+          "A <b>tested kill-switch or rollback</b> mechanism exists for each AI system in production.",
+          "The above, plus <b>automatic triggers</b> &mdash; not just manual ones &mdash; for defined severe conditions."
+        ],
+        "nextSteps": [
+          "Figure out, on paper, what it would actually take to disable or roll back each AI system you run today &mdash; this alone usually reveals the gap.",
+          "Build a defined rollback mechanism for at least your highest-risk AI system, even if it's manual and untested so far.",
+          "Actually test that rollback mechanism once, end to end, so you know it works before you need it under pressure.",
+          "Extend a tested kill-switch or rollback to every AI system in production, and add automatic triggers &mdash; not just manual ones &mdash; for the most severe, well-defined conditions."
+        ],
+        "rationale": "If disabling a misbehaving AI system requires a full deployment cycle, the damage keeps happening for as long as that takes &mdash; which, under pressure, is longer than anyone wants it to be.",
+        "ownerRole": "Incident Response",
+        "crosswalk": "NIST AI RMF MANAGE 4.1 &middot; Databricks DASF v3.0 agentic mitigation controls (least privilege, sandboxing, human oversight) &middot; OWASP ASI08:2026 Cascading Agent Failures"
+      }
+    ]
+  },
+  {
+    "id": "d",
+    "letter": "D",
+    "name": "Data &amp; Privacy",
+    "intro": "AI systems remember things in ways that are hard to audit and harder to undo. This pillar is about whether you actually know what yours knows.",
+    "maps": "OWASP LLM02:2026 Sensitive Information Disclosure &middot; NIST AI RMF MAP function &middot; CSA AICM Data Security &amp; Privacy Lifecycle domain",
+    "deployNotes": {
+      "api": "Know exactly what data leaves your systems and reaches the vendor with every request &mdash; that's your real exposure.",
+      "rag": "The data you retrieve is exposed the moment it's pulled in, even if it was never meant to leave its original system.",
+      "finetune": "Anything in your fine-tuning data can potentially resurface in the model's output &mdash; treat it with the same care as production data.",
+      "selfhost": "You control data handling completely, which means every privacy failure is unambiguously yours to answer for.",
+      "agents": "An agent that can read and act on data across multiple systems has a much larger footprint of what it could expose than a single-purpose tool."
+    },
+    "questions": [
+      {
+        "id": "D1",
+        "q": "Do you know exactly what data went into training, fine-tuning, or is retrieved (RAG) by your AI system?",
+        "levels": [
+          "No, or it isn't tracked.",
+          "General awareness, but nothing documented.",
+          "<b>Documented data sources</b>, but no classification of what's sensitive.",
+          "Documented and <b>classified</b> &mdash; personal information, confidential, public &mdash; with access controls matching classification.",
+          "The above, plus <b>automatic scanning</b> for sensitive data before ingestion."
+        ],
+        "nextSteps": [
+          "Start documenting, even roughly, what data sources feed each AI system &mdash; training data, fine-tuning data, or what it retrieves live.",
+          "Turn that general awareness into a written, documented list of sources for each AI system.",
+          "Classify what you've documented &mdash; personal information, confidential, public &mdash; and match access controls to that classification.",
+          "Add automatic scanning for sensitive data before it's allowed into training, fine-tuning, or retrieval sources, instead of relying on manual classification alone."
+        ],
+        "rationale": "If you don't know what data trained or feeds your AI system, you can't tell a regulator, a customer, or your own leadership what it actually knows &mdash; or whether it should.",
+        "ownerRole": "Data",
+        "crosswalk": "OWASP LLM05:2026 Data &amp; Model Poisoning &middot; NIST AI RMF MAP function (data characterization) &middot; CSA AICM Data Security &amp; Privacy Lifecycle Management domain"
+      },
+      {
+        "id": "D2",
+        "q": "Could your AI system leak sensitive information it was trained on or has access to, in its responses?",
+        "levels": [
+          "Untested, unknown.",
+          "We assume it's fine because we haven't seen it happen.",
+          "We've tested for this <b>informally</b>.",
+          "We've tested for this <b>systematically</b> &mdash; deliberately probing whether original sensitive data can be extracted &mdash; and implemented mitigations.",
+          "Systematic testing on a <b>recurring cadence</b>, with output filtering as a backstop control."
+        ],
+        "nextSteps": [
+          "Spend some time actually trying to get your AI system to reveal something it shouldn't, rather than assuming it won't.",
+          "Turn that into a slightly more structured, even if still informal, round of testing, and write down what you find.",
+          "Run a systematic test for data leakage and put mitigations in place for what you find.",
+          "Repeat that testing on a recurring schedule, and add output filtering as a backstop in case a leak slips through despite the mitigations."
+        ],
+        "rationale": "An AI system can repeat something sensitive it saw during training or has access to without anyone asking it to &mdash; and \"we haven't seen it happen\" is not the same as \"it can't happen.\"",
+        "ownerRole": "Security Engineering",
+        "crosswalk": "OWASP LLM02:2026 Sensitive Information Disclosure &middot; OWASP LLM09:2026 Vector &amp; Embedding Weaknesses &middot; MITRE ATLAS Exfiltration tactic"
+      },
+      {
+        "id": "D3",
+        "q": "If someone asked you to delete their personal data from your AI system, could you actually do it &mdash; including from training data, embeddings, logs, and any fine-tuned model?",
+        "levels": [
+          "No idea how we'd even do that.",
+          "We could delete it from our primary database, but we're not sure about the AI-specific stores &mdash; embeddings, logs, fine-tuned weights.",
+          "A <b>documented process</b> exists, but it's manual and slow.",
+          "A defined, <b>tested process</b> covers all AI-specific data stores, not just the primary database.",
+          "An <b>automated process</b> handles this across all data stores within a defined time limit, with an audit trail proving completion."
+        ],
+        "nextSteps": [
+          "Get a straight answer from your team on what it would actually take to delete someone's data from every AI-specific store &mdash; training data, embeddings, logs, fine-tuned models &mdash; even if the honest answer today is \"we don't know.\"",
+          "Write down a process for deleting data from those AI-specific stores, even if it's manual and slow to start.",
+          "Test that process end to end and confirm it actually covers every AI-specific store, not just your primary database.",
+          "Automate the process across all data stores, set a defined time limit for completing it, and keep an audit trail proving it happened."
+        ],
+        "rationale": "A deletion request you can only partly fulfill &mdash; from the database but not from the AI-specific stores &mdash; leaves personal data sitting somewhere you told someone it was gone.",
+        "ownerRole": "Legal & Privacy",
+        "crosswalk": "CSA AICM Data Security &amp; Privacy Lifecycle Management domain &middot; NIST AI RMF MAP function"
+      }
+    ]
+  }
+];
+
+  const PILLAR_SCOPE = {
+    s: "Who else's risk is now yours",
+    h: 'Who owns this when it breaks',
+    i: "What it's allowed to do alone",
+    e: 'Whether it survives an attack',
+    l: "Whether you'd notice",
+    d: 'What it knows, and who it tells',
+  };
+
+  const DEPLOYMENT_PATTERNS = [
+    { id: 'api', name: 'Vendor API / SaaS chatbot', desc: 'Consuming a hosted model or product as-is \u2014 ChatGPT, Claude, a vendor\u2019s built-in AI feature.' },
+    { id: 'rag', name: 'RAG on a vendor model', desc: 'A vendor or foundation model plus your own retrieved data.' },
+    { id: 'finetune', name: 'Fine-tuning', desc: 'Fine-tuning a vendor or open model on your own data.' },
+    { id: 'selfhost', name: 'Self-hosting / training', desc: 'Self-hosting or training your own model.' },
+    { id: 'agents', name: 'Autonomous agents', desc: 'Building agents with tool access and delegated authority.' },
+  ];
+
+  const BENCHMARK_ENDPOINT = 'https://krismccabe.com/api/shield-benchmark.php';
+  const INDUSTRIES = [
+    'Technology / SaaS', 'Financial Services', 'Healthcare', 'Retail / E-commerce',
+    'Manufacturing', 'Government / Public Sector', 'Professional Services', 'Education', 'Other',
+  ];
+  const ORG_SIZE_BANDS = ['1-50', '51-200', '201-1000', '1000+'];
+
+  const RATING_BANDS = [
+    { min: 0.0, max: 0.8, name: 'Exposed', color: '#DC2626', desc: 'No meaningful AI-specific controls. Risk is unmanaged and, most likely, unmeasured.' },
+    { min: 0.8, max: 1.6, name: 'Reactive', color: '#EA580C', desc: 'Controls exist because someone personally cared. Nothing survives that person leaving.' },
+    { min: 1.6, max: 2.4, name: 'Defined', color: '#CA8A04', desc: 'Policies and controls are written down. Whether they\u2019re followed is a separate question.' },
+    { min: 2.4, max: 3.2, name: 'Managed', color: '#0D9488', desc: 'Controls are owned, applied consistently, and someone is watching the results.' },
+    { min: 3.2, max: 4.01, name: 'Resilient', color: '#16A34A', desc: 'Controls are continuously tested against real adversarial pressure, and the evidence is automatic.' },
+  ];
+
+  const ALL_QUESTIONS = [];
+  PILLARS.forEach(p => {
+    p.questions.forEach(q => {
+      ALL_QUESTIONS.push(Object.assign({}, q, { pillarId: p.id, pillarLetter: p.letter, pillarName: p.name }));
+    });
+  });
+  const TOTAL_QUESTIONS = ALL_QUESTIONS.length;
+  const pillarById = id => PILLARS.find(p => p.id === id);
+  const deployById = id => DEPLOYMENT_PATTERNS.find(d => d.id === id);
+  // Migrates assessments saved before deployment pattern became multi-select
+  // (meta.deployment as a single string) onto the current meta.deployments array shape.
+  function normalizeMeta(meta) {
+    if (!meta) return meta;
+    if (!Array.isArray(meta.deployments)) {
+      meta.deployments = meta.deployment ? [meta.deployment] : [];
+    }
+    delete meta.deployment;
+    return meta;
+  }
+
+  function bandFor(score) {
+    return RATING_BANDS.find(b => score >= b.min && score < b.max) || RATING_BANDS[RATING_BANDS.length - 1];
+  }
+  function scoreColor(score) { return bandFor(score).color; }
+
+  function escapeHtml(str) {
+    return String(str == null ? '' : str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  }
+  function stripTags(str) { return String(str || '').replace(/<[^>]+>/g, ''); }
+  function deent(str) {
+    return String(str || '').replace(/&middot;/g, '\u00B7').replace(/&amp;/g, '&').replace(/&ndash;/g, '\u2013').replace(/&mdash;/g, '\u2014').replace(/&rsquo;/g, '\u2019');
+  }
+  function slug(str) { return String(str || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
+  function fmtDate(iso) {
+    if (!iso) return '';
+    try { return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }); } catch (e) { return iso; }
+  }
+  function downloadBlob(content, filename, type) {
+    const blob = new Blob([content], { type: type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  }
+  function uid() { return 'a' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8); }
+
+  // ---------------------------------------------------------------
+  // STATE
+  // ---------------------------------------------------------------
+
+  function freshAssessment() {
+    return {
+      meta: {
+        id: uid(), name: '', org: '', scope: '', assessor: '', assessorRole: '',
+        deployments: [], createdAt: new Date().toISOString(), savedAt: '', previousId: ''
+      },
+      answers: {},
+      currentQuestionIndex: 0,
+      mergeConflicts: []
+    };
+  }
+  let state = freshAssessment();
+  let portfolio = [];
+  let rememberEnabled = true;
+  let screen = 'start'; // 'start' | 'questions' | 'review'
+  let printMode = 'full';
+
+  const PORTFOLIO_KEY = 'shield-portfolio-v2';
+  const ACTIVE_KEY = 'shield-active-v2';
+  const REMEMBER_KEY = 'shield-remember-v2';
+
+  function isAnswered(a) { return !!a && (typeof a.level === 'number' || a.na || a.dontKnow); }
+  function answeredCount(assessment) {
+    assessment = assessment || state;
+    return ALL_QUESTIONS.filter(q => isAnswered(assessment.answers[q.id])).length;
+  }
+
+  // ---------------------------------------------------------------
+  // SCORING
+  // ---------------------------------------------------------------
+
+  function computeScores(assessment) {
+    const pillarScores = {};
+    PILLARS.forEach(p => {
+      let sum = 0, count = 0;
+      p.questions.forEach(q => {
+        const a = assessment.answers[q.id];
+        if (a && typeof a.level === 'number') { sum += a.level; count++; }
+      });
+      pillarScores[p.id] = count > 0 ? sum / count : null;
+    });
+    const applicable = PILLARS.filter(p => pillarScores[p.id] !== null);
+    const avg = applicable.length ? applicable.reduce((s, p) => s + pillarScores[p.id], 0) / applicable.length : 0;
+    const govScore = pillarScores['h'];
+    const overall = (govScore !== null) ? Math.min(avg, govScore + 1) : avg;
+    return { pillarScores, avg, overall, govScore };
+  }
+
+  function computeResults(assessment) {
+    assessment = assessment || state;
+    const { pillarScores, avg, overall, govScore } = computeScores(assessment);
+    const band = bandFor(overall);
+    const capped = govScore !== null && overall < avg - 0.0001;
+
+    const criticalGaps = [], improvable = [], needsVerification = [];
+    PILLARS.forEach(p => p.questions.forEach(q => {
+      const a = assessment.answers[q.id];
+      if (!a) return;
+      if (a.dontKnow) { needsVerification.push({ pillar: p, question: q }); return; }
+      if (typeof a.level !== 'number') return;
+      if (a.level === 0) criticalGaps.push({ pillar: p, question: q, level: a.level, answer: a });
+      else if (a.level < 4) improvable.push({ pillar: p, question: q, level: a.level, answer: a });
+    }));
+
+    function deltaIfFixed(qid, currentLevel) {
+      const clone = { answers: Object.assign({}, assessment.answers) };
+      clone.answers[qid] = Object.assign({}, clone.answers[qid], { level: currentLevel + 1, na: false, dontKnow: false });
+      const alt = computeScores(clone);
+      return +(alt.overall - overall).toFixed(2);
+    }
+
+    const actionable = criticalGaps.concat(improvable).map(g => Object.assign({}, g, { delta: deltaIfFixed(g.question.id, g.level) }));
+    actionable.sort((x, y) => {
+      const xLifts = capped && x.pillar.id === 'h';
+      const yLifts = capped && y.pillar.id === 'h';
+      if (xLifts !== yLifts) return xLifts ? -1 : 1;
+      if (y.delta !== x.delta) return y.delta - x.delta;
+      return x.level - y.level;
+    });
+    const govUnresolved = capped ? pillarById('h').questions.filter(q => {
+      const a = assessment.answers[q.id];
+      return a && typeof a.level === 'number' && a.level < 4;
+    }) : [];
+
+    return { pillarScores, avg, overall, govScore, band, capped, criticalGaps, improvable, needsVerification, actionable, govUnresolved };
+  }
+
+  // ---------------------------------------------------------------
+  // RENDER: Framework tab (static reference content, built from PILLARS)
+  // ---------------------------------------------------------------
+
+  function renderPillarStrip() {
+    const html = PILLARS.map(p =>
+      '<a class="pillar-cell" href="#fw-pillar-' + p.id + '" data-tab="framework"><span class="letter">' + p.letter + '</span>' +
+      '<span class="ptext"><span class="pname">' + p.name + '</span><span class="pscope">' + (PILLAR_SCOPE[p.id] || '') + '</span></span></a>'
+    ).join('');
+    document.getElementById('pillar-strip').innerHTML = html;
+  }
+
+  function renderBands() {
+    document.getElementById('band-track').innerHTML = RATING_BANDS.map(b => '<div style="background:' + b.color + ';"></div>').join('');
+    document.getElementById('band-grid').innerHTML = RATING_BANDS.map(b =>
+      '<div class="band-card"><span class="range">' + b.min.toFixed(1) + '\u2013' + (b.max > 4 ? '4.0' : b.max.toFixed(1)) + '</span>' +
+      '<div class="bname" style="color:' + b.color + ';">' + b.name + '</div><p>' + b.desc + '</p></div>'
+    ).join('');
+  }
+
+  function renderFrameworkContent() {
+    let html = '';
+    PILLARS.forEach(p => {
+      html += '<div class="fw-pillar-head" id="fw-pillar-' + p.id + '"><span class="big-letter">' + p.letter + '</span><h2>' + p.name + '</h2></div>';
+      html += '<p class="fw-pillar-intro">' + p.intro + '</p>';
+      html += '<p class="fw-maps-to"><b>Maps to</b>&nbsp; ' + p.maps + '</p>';
+      p.questions.forEach(q => {
+        html += '<div class="fw-question"><span class="qid">' + q.id + '</span><h3>' + q.q + '</h3><div class="fw-ladder">';
+        q.levels.forEach((lvl, i) => {
+          html += '<div class="fw-rung' + (i === 4 ? ' lvl-4' : '') + '"><div class="lvl">' + i + '</div><div class="rtext">' + lvl + '</div></div>';
+        });
+        html += '</div><p class="fw-crosswalk"><b>Relevant controls in other frameworks</b>&nbsp; ' + q.crosswalk + '</p>';
+        html += '<p class="fw-why"><b>Why this matters</b>&nbsp; ' + q.rationale + '</p>';
+        html += liveCheckHtml(q) + '</div>';
+      });
+    });
+    document.getElementById('framework-content').innerHTML = html;
+  }
+
+  // ---------------------------------------------------------------
+  // RENDER: Assessment tab \u2014 screens
+  // ---------------------------------------------------------------
+
+  function setScreen(next) {
+    screen = next;
+    ['start', 'questions', 'review'].forEach(s => {
+      document.getElementById('screen-' + s).style.display = (s === screen) ? '' : 'none';
+    });
+    if (screen === 'start') renderStartScreen();
+    if (screen === 'questions') renderCurrentQuestion();
+    if (screen === 'review') renderReviewScreen();
+  }
+
+  function renderStartScreen() {
+    const listEl = document.getElementById('portfolio-list');
+    const wrapEl = document.getElementById('portfolio-wrap');
+    if (!portfolio.length) {
+      wrapEl.style.display = 'none';
+      listEl.innerHTML = '';
+    } else {
+      wrapEl.style.display = '';
+      listEl.innerHTML = portfolio.slice().sort((a, b) => (b.meta.savedAt || '').localeCompare(a.meta.savedAt || '')).map(a => {
+        const r = computeResults(a);
+        const complete = answeredCount(a) === TOTAL_QUESTIONS;
+        return '<div class="portfolio-card">' +
+          '<div class="pf-main"><div class="pf-name">' + escapeHtml(a.meta.name || 'Untitled assessment') + '</div>' +
+          '<div class="pf-meta">' + (complete ? (r.overall.toFixed(1) + ' / 4.0 \u00B7 ' + r.band.name + ' \u00B7 ' + r.criticalGaps.length + ' critical gap' + (r.criticalGaps.length === 1 ? '' : 's')) : (answeredCount(a) + ' of ' + TOTAL_QUESTIONS + ' answered')) +
+          (a.meta.savedAt ? ' \u00B7 saved ' + fmtDate(a.meta.savedAt) : '') + '</div></div>' +
+          '<div class="pf-actions">' +
+          '<button class="btn small" data-act="open" data-id="' + a.meta.id + '">' + (complete ? 'View' : 'Continue') + '</button>' +
+          (complete ? '<button class="btn small" data-act="reassess" data-id="' + a.meta.id + '">Re-assess</button>' : '') +
+          '<button class="btn small" data-act="delete" data-id="' + a.meta.id + '" aria-label="Delete">Delete</button>' +
+          '</div></div>';
+      }).join('');
+    }
+    document.getElementById('assessment-name-input').value = state.meta.name || '';
+    renderDeployGrid();
+  }
+
+  document.getElementById('portfolio-list').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-act]');
+    if (!btn) return;
+    const id = btn.dataset.id;
+    const found = portfolio.find(a => a.meta.id === id);
+    if (!found) return;
+    if (btn.dataset.act === 'delete') {
+      if (!confirm('Delete "' + (found.meta.name || 'Untitled assessment') + '"? This cannot be undone.')) return;
+      portfolio = portfolio.filter(a => a.meta.id !== id);
+      persistPortfolio();
+      renderStartScreen();
+      return;
+    }
+    if (btn.dataset.act === 'reassess') {
+      const clone = JSON.parse(JSON.stringify(found));
+      clone.meta.id = uid();
+      clone.meta.previousId = found.meta.id;
+      clone.meta.createdAt = new Date().toISOString();
+      clone.meta.savedAt = '';
+      clone.currentQuestionIndex = 0;
+      state = clone;
+      persistActive();
+      setScreen('questions');
+      return;
+    }
+    // open / continue
+    state = JSON.parse(JSON.stringify(found));
+    persistActive();
+    if (answeredCount(state) === TOTAL_QUESTIONS) {
+      switchTab('results');
+    } else {
+      setScreen('questions');
+    }
+  });
+
+  document.getElementById('assessment-name-input').addEventListener('input', e => {
+    state.meta.name = e.target.value;
+  });
+
+  function renderDeployGrid() {
+    const el = document.getElementById('deploy-grid');
+    el.innerHTML = DEPLOYMENT_PATTERNS.map(d => {
+      const checked = state.meta.deployments.includes(d.id);
+      return '<div class="deploy-option' + (checked ? ' selected' : '') + '" data-id="' + d.id + '" role="checkbox" aria-checked="' + checked + '" tabindex="0">' +
+        '<div class="d-name">' + d.name + '</div><div class="d-desc">' + d.desc + '</div></div>';
+    }).join('');
+    el.querySelectorAll('.deploy-option').forEach(opt => {
+      const toggle = () => {
+        const id = opt.dataset.id;
+        const idx = state.meta.deployments.indexOf(id);
+        if (idx >= 0) state.meta.deployments.splice(idx, 1); else state.meta.deployments.push(id);
+        renderDeployGrid();
+      };
+      opt.addEventListener('click', toggle);
+      opt.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+    });
+  }
+
+  document.getElementById('begin-assessment-btn').addEventListener('click', () => {
+    const nameInput = document.getElementById('assessment-name-input');
+    if (!state.meta.name.trim()) {
+      nameInput.focus();
+      document.getElementById('name-required-note').style.display = '';
+      return;
+    }
+    document.getElementById('name-required-note').style.display = 'none';
+    setScreen('questions');
+  });
+
+  // ---------------------------------------------------------------
+  // RENDER: Assessment tab \u2014 question flow
+  // ---------------------------------------------------------------
+
+  const questionsContainer = document.getElementById('questions-container');
+
+  function renderCurrentQuestion() {
+    const idx = state.currentQuestionIndex;
+    const q = ALL_QUESTIONS[idx];
+    const a = state.answers[q.id] || {};
+    const selectedLevel = a.level;
+    const pillarDeployNotes = pillarById(q.pillarId).deployNotes;
+    const deployNotes = state.meta.deployments
+      .map(id => deent(pillarDeployNotes[id]))
+      .filter(Boolean);
+
+    let html = '<div class="q-progress-track"><div class="q-progress-fill" style="width:' + (((idx + 1) / TOTAL_QUESTIONS) * 100) + '%;"></div></div>';
+    html += '<div class="pillar-tag">' + q.pillarLetter + ' &middot; ' + q.pillarName + '</div>';
+    if (deployNotes.length) html += '<ul class="deploy-note">' + deployNotes.map(n => '<li>' + escapeHtml(n) + '</li>').join('') + '</ul>';
+    html += '<div class="question-card"><div class="q-num">Question ' + (idx + 1) + ' of ' + TOTAL_QUESTIONS + '</div><h3 tabindex="-1" id="current-q-heading">' + q.q + '</h3>';
+    html += '<div class="level-options">';
+    q.levels.forEach((desc, i) => {
+      html += '<div class="level-option' + (selectedLevel === i ? ' selected' : '') + '" data-level="' + i + '" role="button" tabindex="0">' +
+        '<span class="lvl-badge">' + i + '</span><span class="lvl-text">' + desc + '</span></div>';
+    });
+    html += '</div>';
+
+    html += '<div class="alt-answers">';
+    html += '<button type="button" class="alt-btn' + (a.na ? ' selected' : '') + '" data-alt="na">Not applicable to us</button>';
+    html += '<button type="button" class="alt-btn' + (a.dontKnow ? ' selected' : '') + '" data-alt="dontKnow">I don\u2019t know &mdash; needs verification</button>';
+    html += '</div>';
+
+    html += '<details class="evidence-box"' + (a.evidence || a.evidenceUrl ? ' open' : '') + '><summary>+ Add evidence or a note (optional)</summary>' +
+      '<textarea id="evidence-text" placeholder="e.g. name of the document, or what you checked">' + escapeHtml(a.evidence || '') + '</textarea>' +
+      '<input type="url" id="evidence-url" placeholder="Optional link" value="' + escapeHtml(a.evidenceUrl || '') + '">' +
+      '</details>';
+
+    html += '<div class="q-nav">';
+    html += '<button class="btn" id="q-back" ' + (idx === 0 ? 'disabled' : '') + '>&#8592; Back</button>';
+    if (!isAnswered(a)) {
+      html += '<span class="must-answer-note">Pick the closest description above to continue</span>';
+    }
+    html += '<button class="btn primary" id="q-next" ' + (!isAnswered(a) ? 'disabled' : '') + '>' +
+      (idx === TOTAL_QUESTIONS - 1 ? 'See my results \u2192' : 'Next \u2192') + '</button>';
+    html += '</div></div>';
+    html += '<div class="review-link-row no-print"><button type="button" class="link-btn" id="review-link-btn">View / edit all answers</button></div>';
+
+    questionsContainer.innerHTML = html;
+
+    function ensureAnswer() {
+      if (!state.answers[q.id]) state.answers[q.id] = {};
+      return state.answers[q.id];
+    }
+
+    questionsContainer.querySelectorAll('.level-option').forEach(opt => {
+      const select = () => {
+        const ans = ensureAnswer();
+        ans.level = parseInt(opt.dataset.level, 10);
+        ans.na = false; ans.dontKnow = false;
+        renderCurrentQuestion();
+        refreshAll();
+      };
+      opt.addEventListener('click', select);
+      opt.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); select(); } });
+    });
+    questionsContainer.querySelectorAll('.alt-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const ans = ensureAnswer();
+        const key = btn.dataset.alt;
+        const turningOn = !ans[key];
+        ans.level = undefined; ans.na = false; ans.dontKnow = false;
+        if (turningOn) ans[key] = true;
+        renderCurrentQuestion();
+        refreshAll();
+      });
+    });
+    document.getElementById('evidence-text').addEventListener('change', e => { ensureAnswer().evidence = e.target.value; refreshAll(); });
+    document.getElementById('evidence-url').addEventListener('change', e => { ensureAnswer().evidenceUrl = e.target.value; refreshAll(); });
+
+    document.getElementById('q-back').addEventListener('click', () => {
+      state.currentQuestionIndex = Math.max(0, state.currentQuestionIndex - 1);
+      renderCurrentQuestion();
+      questionsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+    document.getElementById('q-next').addEventListener('click', () => {
+      if (!isAnswered(state.answers[q.id])) return;
+      if (idx === TOTAL_QUESTIONS - 1) {
+        switchTab('results');
+      } else {
+        state.currentQuestionIndex = Math.min(TOTAL_QUESTIONS - 1, state.currentQuestionIndex + 1);
+        renderCurrentQuestion();
+        questionsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    });
+    document.getElementById('review-link-btn').addEventListener('click', () => setScreen('review'));
+  }
+
+  // ---------------------------------------------------------------
+  // RENDER: Assessment tab \u2014 review/edit screen
+  // ---------------------------------------------------------------
+
+  function renderReviewScreen() {
+    let html = '<h2>Review your answers</h2><p class="sub">Click any question to jump back and change it.</p>';
+    if (state.mergeConflicts && state.mergeConflicts.length) {
+      html += '<div class="conflict-banner"><b>' + state.mergeConflicts.length + ' answer' + (state.mergeConflicts.length === 1 ? '' : 's') + ' changed meaningfully during an import.</b> ' +
+        'Different respondents gave different answers to the same question (2 or more levels apart) \u2014 worth a quick conversation before you treat the result as final.<ul>' +
+        state.mergeConflicts.map(c => '<li>' + c.qid + ': was ' + c.existingLevel + ', imported answer scored ' + c.incomingLevel + (c.source ? ' (from ' + escapeHtml(c.source) + ')' : '') + '</li>').join('') +
+        '</ul></div>';
+    }
+    html += '<div class="review-list">';
+    ALL_QUESTIONS.forEach((q, idx) => {
+      const a = state.answers[q.id] || {};
+      let statusText = 'Not yet answered';
+      let statusClass = 'unanswered';
+      if (typeof a.level === 'number') { statusText = 'Level ' + a.level + ' of 4'; statusClass = a.level === 0 ? 'critical' : (a.level < 4 ? 'partial' : 'good'); }
+      else if (a.na) { statusText = 'Not applicable'; statusClass = 'neutral'; }
+      else if (a.dontKnow) { statusText = 'Needs verification'; statusClass = 'unknown'; }
+      html += '<button type="button" class="review-row" data-idx="' + idx + '">' +
+        '<span class="rr-id">' + q.id + '</span><span class="rr-q">' + q.q + '</span>' +
+        '<span class="rr-status ' + statusClass + '">' + statusText + '</span></button>';
+    });
+    html += '</div><div class="review-actions"><button class="btn" id="review-back-btn">&#8592; Back to questions</button></div>';
+    document.getElementById('screen-review').innerHTML = html;
+    document.querySelectorAll('.review-row').forEach(row => {
+      row.addEventListener('click', () => {
+        state.currentQuestionIndex = parseInt(row.dataset.idx, 10);
+        setScreen('questions');
+      });
+    });
+    document.getElementById('review-back-btn').addEventListener('click', () => setScreen('questions'));
+  }
+
+  // ---------------------------------------------------------------
+  // RENDER: Results tab
+  // ---------------------------------------------------------------
+
+  function renderReportDetails() {
+    const el = document.getElementById('report-details');
+    el.innerHTML =
+      '<div class="rd-grid">' +
+      '<label>Organisation<input type="text" id="rd-org" value="' + escapeHtml(state.meta.org) + '" placeholder="Optional"></label>' +
+      '<label>System / scope assessed<input type="text" id="rd-scope" value="' + escapeHtml(state.meta.scope) + '" placeholder="e.g. Customer support agent, production"></label>' +
+      '<label>Assessor name<input type="text" id="rd-assessor" value="' + escapeHtml(state.meta.assessor) + '" placeholder="Optional"></label>' +
+      '<label>Assessor role<input type="text" id="rd-assessor-role" value="' + escapeHtml(state.meta.assessorRole) + '" placeholder="Optional"></label>' +
+      '</div><p class="rd-note">These appear on the exported PDF and register. Nothing here leaves your browser.</p>';
+    ['org', 'scope', 'assessor', 'assessorRole'].forEach(key => {
+      const id = 'rd-' + key.replace(/([A-Z])/g, '-$1').toLowerCase();
+      const input = document.getElementById(id);
+      if (input) input.addEventListener('change', e => { state.meta[key] = e.target.value; persistIfEnabled(); });
+    });
+  }
+
+  function renderBenchmarkPanel(r) {
+    const el = document.getElementById('benchmark-panel');
+    if (!el) return;
+    el.innerHTML =
+      '<h3 class="section-h" style="margin-top:0;">See how you compare (optional)</h3>' +
+      '<p class="sub" style="margin:-4px 0 14px;">Opt in to send only your overall score, band, per-pillar scores, and the two fields below to an anonymous aggregate on a server I control &mdash; never your answers, evidence, owner names, or organisation name. Nothing is sent unless you click the button below.</p>' +
+      '<div class="benchmark-form">' +
+      '<label>Industry<select id="bm-industry">' + INDUSTRIES.map(i => '<option value="' + escapeHtml(i) + '">' + escapeHtml(i) + '</option>').join('') + '</select></label>' +
+      '<label>Organisation size<select id="bm-size"><option value="">Prefer not to say</option>' + ORG_SIZE_BANDS.map(s => '<option value="' + s + '">' + s + ' employees</option>').join('') + '</select></label>' +
+      '<button class="btn primary" id="bm-submit">Compare anonymously</button>' +
+      '<input type="text" id="bm-website" name="website" autocomplete="off" tabindex="-1" aria-hidden="true" style="position:absolute; left:-9999px; width:1px; height:1px;">' +
+      '</div>' +
+      '<div id="bm-result" class="bm-result" style="display:none;" aria-live="polite"></div>';
+
+    const loadedAt = Date.now();
+    document.getElementById('bm-submit').addEventListener('click', async () => {
+      const btn = document.getElementById('bm-submit');
+      const resultEl = document.getElementById('bm-result');
+      btn.disabled = true;
+      btn.textContent = 'Comparing\u2026';
+      const payload = {
+        loadedAt: loadedAt,
+        website: document.getElementById('bm-website').value,
+        score: r.overall,
+        band: r.band.name,
+        pillarScores: r.pillarScores,
+        deploymentPattern: state.meta.deployments.length === 1 ? state.meta.deployments[0] : null,
+        industry: document.getElementById('bm-industry').value,
+        orgSizeBand: document.getElementById('bm-size').value,
+      };
+      resultEl.style.display = '';
+      try {
+        const resp = await fetch(BENCHMARK_ENDPOINT, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await resp.json();
+        if (data && data.ok && data.percentile !== null && data.percentile !== undefined) {
+          resultEl.innerHTML = '<p>You scored higher than <b>' + data.percentile + '%</b> of ' + escapeHtml(data.scope) + ' (n=' + data.count + ').</p>';
+        } else if (data && data.ok) {
+          resultEl.innerHTML = '<p>Thanks &mdash; recorded. Not enough submissions yet for a meaningful comparison (' + data.count + ' so far). Check back later.</p>';
+        } else {
+          resultEl.innerHTML = '<p>Couldn\u2019t reach the comparison service right now. Your assessment is unaffected &mdash; try again later.</p>';
+        }
+      } catch (e) {
+        resultEl.innerHTML = '<p>Couldn\u2019t reach the comparison service right now. Your assessment is unaffected &mdash; try again later.</p>';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Compare anonymously';
+      }
+    });
+  }
+
+  // Not every question has one - a small handful of questions (currently
+  // just S1, vendor vetting) point at a companion tool that actually
+  // answers part of the question live, rather than just citing a static
+  // framework control. Same escaping discipline as the rest of this file
+  // even though the source is our own curated JSON, not user input.
+  function liveCheckHtml(q) {
+    if (!q.liveCheck) return '';
+    const lc = q.liveCheck;
+    return '<p class="fw-live-check"><b>Check this live</b>&nbsp; ' + lc.note +
+      ' <a href="' + lc.url + '" target="_blank" rel="noopener">' + lc.label + ' &rarr;</a></p>';
+  }
+
+  function actionCardHtml(g) {
+    const isCritical = g.level === 0;
+    const a = g.answer || {};
+    return '<div class="gap-card ' + (isCritical ? 'severity-critical' : 'severity-improve') + '" data-qid="' + g.question.id + '">' +
+      '<div class="gap-head"><p class="gap-title">' + g.question.id + ' &middot; ' + g.pillar.name + '</p>' +
+      '<span class="gap-badge">' + (isCritical ? 'Critical gap' : 'Level ' + g.level + ' of 4') + '</span></div>' +
+      '<p class="gap-desc">' + g.question.q + '</p>' +
+      '<p class="gap-next"><b>Next step</b>&nbsp; ' + g.question.nextSteps[g.level] + '</p>' +
+      '<p class="gap-why"><b>Why it matters</b>&nbsp; ' + g.question.rationale + '</p>' +
+      (g.delta > 0 ? '<p class="gap-delta">Moving this to the next level would raise your overall score by roughly <b>+' + g.delta.toFixed(1) + '</b>.</p>' :
+        '<p class="gap-delta gap-delta-flat">Fixing this alone would not move your overall score right now &mdash; see the governance cap note above.</p>') +
+      '<div class="gap-assign">' +
+      '<label>Owner <input type="text" class="gap-owner" value="' + escapeHtml(a.owner || '') + '" placeholder="' + escapeHtml(g.question.ownerRole) + ' (suggested)"></label>' +
+      '<label>Target date <input type="date" class="gap-date" value="' + escapeHtml(a.targetDate || '') + '"></label>' +
+      '</div>' +
+      '<p class="gap-crosswalk"><b style="color:var(--text);">Relevant controls in other frameworks</b><br>' + g.question.crosswalk + '</p>' +
+      liveCheckHtml(g.question) + '</div>';
+  }
+
+  function renderResults() {
+    const panel = document.getElementById('results-panel-content');
+    if (answeredCount() < TOTAL_QUESTIONS) {
+      panel.innerHTML = '<div class="empty-state"><p>Answer all ' + TOTAL_QUESTIONS + ' questions to see your results.</p></div>';
+      return;
+    }
+    const r = computeResults(state);
+    const deploys = state.meta.deployments.map(deployById).filter(Boolean);
+    const deployNames = deploys.map(d => d.name).join(', ');
+
+    let html = '<div id="report-details" class="report-details no-print"></div>';
+
+    // delta vs previous assessment
+    let prev = null, prevResults = null;
+    if (state.meta.previousId) {
+      prev = portfolio.find(a => a.meta.id === state.meta.previousId);
+      if (prev) prevResults = computeResults(prev);
+    }
+    if (prevResults) {
+      const diff = +(r.overall - prevResults.overall).toFixed(1);
+      html += '<div class="delta-banner"><h3>Progress since your last assessment (' + escapeHtml(prev.meta.name || 'Untitled') + ', ' + fmtDate(prev.meta.savedAt) + ')</h3>' +
+        '<p>Overall score: ' + prevResults.overall.toFixed(1) + ' &rarr; <b>' + r.overall.toFixed(1) + '</b> (' + (diff >= 0 ? '+' : '') + diff.toFixed(1) + ')</p>';
+      const closed = prevResults.criticalGaps.filter(pg => !r.criticalGaps.some(ng => ng.question.id === pg.question.id));
+      const opened = r.criticalGaps.filter(ng => !prevResults.criticalGaps.some(pg => pg.question.id === ng.question.id));
+      if (closed.length) html += '<p>Critical gaps closed: ' + closed.map(g => g.question.id).join(', ') + '</p>';
+      if (opened.length) html += '<p>New critical gaps: ' + opened.map(g => g.question.id).join(', ') + '</p>';
+      if (!closed.length && !opened.length) html += '<p>No critical gaps opened or closed since last time.</p>';
+      html += '</div>';
+    }
+
+    html += '<div class="score-hero">';
+    html += '<div class="score-circle" style="--band-color:' + r.band.color + ';"><span class="num">' + r.overall.toFixed(1) + '</span><span class="denom">out of 4.0</span></div>';
+    html += '<div class="score-meta"><span class="band-pill" style="background:' + r.band.color + ';">' + r.band.name + '</span>';
+    html += '<h3>' + r.band.name + ' &mdash; ' + r.overall.toFixed(1) + ' / 4.0</h3>';
+    html += '<p>' + r.band.desc + '</p>';
+    if (deployNames) html += '<p style="margin-top:8px; font-size:12px;">Deployment pattern' + (deploys.length > 1 ? 's' : '') + ': <b style="color:var(--text);">' + escapeHtml(deployNames) + '</b></p>';
+    html += '</div></div>';
+
+    if (r.capped) {
+      html += '<div class="cap-banner"><b>Your overall score is capped at ' + r.overall.toFixed(1) + '</b> by your Governance &amp; Human Oversight score (' + r.govScore.toFixed(1) + '), even though your other pillars average ' + r.avg.toFixed(1) + '. ' +
+        'While this cap applies, improving the other five pillars on their own will not raise your overall score. The only questions that can lift it right now: ' +
+        r.govUnresolved.map(q => '<b>' + q.id + '</b>').join(', ') + '.</div>';
+    }
+
+    html += '<h3 class="section-h">By pillar</h3><div class="pillar-bars">';
+    PILLARS.forEach(p => {
+      const score = r.pillarScores[p.id];
+      const color = score === null ? '#475569' : scoreColor(score);
+      html += '<div class="pillar-bar-row"><span class="pb-label">' + p.letter + ' &middot; ' + p.name + '</span>' +
+        '<div class="pillar-bar-track"><div class="pillar-bar-fill" style="width:' + (score === null ? 0 : (score / 4) * 100) + '%; background:' + color + ';"></div></div>' +
+        '<span class="pb-score">' + (score === null ? 'N/A' : score.toFixed(1)) + '</span></div>';
+    });
+    html += '</div>';
+
+    html += '<h3 class="section-h">What to fix, in order (' + r.actionable.length + ')</h3>';
+    if (r.actionable.length) {
+      html += '<p class="sub" style="margin:-4px 0 16px;">Ranked so the items that actually move your score \u2014 and any governance-cap questions, while the cap applies \u2014 come first.</p>';
+      r.actionable.forEach(g => { html += actionCardHtml(g); });
+    } else {
+      html += '<div class="gap-card severity-good"><p class="gap-title">Nothing outstanding</p><p class="gap-desc">Every applicable question is already at the top level.</p></div>';
+    }
+
+    if (r.needsVerification.length) {
+      html += '<h3 class="section-h">Needs verification (' + r.needsVerification.length + ')</h3>';
+      html += '<p class="sub" style="margin:-4px 0 16px;">Marked \u201CI don\u2019t know\u201D \u2014 this is a discovery task (find out), not yet a remediation task (fix).</p>';
+      r.needsVerification.forEach(g => {
+        html += '<div class="gap-card severity-unknown"><p class="gap-title">' + g.question.id + ' &middot; ' + g.pillar.name + '</p><p class="gap-desc">' + g.question.q + '</p></div>';
+      });
+    }
+
+    html += '<div class="method-item" style="margin-top:24px;"><div class="step">i</div><div><h3>How this was calculated</h3>' +
+      '<p>Overall = min(average of applicable pillar scores, Governance score + 1). Your Governance &amp; Human Oversight score was <b>' + (r.govScore === null ? 'N/A' : r.govScore.toFixed(1)) + '</b>, ' +
+      (r.capped ? 'which capped your raw average of <b>' + r.avg.toFixed(1) + '</b> down to <b>' + r.overall.toFixed(1) + '</b>.' : 'which did not cap your raw average of <b>' + r.avg.toFixed(1) + '</b>.') +
+      '</p></div></div>';
+
+    html += '<div id="benchmark-panel" class="benchmark-panel no-print"></div>';
+
+    html += '<div class="export-row no-print">' +
+      '<button class="btn primary" id="btn-pdf-full">&#128196; Export full PDF</button>' +
+      '<button class="btn" id="btn-pdf-onepager">&#128203; Export board one-pager</button>' +
+      '<button class="btn" id="btn-register-csv">&#128202; Export register (CSV)</button>' +
+      '<button class="btn" id="btn-review-from-results">&#9998; Review / edit answers</button>' +
+      '</div>';
+
+    panel.innerHTML = html;
+    renderReportDetails();
+    renderBenchmarkPanel(r);
+    document.getElementById('btn-review-from-results').addEventListener('click', () => { switchTab('assessment'); setScreen('review'); });
+
+    panel.querySelectorAll('.gap-owner').forEach(inp => {
+      inp.addEventListener('change', e => {
+        const qid = e.target.closest('.gap-card').dataset.qid;
+        if (!state.answers[qid]) state.answers[qid] = {};
+        state.answers[qid].owner = e.target.value;
+        persistIfEnabled();
+      });
+    });
+    panel.querySelectorAll('.gap-date').forEach(inp => {
+      inp.addEventListener('change', e => {
+        const qid = e.target.closest('.gap-card').dataset.qid;
+        if (!state.answers[qid]) state.answers[qid] = {};
+        state.answers[qid].targetDate = e.target.value;
+        persistIfEnabled();
+      });
+    });
+
+    document.getElementById('btn-pdf-full').addEventListener('click', () => { printMode = 'full'; buildPrintRoot(r, deployNames); window.print(); });
+    document.getElementById('btn-pdf-onepager').addEventListener('click', () => { printMode = 'onepager'; buildPrintRoot(r, deployNames); window.print(); });
+    document.getElementById('btn-register-csv').addEventListener('click', () => exportRegisterCSV(r));
+
+    buildPrintRoot(r, deployNames);
+    persistToPortfolioIfComplete(r);
+  }
+
+  // ---------------------------------------------------------------
+  // PDF EXPORT (two modes: full report, board one-pager)
+  // ---------------------------------------------------------------
+
+  function buildPrintRoot(r, deployNames) {
+    if (printMode === 'onepager') buildPrintRootOnePager(r, deployNames);
+    else buildPrintRootFull(r, deployNames);
+  }
+
+  function printIdentityLine() {
+    const bits = [];
+    if (state.meta.org) bits.push('Organisation: ' + escapeHtml(state.meta.org));
+    if (state.meta.scope) bits.push('Scope: ' + escapeHtml(state.meta.scope));
+    if (state.meta.assessor) bits.push('Assessor: ' + escapeHtml(state.meta.assessor) + (state.meta.assessorRole ? ' (' + escapeHtml(state.meta.assessorRole) + ')' : ''));
+    return bits.length ? bits.join(' &middot; ') : '[organisation, scope, and assessor not specified]';
+  }
+
+  function buildPrintRootFull(r, deployNames) {
+    const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    const assessmentName = escapeHtml(state.meta.name || 'Untitled assessment');
+
+    let out = '<div class="print-page">';
+    out += '<p class="p-eyebrow">AI-SHIELD &mdash; Executive Summary</p>';
+    out += '<h1>' + assessmentName + '</h1>';
+    out += '<p class="p-identity">' + printIdentityLine() + '</p>';
+    out += '<p><strong>Generated:</strong> ' + today + (deployNames ? ' &middot; <strong>Deployment pattern' + (deployNames.includes(',') ? 's' : '') + ':</strong> ' + escapeHtml(deployNames) : '') + '</p>';
+    out += '<div class="p-score-box"><span class="p-score-num" style="color:' + r.band.color + ';">' + r.overall.toFixed(1) + '</span><span class="p-score-denom">/ 4.0 \u2014 ' + r.band.name + '</span></div>';
+    out += '<p>' + r.band.desc + '</p>';
+    if (r.capped) {
+      out += '<div class="p-cap-note"><strong>Score capped by governance:</strong> your Governance &amp; Human Oversight score (' + r.govScore.toFixed(1) + ') is holding the overall score below the raw average of ' + r.avg.toFixed(1) + '. ' +
+        'Until ' + r.govUnresolved.map(q => q.id).join(', ') + ' improve, no other fix will raise this number.</div>';
+    }
+    out += '<h2>Top actions</h2>';
+    r.actionable.slice(0, 3).forEach((g, i) => {
+      out += '<p><strong>' + (i + 1) + '. ' + g.question.id + ' &middot; ' + g.pillar.name.replace(/&amp;/g, '&') + '</strong> (owner: ' + g.question.ownerRole + ')<br>' + g.question.nextSteps[g.level] + '</p>';
+    });
+    if (!r.actionable.length) out += '<p>No outstanding actions \u2014 every applicable question is at the top level.</p>';
+    out += '</div>'; // end print-page (forces page break after)
+
+    out += '<h2>By pillar</h2><div class="p-bars">';
+    PILLARS.forEach(p => {
+      const score = r.pillarScores[p.id];
+      const pct = score === null ? 0 : (score / 4) * 100;
+      out += '<div class="p-bar-row"><span class="p-bar-label">' + p.letter + ' \u00B7 ' + p.name.replace(/&amp;/g, '&') + '</span>' +
+        '<div class="p-bar-track"><div class="p-bar-fill" style="width:' + pct + '%;"></div></div>' +
+        '<span class="p-bar-score">' + (score === null ? 'N/A' : score.toFixed(1)) + '</span></div>';
+    });
+    out += '</div>';
+
+    if (r.actionable.length) {
+      out += '<h2>What to fix, in order (' + r.actionable.length + ')</h2>';
+      r.actionable.forEach(g => {
+        const a = g.answer || {};
+        out += '<div class="p-gap' + (g.level === 0 ? ' p-gap-critical' : '') + '"><strong>' + g.question.id + ' \u00B7 ' + g.pillar.name.replace(/&amp;/g, '&') + (g.level === 0 ? ' \u2014 Critical gap' : ' \u2014 Level ' + g.level + ' of 4') + '</strong><br>' +
+          g.question.q + '<br><span class="p-next"><b>Next step:</b> ' + g.question.nextSteps[g.level] + '</span><br>' +
+          '<span class="p-owner"><b>Owner:</b> ' + escapeHtml(a.owner || g.question.ownerRole + ' (suggested)') + (a.targetDate ? ' &middot; <b>Target date:</b> ' + escapeHtml(a.targetDate) : '') + '</span><br>' +
+          '<span class="p-crosswalk">' + deent(g.question.crosswalk) + '</span></div>';
+      });
+    }
+    if (r.needsVerification.length) {
+      out += '<h2>Needs verification (' + r.needsVerification.length + ')</h2>';
+      r.needsVerification.forEach(g => { out += '<p><strong>' + g.question.id + '</strong> \u2014 ' + g.question.q + '</p>'; });
+    }
+
+    out += '<h2>Full answer log</h2>';
+    PILLARS.forEach(p => {
+      out += '<h3>' + p.letter + ' \u00B7 ' + p.name.replace(/&amp;/g, '&') + '</h3>';
+      p.questions.forEach(q => {
+        const a = state.answers[q.id] || {};
+        let scored = a.na ? 'N/A' : (a.dontKnow ? 'unverified' : (typeof a.level === 'number' ? a.level + '/4' : '\u2014'));
+        out += '<p><strong>' + q.id + '</strong> (scored ' + scored + '): ' + q.q + '<br>' +
+          (typeof a.level === 'number' ? '<span class="p-crosswalk">' + stripTags(q.levels[a.level]) + '</span><br>' : '') +
+          (a.evidence ? '<span class="p-crosswalk"><b>Evidence:</b> ' + escapeHtml(a.evidence) + (a.evidenceUrl ? ' (' + escapeHtml(a.evidenceUrl) + ')' : '') + '</span>' : '') + '</p>';
+      });
+    });
+
+    out += '<h2>License &amp; disclaimer</h2>';
+    out += '<p>AI-SHIELD is open source (MIT License), provided "as is" without warranty. This assessment is an indicative tool to aid your own thinking, not a certified audit or professional advice. Use at your own risk \u2014 to the fullest extent permitted by law, the author accepts no liability for any loss or damage arising from its use. Not affiliated with NIST, ISO, OWASP, MITRE, CSA, Gartner, or any named vendor.</p>';
+    out += '<p class="p-footer">Generated by AI-SHIELD \u2014 lab.krismccabe.com/ai-shield/</p>';
+    document.getElementById('print-root').innerHTML = out;
+  }
+
+  function buildPrintRootOnePager(r, deployNames) {
+    const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    const assessmentName = escapeHtml(state.meta.name || 'Untitled assessment');
+    let out = '<div class="print-page onepager">';
+    out += '<p class="p-eyebrow">AI Security Snapshot</p>';
+    out += '<h1>' + assessmentName + '</h1>';
+    out += '<p class="p-identity">' + printIdentityLine() + ' &middot; ' + today + '</p>';
+    out += '<div class="p-score-box"><span class="p-score-num" style="color:' + r.band.color + ';">' + r.overall.toFixed(1) + '</span><span class="p-score-denom">/ 4.0 \u2014 ' + r.band.name + '</span></div>';
+
+    const overallSentence = r.capped
+      ? 'Overall, this system is rated "' + r.band.name + '." Several technical controls are stronger than this number suggests, but the score is being held down by weak governance and human oversight \u2014 until that\u2019s addressed, technical fixes alone will not move the needle.'
+      : 'Overall, this system is rated "' + r.band.name + '." ' + r.band.desc;
+    out += '<p class="p-lead">' + overallSentence + '</p>';
+
+    out += '<h2>What this actually means</h2>';
+    const top = r.actionable.slice(0, 3);
+    if (top.length) {
+      top.forEach(g => {
+        out += '<div class="p-narrative"><p>' + g.question.rationale + '</p><p><b>What to do:</b> ' + g.question.nextSteps[g.level] + ' <i>(suggested owner: ' + g.question.ownerRole + ')</i></p></div>';
+      });
+    } else {
+      out += '<p>No outstanding gaps \u2014 every area assessed is at the top level.</p>';
+    }
+
+    out += '<h2>Recommended next steps</h2><ol class="p-actions">';
+    top.forEach(g => { out += '<li>' + g.question.nextSteps[g.level] + '</li>'; });
+    out += '</ol>';
+    out += '<p class="p-footer">Generated by AI-SHIELD \u2014 an independent, evidence-based AI security self-assessment. lab.krismccabe.com/ai-shield/</p>';
+    out += '</div>';
+    document.getElementById('print-root').innerHTML = out;
+  }
+
+  // ---------------------------------------------------------------
+  // REGISTER (CSV) EXPORT
+  // ---------------------------------------------------------------
+
+  function toCSVRow(cells) {
+    return cells.map(c => {
+      const s = String(c == null ? '' : c);
+      return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+    }).join(',');
+  }
+
+  function exportRegisterCSV() {
+    const rows = [['Assessment', 'Date', 'Question ID', 'Pillar', 'Question', 'Score', 'Level text', 'Critical Gap', 'Next Step', 'Owner', 'Target Date', 'Evidence', 'Crosswalk']];
+    const dateStr = new Date().toISOString().slice(0, 10);
+    PILLARS.forEach(p => p.questions.forEach(q => {
+      const a = state.answers[q.id] || {};
+      const scoreText = a.na ? 'N/A' : (a.dontKnow ? 'Unknown' : (typeof a.level === 'number' ? a.level : ''));
+      const levelText = (typeof a.level === 'number') ? stripTags(q.levels[a.level]) : '';
+      const isCritical = a.level === 0 ? 'Yes' : 'No';
+      const nextStep = (typeof a.level === 'number' && a.level < 4) ? q.nextSteps[a.level] : '';
+      rows.push([
+        state.meta.name || 'Untitled assessment', dateStr, q.id, p.name.replace(/&amp;/g, '&'), q.q,
+        scoreText, levelText, isCritical, nextStep, a.owner || '', a.targetDate || '', a.evidence || '',
+        deent(q.crosswalk)
+      ]);
+    }));
+    const csv = rows.map(toCSVRow).join('\r\n');
+    downloadBlob(csv, (slug(state.meta.name) || 'ai-shield-assessment') + '-register.csv', 'text/csv');
+  }
+
+  // ---------------------------------------------------------------
+  // TABS
+  // ---------------------------------------------------------------
+
+  function switchTab(name) {
+    document.querySelector('.tab-btn[data-tab="' + name + '"]').click();
+  }
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.disabled) return;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      window.scrollTo({ top: document.querySelector('.tabs').offsetTop - 20, behavior: 'smooth' });
+      if (btn.dataset.tab === 'assessment') {
+        const inProgress = state.meta.name && answeredCount() > 0 && answeredCount() < TOTAL_QUESTIONS;
+        setScreen(inProgress ? 'questions' : 'start');
+      }
+      if (btn.dataset.tab === 'results') renderResults();
+    });
+  });
+  document.getElementById('start-assessment-btn').addEventListener('click', () => switchTab('assessment'));
+  document.getElementById('pillar-strip').addEventListener('click', e => {
+    const cell = e.target.closest('.pillar-cell');
+    if (!cell) return;
+    e.preventDefault();
+    switchTab('framework');
+    setTimeout(() => { document.getElementById(cell.getAttribute('href').slice(1)).scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 60);
+  });
+
+  // ---------------------------------------------------------------
+  // SAVE / LOAD / IMPORT / PORTFOLIO / REMEMBER
+  // ---------------------------------------------------------------
+
+  function updateProgress() {
+    document.getElementById('progress-text').textContent = answeredCount() + ' of ' + TOTAL_QUESTIONS + ' answered' + (state.meta.name ? ' \u00B7 ' + escapeHtml(state.meta.name) : '');
+    const complete = answeredCount() === TOTAL_QUESTIONS;
+    document.getElementById('tab-btn-results').disabled = !complete;
+  }
+
+  function refreshAll() {
+    updateProgress();
+    persistIfEnabled();
+  }
+
+  function persistIfEnabled() {
+    if (rememberEnabled) { persistActive(); persistPortfolio(); }
+  }
+
+  function persistActive() {
+    try { localStorage.setItem(ACTIVE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+  function persistPortfolio() {
+    try { localStorage.setItem(PORTFOLIO_KEY, JSON.stringify(portfolio)); } catch (e) {}
+  }
+  function persistToPortfolioIfComplete(r) {
+    if (answeredCount() !== TOTAL_QUESTIONS) return;
+    state.meta.savedAt = new Date().toISOString();
+    const idx = portfolio.findIndex(a => a.meta.id === state.meta.id);
+    const snapshot = JSON.parse(JSON.stringify(state));
+    if (idx >= 0) portfolio[idx] = snapshot; else portfolio.push(snapshot);
+    persistIfEnabled();
+  }
+
+  document.getElementById('remember-toggle').addEventListener('change', e => {
+    rememberEnabled = e.target.checked;
+    try { localStorage.setItem(REMEMBER_KEY, rememberEnabled ? '1' : '0'); } catch (e) {}
+    if (rememberEnabled) { persistActive(); persistPortfolio(); }
+    else { try { localStorage.removeItem(ACTIVE_KEY); localStorage.removeItem(PORTFOLIO_KEY); } catch (e) {} }
+  });
+
+  window.addEventListener('beforeunload', e => {
+    if (!rememberEnabled && answeredCount() > 0) {
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
+
+  document.getElementById('btn-save').addEventListener('click', () => {
+    downloadBlob(JSON.stringify(state, null, 2), (slug(state.meta.name) || 'ai-shield-assessment') + '.json', 'application/json');
+  });
+
+  document.getElementById('btn-load').addEventListener('click', () => document.getElementById('file-input').click());
+  document.getElementById('file-input').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const loaded = JSON.parse(reader.result);
+        if (loaded && typeof loaded === 'object' && loaded.answers) {
+          state = Object.assign(freshAssessment(), loaded);
+          normalizeMeta(state.meta);
+          state.mergeConflicts = [];
+          setScreen(answeredCount() === TOTAL_QUESTIONS ? 'review' : 'start');
+          refreshAll();
+        }
+      } catch (err) {}
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  document.getElementById('btn-import').addEventListener('click', () => document.getElementById('import-file-input').click());
+  document.getElementById('import-file-input').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const loaded = JSON.parse(reader.result);
+        const incomingAnswers = (loaded && loaded.answers) ? loaded.answers : null;
+        if (!incomingAnswers) return;
+        const sourceName = (loaded.meta && (loaded.meta.assessor || loaded.meta.name)) || file.name;
+        const conflicts = [];
+        Object.keys(incomingAnswers).forEach(qid => {
+          const incoming = incomingAnswers[qid];
+          if (!incoming || typeof incoming.level !== 'number') return;
+          const existing = state.answers[qid];
+          if (existing && typeof existing.level === 'number' && Math.abs(existing.level - incoming.level) >= 2) {
+            conflicts.push({ qid: qid, existingLevel: existing.level, incomingLevel: incoming.level, source: sourceName });
+          }
+          state.answers[qid] = Object.assign({}, existing, incoming);
+        });
+        state.mergeConflicts = (state.mergeConflicts || []).concat(conflicts);
+        setScreen(answeredCount() === TOTAL_QUESTIONS ? 'review' : 'start');
+        refreshAll();
+      } catch (err) {}
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  document.getElementById('new-assessment-btn').addEventListener('click', () => {
+    if (answeredCount() > 0 && !state.meta.savedAt && !confirm('Discard the assessment you have in progress and start a new one?')) return;
+    state = freshAssessment();
+    persistIfEnabled();
+    switchTab('assessment');
+  });
+
+  // ---------------------------------------------------------------
+  // INIT
+  // ---------------------------------------------------------------
+
+  renderPillarStrip();
+  renderBands();
+  renderFrameworkContent();
+
+  try {
+    rememberEnabled = localStorage.getItem(REMEMBER_KEY) !== '0';
+    document.getElementById('remember-toggle').checked = rememberEnabled;
+    const rawPortfolio = localStorage.getItem(PORTFOLIO_KEY);
+    if (rawPortfolio) { const p = JSON.parse(rawPortfolio); if (Array.isArray(p)) { p.forEach(a => normalizeMeta(a.meta)); portfolio = p; } }
+    const rawActive = localStorage.getItem(ACTIVE_KEY);
+    if (rawActive) {
+      const loaded = JSON.parse(rawActive);
+      if (loaded && typeof loaded === 'object') { state = Object.assign(freshAssessment(), loaded); normalizeMeta(state.meta); }
+    }
+  } catch (e) {}
+
+  setScreen((state.meta.name && answeredCount() > 0 && answeredCount() < TOTAL_QUESTIONS) ? 'questions' : 'start');
+  updateProgress();
+
+</script>
+</body>
+</html>

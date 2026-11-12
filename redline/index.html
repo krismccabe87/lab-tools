@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<!-- Apply a stored theme choice before first paint, so there's no flash
+     of the wrong theme while lab-theme.js is still loading. -->
+<script>
+(function(){try{var t=localStorage.getItem('lab-theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();
+</script>
+<!-- Google Analytics - only loads after cookie consent, see banner script below -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  function loadGoogleAnalytics(){
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-QE309XG3DJ';
+    document.head.appendChild(s);
+    gtag('js', new Date());
+    gtag('config', 'G-QE309XG3DJ');
+  }
+</script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Redline — RTO/RPO Exposure Calculator | Kris McCabe</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon-16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="description" content="See the gap between the recovery time you've promised and the one a real incident would actually take — and what that gap costs." />
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Kris's Lab">
+<meta property="og:title" content="Redline — RTO/RPO Exposure Calculator">
+<meta property="og:description" content="See the gap between the recovery time you've promised and the one a real incident would actually take — and what that gap costs.">
+<meta property="og:url" content="https://lab.krismccabe.com/redline/">
+<meta property="og:image" content="https://lab.krismccabe.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Redline — RTO/RPO Exposure Calculator">
+<meta name="twitter:description" content="See the gap between the recovery time you've promised and the one a real incident would actually take — and what that gap costs.">
+<meta name="twitter:image" content="https://lab.krismccabe.com/og-image.png">
+<link rel="stylesheet" href="/assets/lab.css?v=6">
+<script src="/assets/lab-theme.js?v=1" defer></script>
+<style>
+  .lab-header-inner { max-width: 880px; }
+
+  .hero { padding: 64px 24px 56px; }
+  .hero h1 { color: #fff; font-size: clamp(1.7rem, 4vw, 2.5rem); font-weight: 800; letter-spacing: -0.02em; margin: 0 0 16px; max-width: 720px; margin-left: auto; margin-right: auto; }
+  .hero p { color: #94A3B8; font-size: 16px; max-width: 560px; margin: 0 auto; }
+
+  .wrap { max-width: 880px; margin: 0 auto; padding: 24px 20px 64px; }
+  @media (min-width: 1024px) {
+    .lab-header-inner, .wrap, footer { max-width: 1200px; }
+  }
+
+  .panel { padding: 32px; margin-bottom: 28px; }
+  .btn {
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    font-family: inherit; font-size: 14px; font-weight: 700; padding: 12px 20px; border-radius: 8px;
+    cursor: pointer; text-decoration: none; transition: border-color 0.15s ease, background 0.15s ease;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn:hover { border-color: var(--accent); background: rgba(37, 99, 235, 0.12); text-decoration: none; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { background: var(--accent-hv); border-color: var(--accent-hv); color: #fff; }
+  .panel h2 { font-size: 18px; font-weight: 700; color: var(--text); margin: 0 0 4px; }
+  .panel .sub { font-size: 13px; color: var(--text-muted); margin: 0 0 24px; }
+
+  .scenario-panel { padding: 24px 32px; }
+  .scenario-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-top: 16px; }
+  .scenario-btn { border: 1px solid var(--border); background: var(--surface); border-radius: 10px; padding: 14px 12px; text-align: left; cursor: pointer; font-family: inherit; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+  .scenario-btn:hover { border-color: var(--accent); box-shadow: 0 4px 12px rgba(37,99,235,0.1); }
+  .scenario-btn.active { border-color: var(--accent); background: rgba(37, 99, 235, 0.12); box-shadow: 0 0 0 2px var(--accent) inset; }
+  .scenario-btn .name { display: block; font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 3px; }
+  .scenario-btn .desc { display: block; font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+
+  .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 8px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .field .hint { display: block; font-size: 11px; font-weight: 400; color: var(--text-muted); margin-top: 4px; }
+  .input-group { display: flex; align-items: center; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; background: var(--surface); }
+  .input-group.readonly { background: var(--surface-2); }
+  .input-group select { flex-shrink: 0; border: none; background: var(--surface-2); padding: 10px 6px; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--text); border-right: 1px solid var(--border); }
+  .input-group input { flex: 1 1 40px; min-width: 40px; border: none; background: transparent; padding: 10px 8px; font-family: inherit; font-size: 14px; color: var(--text); width: 100%; }
+  .input-group input[readonly] { color: var(--text); font-weight: 700; }
+  .input-group input:focus, .input-group select:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .input-group .suffix { flex-shrink: 0; padding: 0 10px; font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+
+  select.reg-select { width: 100%; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); padding: 10px 12px; font-family: inherit; font-size: 13px; color: var(--text); font-weight: 500; }
+  select.reg-select:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+  .phase-header { display: flex; justify-content: space-between; align-items: baseline; margin: 28px 0 12px; }
+  .phase-header h3 { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin: 0; }
+  .phase-total { font-size: 13px; font-weight: 700; color: var(--text); }
+  .phase-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
+  .phase-field label { display: block; font-size: 11px; font-weight: 600; color: var(--text); margin-bottom: 6px; line-height: 1.3; }
+  .phase-field .input-group input { padding: 8px 8px; font-size: 13px; }
+  .phase-field .suffix { font-size: 11px; padding: 0 8px; }
+
+  .subsection { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--border); }
+  .subsection h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin: 0 0 4px; }
+  .subsection .sub-lead { font-size: 12px; color: var(--text-muted); margin: 0 0 16px; }
+
+  .horizon { margin-top: 24px; }
+  .horizon-track { position: relative; height: 44px; background: var(--surface-2); border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+  .horizon-fill-safe { position: absolute; left: 0; top: 0; bottom: 0; background: var(--safe); transition: width 0.3s ease; }
+  .horizon-fill-risk { position: absolute; top: 0; bottom: 0; background: var(--risk); background-image: repeating-linear-gradient(135deg, rgba(255,255,255,0.18), rgba(255,255,255,0.18) 6px, transparent 6px, transparent 12px); transition: width 0.3s ease, left 0.3s ease; }
+  .horizon-fill-severe { position: absolute; top: 0; bottom: 0; background: var(--severe); transition: width 0.3s ease, left 0.3s ease; }
+  .horizon-line { position: absolute; top: -6px; bottom: -6px; width: 3px; background: var(--navy); transition: left 0.3s ease; }
+  .horizon-line::after { content: 'Promised'; position: absolute; top: -22px; left: 50%; transform: translateX(-50%); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text); white-space: nowrap; }
+  .horizon-line.mtd { background: var(--severe); }
+  .horizon-line.mtd::after { content: 'Max tolerable'; color: var(--severe); top: auto; bottom: -22px; }
+  .horizon-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-muted); margin-top: 8px; }
+  .horizon-legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px; font-size: 11px; color: var(--text-muted); }
+  .horizon-legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .horizon-legend i { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+  .result-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-top: 24px; }
+  .result-card { border-radius: 10px; padding: 18px 20px; }
+  .result-card.gap { background: var(--surface-2); }
+  .result-card.cost { background: var(--risk-bg); }
+  .result-card .label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin: 0 0 6px; }
+  .result-card.cost .label { color: #991B1B; }
+  .result-card .value { font-size: 26px; font-weight: 800; color: var(--text); letter-spacing: -0.02em; }
+  .result-card.cost .value { color: var(--risk); }
+
+  .verdict { margin-top: 20px; padding: 14px 16px; border-radius: 8px; font-size: 14px; background: var(--surface-2); color: var(--text); border-left: 4px solid var(--accent); }
+  .verdict.risk { border-left-color: var(--risk); background: var(--risk-bg); color:var(--risk); }
+  .verdict.safe { border-left-color: var(--safe); background: var(--safe-bg); color:var(--safe); }
+  .verdict.severe { border-left-color: var(--severe); background: var(--severe-bg); color: var(--severe); }
+  .verdict strong { font-weight: 700; }
+  .verdict .sub-note { display: block; margin-top: 8px; font-size: 13px; font-weight: 600; }
+
+  .reg-clock h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin: 0 0 12px; }
+  .reg-picker { margin-bottom: 16px; }
+  .reg-picker label { display: block; font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .reg-picker .hint { display: block; font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+  .reg-custom-wrap { margin-top: 12px; max-width: 220px; }
+  .reg-custom-wrap label { display: block; font-size: 11px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .reg-clock-active-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+  .reg-clock-active-header span.name { font-size: 12px; font-weight: 700; color: var(--text); }
+  .reg-clock-pct { font-size: 13px; font-weight: 700; }
+  .reg-clock-track { position: relative; height: 14px; background: var(--surface-2); border-radius: 7px; overflow: hidden; border: 1px solid var(--border); }
+  .reg-clock-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 7px; transition: width 0.3s ease, background 0.3s ease; }
+  .reg-clock-note { font-size: 13px; margin-top: 10px; padding: 10px 14px; border-radius: 8px; }
+
+  .total-panel { background: var(--navy); border-radius: 16px; padding: 32px; text-align: center; color: #fff; }
+  .total-panel .label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #93C5FD; margin: 0 0 10px; }
+  .total-panel .value { font-size: clamp(2rem, 6vw, 2.8rem); font-weight: 800; letter-spacing: -0.02em; margin: 0 0 8px; }
+  .total-panel .desc { color: #94A3B8; font-size: 14px; max-width: 480px; margin: 0 auto; }
+  .total-panel .pain { color: #E2E8F0; font-size: 14px; font-weight: 600; margin: 14px auto 0; max-width: 480px; }
+
+  footer { max-width: 880px; }
+  footer .disclaimer { max-width: 620px; }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Redline — RTO/RPO Exposure Calculator",
+  "description": "See the gap between the recovery time you've promised and the one a real incident would actually take — and what that gap costs.",
+  "url": "https://lab.krismccabe.com/redline/",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Any (runs in browser)",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "author": {
+    "@type": "Person",
+    "name": "Kris McCabe",
+    "url": "https://krismccabe.com/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/assets/swiss.css?v=5">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to content</a>
+
+<div class="cookie-banner" id="cookie-banner" role="dialog" aria-label="Cookie consent">
+  <p>This site uses Google Analytics to understand how the tools are used. Nothing loads or is tracked until you accept.</p>
+  <div class="cookie-banner-actions">
+    <button type="button" id="cookie-decline" class="btn small">Decline</button>
+    <button type="button" id="cookie-accept" class="btn primary small">Accept</button>
+  </div>
+</div>
+<script>
+(function(){
+  var consent = localStorage.getItem('cookie-consent');
+  if (consent === 'granted') { loadGoogleAnalytics(); return; }
+  if (consent === 'denied') { return; }
+  var banner = document.getElementById('cookie-banner');
+  banner.style.display = 'flex';
+  document.getElementById('cookie-accept').addEventListener('click', function(){
+    localStorage.setItem('cookie-consent', 'granted');
+    banner.style.display = 'none';
+    loadGoogleAnalytics();
+  });
+  document.getElementById('cookie-decline').addEventListener('click', function(){
+    localStorage.setItem('cookie-consent', 'denied');
+    banner.style.display = 'none';
+  });
+})();
+</script>
+
+  <header class="lab-header">
+    <div class="lab-header-inner" style="display:flex; align-items:center; justify-content:space-between;">
+      <a class="lab-back" href="/">&#8592; Kris's Lab</a>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" aria-pressed="false">
+          <svg class="icon-sun" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.5"/>
+            <path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12h2.5M19 12h2.5M4.2 19.8l1.8-1.8M18 6l1.8-1.8"/>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 14.2A8.5 8.5 0 1 1 9.8 4a7 7 0 0 0 10.2 10.2Z"/>
+          </svg>
+        </button>
+        <span style="display:flex; align-items:center; gap:8px; color:#fff; font-weight:700; font-size:14px;">
+        <svg viewBox="0 0 40 40" width="22" height="22" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M 7 24 A 13 13 0 0 1 31.26 17.5" fill="none" stroke="#93C5FD" stroke-width="2.6" stroke-linecap="round"/>
+          <path d="M 31.26 17.5 A 13 13 0 0 1 33 24" fill="none" stroke="#DC2626" stroke-width="2.6" stroke-linecap="round"/>
+          <line x1="20" y1="24" x2="29" y2="21.6" stroke="#2563EB" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="20" cy="24" r="2.6" fill="#2563EB"/>
+        </svg>
+        Redline
+      </span>
+      </div>
+    </div>
+  </header>
+
+  <div class="hero" id="main-content">
+    <svg viewBox="0 0 40 40" width="48" height="48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="margin-bottom:16px;">
+      <path d="M 7 24 A 13 13 0 0 1 31.26 17.5" fill="none" stroke="#93C5FD" stroke-width="2.6" stroke-linecap="round"/>
+      <path d="M 31.26 17.5 A 13 13 0 0 1 33 24" fill="none" stroke="#DC2626" stroke-width="2.6" stroke-linecap="round"/>
+      <line x1="20" y1="24" x2="29" y2="21.6" stroke="#2563EB" stroke-width="2" stroke-linecap="round"/>
+      <circle cx="20" cy="24" r="2.6" fill="#2563EB"/>
+    </svg>
+    <p class="eyebrow">Redline &middot; Free tool by Kris McCabe</p>
+    <h1>What does your downtime actually cost?</h1>
+    <p>Most Disaster Recovery plans promise an RTO and RPO on paper. Few are ever tested against what a real incident takes, how much data it actually affects, or how far it runs past what the business can tolerate. Pick a scenario, or build your own.</p>
+  </div>
+
+  <div class="wrap">
+
+    <div class="panel scenario-panel">
+      <h2>Start from a scenario</h2>
+      <p class="sub">Loads realistic phase timings, data volumes, and tolerance thresholds for that incident type. Everything stays fully editable.</p>
+      <div class="scenario-grid" id="scenario-grid"></div>
+    </div>
+
+    <!-- RTO panel -->
+    <div class="panel">
+      <h2>Recovery Time Objective (RTO)</h2>
+      <p class="sub">How long you've promised systems will be down, broken into the phases a real incident actually goes through.</p>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="rto-cost">Cost of downtime</label>
+          <div class="input-group">
+            <select id="rto-currency" aria-label="Currency">
+              <option value="£">£</option>
+              <option value="$">$</option>
+              <option value="€">€</option>
+            </select>
+            <input type="number" id="rto-cost" value="5000" min="0" step="100" />
+            <span class="suffix">/ hr</span>
+          </div>
+          <span class="hint">Lost revenue, idle staff, SLA penalties — per hour of outage</span>
+        </div>
+        <div class="field">
+          <label for="rto-promised">Promised RTO</label>
+          <div class="input-group">
+            <input type="number" id="rto-promised" value="4" min="0" step="0.5" />
+            <span class="suffix">hrs</span>
+          </div>
+          <span class="hint">What's written in the DR plan or SLA</span>
+        </div>
+        <div class="field">
+          <label for="rto-actual">Realistic RTO</label>
+          <div class="input-group readonly">
+            <input type="text" id="rto-actual" value="0 hrs" readonly />
+          </div>
+          <span class="hint">Sum of the phases below</span>
+        </div>
+      </div>
+
+      <p class="hint" id="dep-chain-note" style="display:none; margin-bottom:14px; padding:10px 14px; background:var(--surface-2); border-left:3px solid var(--accent); border-radius:6px;"></p>
+      <div class="phase-header">
+        <h3>Incident timeline phases</h3>
+        <span class="phase-total" id="phase-total-label"></span>
+      </div>
+      <div class="phase-grid">
+        <div class="phase-field">
+          <label for="phase-detect">Detection</label>
+          <div class="input-group"><input type="number" id="phase-detect" value="4" min="0" step="0.25"><span class="suffix">hrs</span></div>
+        </div>
+        <div class="phase-field">
+          <label for="phase-triage">Triage &amp; escalation</label>
+          <div class="input-group"><input type="number" id="phase-triage" value="2" min="0" step="0.25"><span class="suffix">hrs</span></div>
+        </div>
+        <div class="phase-field">
+          <label for="phase-locate">Locate clean backup</label>
+          <div class="input-group"><input type="number" id="phase-locate" value="6" min="0" step="0.25"><span class="suffix">hrs</span></div>
+        </div>
+        <div class="phase-field">
+          <label for="phase-restore">Restore execution</label>
+          <div class="input-group"><input type="number" id="phase-restore" value="8" min="0" step="0.25"><span class="suffix">hrs</span></div>
+        </div>
+        <div class="phase-field">
+          <label for="phase-validate">Validation before go-live</label>
+          <div class="input-group"><input type="number" id="phase-validate" value="3" min="0" step="0.25"><span class="suffix">hrs</span></div>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Business continuity tolerance</h3>
+        <p class="sub-lead">The point beyond a promised RTO where disruption stops being an SLA miss and becomes genuinely severe for the business — reputational, contractual, sometimes existential.</p>
+        <div class="field-row">
+          <div class="field">
+            <label for="rto-mtd">Maximum Tolerable Downtime (MTD)</label>
+            <div class="input-group">
+              <input type="number" id="rto-mtd" value="24" min="0" step="0.5" />
+              <span class="suffix">hrs</span>
+            </div>
+            <span class="hint">Beyond this, the business itself said it can't cope — from your BIA, if you have one</span>
+          </div>
+        </div>
+      </div>
+
+      <p class="hint" id="rto-restore-note" style="margin-top:10px;"></p>
+
+      <div class="horizon">
+        <div class="horizon-track">
+          <div class="horizon-fill-safe" id="rto-fill-safe"></div>
+          <div class="horizon-fill-risk" id="rto-fill-risk"></div>
+          <div class="horizon-fill-severe" id="rto-fill-severe"></div>
+          <div class="horizon-line" id="rto-line"></div>
+          <div class="horizon-line mtd" id="rto-mtd-line"></div>
+        </div>
+        <div class="horizon-labels">
+          <span>0 hrs</span>
+          <span id="rto-max-label">24 hrs</span>
+        </div>
+        <div class="horizon-legend">
+          <span><i style="background:var(--safe)"></i> Within promise</span>
+          <span><i style="background:var(--risk)"></i> Over promise, within tolerance</span>
+          <span><i style="background:var(--severe)"></i> Beyond max tolerable</span>
+        </div>
+      </div>
+
+      <div class="result-row">
+        <div class="result-card gap">
+          <p class="label">Gap beyond promise</p>
+          <p class="value" id="rto-gap">0 hrs</p>
+        </div>
+        <div class="result-card cost">
+          <p class="label">Exposure cost</p>
+          <p class="value" id="rto-cost-out">£0</p>
+        </div>
+      </div>
+
+      <div class="verdict" id="rto-verdict" aria-live="polite"></div>
+
+      <div class="subsection reg-clock">
+        <h3>Regulatory notification clock</h3>
+        <div class="reg-picker">
+          <label for="reg-regime">Which deadline applies to you, if any?</label>
+          <select class="reg-select" id="reg-regime">
+            <option value="none">Not sure / no fixed statutory deadline applies</option>
+            <option value="gdpr">GDPR / UK GDPR — 72 hours to the supervisory authority</option>
+            <option value="pdpa">Singapore PDPA — 72 hours to the PDPC</option>
+            <option value="hipaa">HIPAA (US) — 60 days to HHS &amp; affected individuals</option>
+            <option value="custom">Custom — set your own deadline</option>
+          </select>
+          <span class="hint">Depends on where the data resides, what type it is, and your sector — not every organisation has one, and this isn't legal advice.</span>
+          <div class="reg-custom-wrap" id="reg-custom-wrap" style="display:none;">
+            <label for="reg-custom-hours">Custom deadline</label>
+            <div class="input-group"><input type="number" id="reg-custom-hours" value="24" min="0" step="1"><span class="suffix">hrs</span></div>
+          </div>
+        </div>
+
+        <div id="reg-clock-active">
+          <div class="reg-clock-active-header">
+            <span class="name" id="reg-clock-name"></span>
+            <span class="reg-clock-pct" id="reg-clock-pct">0%</span>
+          </div>
+          <div class="reg-clock-track">
+            <div class="reg-clock-fill" id="reg-clock-fill"></div>
+          </div>
+          <div class="reg-clock-note" id="reg-clock-note"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RPO panel -->
+    <div class="panel">
+      <h2>Recovery Point Objective (RPO)</h2>
+      <p class="sub">How much data you've promised you could lose, versus how much a real recovery in this scenario actually loses — priced by the volume of data actually at risk, not just elapsed time.</p>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="rpo-promised">Promised RPO</label>
+          <div class="input-group">
+            <input type="number" id="rpo-promised" value="1" min="0" step="0.5" />
+            <span class="suffix">hrs</span>
+          </div>
+          <span class="hint">Maximum acceptable data loss, on paper</span>
+        </div>
+        <div class="field">
+          <label for="rpo-actual">Realistic RPO</label>
+          <div class="input-group">
+            <input type="number" id="rpo-actual" value="24" min="0" step="0.5" />
+            <span class="suffix">hrs</span>
+          </div>
+          <span class="hint">How far back the last clean recovery point really is</span>
+        </div>
+        <div class="field">
+          <label>Data unit</label>
+          <div class="input-group">
+            <select id="rpo-unit" aria-label="Data unit" style="flex:1; border-right:none;">
+              <option value="records">records</option>
+              <option value="GB">GB</option>
+            </select>
+          </div>
+          <span class="hint">Whichever makes more sense for this system</span>
+        </div>
+      </div>
+
+      <div class="field-row" style="margin-top:16px;">
+        <div class="field">
+          <label for="rpo-volume">Total data lost or affected</label>
+          <div class="input-group">
+            <input type="number" id="rpo-volume" value="115000" min="0" step="1000" />
+            <span class="suffix" id="rpo-volume-suffix">records</span>
+          </div>
+          <span class="hint">How much data this incident actually affects, in total — not a rate, the real figure</span>
+        </div>
+        <div class="field">
+          <label for="rpo-cost">Cost per unit lost</label>
+          <div class="input-group">
+            <select id="rpo-currency" aria-label="Currency">
+              <option value="£">£</option>
+              <option value="$">$</option>
+              <option value="€">€</option>
+            </select>
+            <input type="number" id="rpo-cost" value="8" min="0" step="0.5" />
+            <span class="suffix" id="rpo-cost-suffix">/ record</span>
+          </div>
+          <span class="hint">Rework, lost transactions, compliance exposure per unit lost</span>
+        </div>
+      </div>
+
+      <div class="subsection">
+        <h3>Feeds into recovery time</h3>
+        <p class="sub-lead">More data to restore takes longer at any given throughput — this can push the Restore Execution step in the RTO section above higher than a manual guess would.</p>
+        <div class="field-row">
+          <div class="field">
+            <label for="rto-throughput">Restore throughput</label>
+            <div class="input-group">
+              <input type="number" id="rto-throughput" value="20000" min="0" step="500" />
+              <span class="suffix" id="rto-throughput-suffix">records / hr</span>
+            </div>
+            <span class="hint">How fast your tooling can actually restore this volume</span>
+          </div>
+          <div class="field">
+            <label for="rto-data-restore">Data-driven restore time</label>
+            <div class="input-group readonly">
+              <input type="text" id="rto-data-restore" value="0 hrs" readonly />
+            </div>
+            <span class="hint" id="rto-data-restore-hint">Total data lost ÷ throughput</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="horizon">
+        <div class="horizon-track">
+          <div class="horizon-fill-safe" id="rpo-fill-safe"></div>
+          <div class="horizon-fill-risk" id="rpo-fill-risk"></div>
+          <div class="horizon-line" id="rpo-line"></div>
+        </div>
+        <div class="horizon-labels">
+          <span>0 hrs</span>
+          <span id="rpo-max-label">12 hrs</span>
+        </div>
+      </div>
+
+      <div class="result-row">
+        <div class="result-card gap">
+          <p class="label">Gap beyond promise</p>
+          <p class="value" id="rpo-gap">0 hrs</p>
+        </div>
+        <div class="result-card cost">
+          <p class="label">Exposure cost</p>
+          <p class="value" id="rpo-cost-out">£0</p>
+        </div>
+      </div>
+      <p class="hint" id="rpo-cost-basis" style="margin-top:8px;"></p>
+
+      <div class="verdict" id="rpo-verdict" aria-live="polite"></div>
+    </div>
+
+    <!-- Total -->
+    <div class="total-panel">
+      <p class="label">Combined incident exposure</p>
+      <p class="value" id="total-cost">£0</p>
+      <p class="desc">What one real incident could cost you beyond what your DR plan says it should — based on the gap between promise and reality, weighted by data volume, above.</p>
+      <p class="pain" id="pain-line"></p>
+    </div>
+
+    <div class="panel" style="text-align:center; padding:24px;">
+      <p style="font-size:14px; color:var(--text-muted); margin:0 0 12px;">Know your numbers — now find out how ready you actually are to hit them.</p>
+      <a class="btn primary" id="send-to-recoverly" href="/recoverly/" style="display:inline-flex;">Take the full readiness assessment in Recoverly &rarr;</a>
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="links">
+      <a href="https://therecoveryarchnotebook.substack.com/p/the-clock-is-ticking-calculating" target="_blank" rel="noopener">Read the full breakdown →</a>
+      <a href="/recoverly/" target="_blank" rel="noopener">Recoverly — data recovery maturity assessment &rarr;</a>
+      <a href="/schema-explorer/" target="_blank" rel="noopener">Schema Explorer — what breaks if you delete this? &rarr;</a>
+      <a href="/tabletop/" target="_blank" rel="noopener">Tabletop — Incident Command practice exercise &rarr;</a>
+      <a href="/agent-impact/" target="_blank" rel="noopener">Agent-Impact — AI agent Blast Radius &amp; guardrail simulator &rarr;</a>
+      <a href="https://krismccabe.com" target="_blank" rel="noopener">krismccabe.com</a>
+      <a href="https://therecoveryarchnotebook.substack.com" target="_blank" rel="noopener">The Recovery Architect's Notebook</a>
+    </div>
+    <p class="disclaimer">An independent tool by Kris McCabe. Scenario timings, data volumes, and tolerance thresholds are indicative estimates to aid discussion, not a substitute for a formal Business Impact Analysis. Regulatory notification deadlines vary significantly by jurisdiction, sector, and data type — the regimes listed are a small, common sample, not an exhaustive list, and nothing here is legal advice on your specific breach notification obligations. Not affiliated with or endorsed by Salesforce or any named vendor.</p>
+  </footer>
+
+<script>
+  const SCENARIOS = [
+    {
+      id: 'ransomware', name: 'Ransomware attack', desc: 'Encrypted systems, dwell time before detection',
+      phases: { detect: 4, triage: 2, locate: 6, restore: 10, validate: 3 },
+      rtoPromised: 4, downtimeCost: 8000, rtoMTD: 24, restoreThroughput: 8000,
+      rpoPromised: 1, rpoActual: 24, unit: 'records', volume: 115000, costPerUnit: 8
+    },
+    {
+      id: 'deletion', name: 'Accidental mass deletion', desc: 'Fast to notice, quick to restore',
+      phases: { detect: 0.5, triage: 0.5, locate: 1, restore: 2.5, validate: 1 },
+      rtoPromised: 4, downtimeCost: 5000, rtoMTD: 12, restoreThroughput: 10000,
+      rpoPromised: 1, rpoActual: 2, unit: 'records', volume: 2000, costPerUnit: 3
+    },
+    {
+      id: 'integration', name: 'Bad integration sync', desc: 'Silent data corruption, slow to detect',
+      phases: { detect: 18, triage: 2, locate: 4, restore: 5, validate: 3 },
+      rtoPromised: 8, downtimeCost: 6000, rtoMTD: 24, restoreThroughput: 6000,
+      rpoPromised: 2, rpoActual: 20, unit: 'records', volume: 144000, costPerUnit: 5
+    },
+    {
+      id: 'outage', name: 'Cloud region outage', desc: 'Fast alerting, failover not restore',
+      phases: { detect: 0.25, triage: 0.5, locate: 0.5, restore: 2, validate: 1 },
+      rtoPromised: 2, downtimeCost: 10000, rtoMTD: 4, restoreThroughput: 100,
+      rpoPromised: 0.25, rpoActual: 1, unit: 'GB', volume: 40, costPerUnit: 40
+    }
+  ];
+
+  const REGIMES = {
+    gdpr: { name: 'GDPR / UK GDPR', hours: 72 },
+    pdpa: { name: 'Singapore PDPA', hours: 72 },
+    hipaa: { name: 'HIPAA (US)', hours: 1440 }
+  };
+
+  const grid = document.getElementById('scenario-grid');
+  SCENARIOS.forEach(s => {
+    const btn = document.createElement('button');
+    btn.className = 'scenario-btn';
+    btn.type = 'button';
+    btn.innerHTML = '<span class="name">' + s.name + '</span><span class="desc">' + s.desc + '</span>';
+    btn.addEventListener('click', () => applyScenario(s, btn));
+    grid.appendChild(btn);
+  });
+
+  function applyScenario(s, btn) {
+    document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    document.getElementById('phase-detect').value = s.phases.detect;
+    document.getElementById('phase-triage').value = s.phases.triage;
+    document.getElementById('phase-locate').value = s.phases.locate;
+    document.getElementById('phase-restore').value = s.phases.restore;
+    document.getElementById('phase-validate').value = s.phases.validate;
+    document.getElementById('rto-promised').value = s.rtoPromised;
+    document.getElementById('rto-cost').value = s.downtimeCost;
+    document.getElementById('rto-mtd').value = s.rtoMTD;
+    document.getElementById('rto-throughput').value = s.restoreThroughput;
+    document.getElementById('rpo-promised').value = s.rpoPromised;
+    document.getElementById('rpo-actual').value = s.rpoActual;
+    document.getElementById('rpo-unit').value = s.unit;
+    document.getElementById('rpo-volume').value = s.volume;
+    document.getElementById('rpo-cost').value = s.costPerUnit;
+    updateUnitSuffixes();
+
+    updateAll();
+  }
+
+  function fmtMoney(currency, n) {
+    n = Math.round(n);
+    return currency + n.toLocaleString('en-GB');
+  }
+  function fmtHours(n) {
+    n = Math.round(n * 10) / 10;
+    if (n >= 48) {
+      const days = Math.round((n / 24) * 10) / 10;
+      return days + (days === 1 ? ' day' : ' days');
+    }
+    return n + (n === 1 ? ' hr' : ' hrs');
+  }
+  function fmtVolume(n, unit) {
+    n = Math.round(n);
+    return n.toLocaleString('en-GB') + ' ' + unit;
+  }
+  function painLine(hours) {
+    if (hours <= 0) return '';
+    if (hours < 2) return 'That gap alone is longer than most people\'s lunch break.';
+    if (hours < 8) return 'That gap alone eats a full working day.';
+    if (hours < 24) return 'That gap alone runs past a full 24-hour cycle — someone\'s phone won\'t stop ringing.';
+    if (hours < 72) return 'That gap alone is the better part of a working week.';
+    return 'That gap alone runs well past a week.';
+  }
+
+  const regRegime = document.getElementById('reg-regime');
+  const regCustomWrap = document.getElementById('reg-custom-wrap');
+  const regCustomHours = document.getElementById('reg-custom-hours');
+  const regActive = document.getElementById('reg-clock-active');
+  regRegime.addEventListener('change', () => {
+    regCustomWrap.style.display = regRegime.value === 'custom' ? 'block' : 'none';
+    updateAll();
+  });
+  regCustomHours.addEventListener('input', updateAll);
+
+  const rpoUnit = document.getElementById('rpo-unit');
+  function updateUnitSuffixes() {
+    const unit = rpoUnit.value;
+    const volumeSuffix = document.getElementById('rpo-volume-suffix');
+    const costSuffix = document.getElementById('rpo-cost-suffix');
+    const throughputSuffix = document.getElementById('rto-throughput-suffix');
+    if (unit === 'GB') {
+      volumeSuffix.textContent = 'GB';
+      costSuffix.textContent = '/ GB';
+      throughputSuffix.textContent = 'GB / hr';
+    } else {
+      volumeSuffix.textContent = 'records';
+      costSuffix.textContent = '/ record';
+      throughputSuffix.textContent = 'records / hr';
+    }
+  }
+  rpoUnit.addEventListener('change', () => { updateUnitSuffixes(); updateAll(); });
+
+  function calcRTO() {
+    const detect = parseFloat(document.getElementById('phase-detect').value) || 0;
+    const triage = parseFloat(document.getElementById('phase-triage').value) || 0;
+    const locate = parseFloat(document.getElementById('phase-locate').value) || 0;
+    const restore = parseFloat(document.getElementById('phase-restore').value) || 0;
+    const validate = parseFloat(document.getElementById('phase-validate').value) || 0;
+
+    // Data volume affected feeds recovery TIME, not just RPO cost: more data
+    // to restore takes longer at any given throughput, so the effective
+    // restore step is whichever is larger — your manual estimate, or what
+    // the volume actually demands.
+    const volumeAtRiskForRTO = Math.max(0, parseFloat(document.getElementById('rpo-volume').value) || 0);
+    const throughput = Math.max(0, parseFloat(document.getElementById('rto-throughput').value) || 0);
+    const dataDrivenRestore = throughput > 0 ? volumeAtRiskForRTO / throughput : 0;
+    const effectiveRestore = Math.max(restore, dataDrivenRestore);
+
+    document.getElementById('rto-data-restore').value = fmtHours(dataDrivenRestore);
+    const dataRestoreHint = document.getElementById('rto-data-restore-hint');
+    const restoreNote = document.getElementById('rto-restore-note');
+    if (dataDrivenRestore > restore) {
+      dataRestoreHint.innerHTML = '<strong>Exceeds your ' + fmtHours(restore) + ' estimate</strong> — at this volume and throughput, restore alone needs at least this long. Used in the total below.';
+      restoreNote.innerHTML = 'Restore Execution above is effectively <strong>' + fmtHours(dataDrivenRestore) + '</strong> once the data volume is accounted for — see "Feeds into recovery time" in the RPO section below.';
+    } else {
+      dataRestoreHint.textContent = 'Total data lost ÷ throughput — currently within your restore estimate above';
+      restoreNote.textContent = '';
+    }
+
+    const actual = detect + triage + locate + effectiveRestore + validate;
+
+    document.getElementById('phase-total-label').textContent = 'Total: ' + fmtHours(actual);
+    document.getElementById('rto-actual').value = fmtHours(actual);
+
+    const cost = Math.max(0, parseFloat(document.getElementById('rto-cost').value) || 0);
+    const currency = document.getElementById('rto-currency').value;
+    const promised = Math.max(0, parseFloat(document.getElementById('rto-promised').value) || 0);
+    const mtd = Math.max(0, parseFloat(document.getElementById('rto-mtd').value) || 0);
+
+    const gap = Math.max(0, actual - promised);
+    const exposure = gap * cost;
+
+    renderHorizonRTO(promised, actual, mtd);
+
+    document.getElementById('rto-gap').textContent = fmtHours(gap);
+    document.getElementById('rto-cost-out').textContent = fmtMoney(currency, exposure);
+
+    const verdict = document.getElementById('rto-verdict');
+    verdict.classList.remove('risk', 'safe', 'severe');
+    if (mtd < promised) {
+      verdict.classList.add('severe');
+      verdict.innerHTML = '<strong>The promise itself is unsafe.</strong> Your promised RTO (' + fmtHours(promised) + ') already sits beyond your own Maximum Tolerable Downtime (' + fmtHours(mtd) + ') — the target needs revisiting before technology is even the issue.';
+    } else if (gap === 0) {
+      verdict.classList.add('safe');
+      verdict.innerHTML = '<strong>On target.</strong> Your realistic figure meets what you\'ve promised — the discipline is in keeping it tested that way.';
+    } else if (actual > mtd) {
+      verdict.classList.add('severe');
+      verdict.innerHTML = '<strong>Beyond maximum tolerable downtime.</strong> This isn\'t just an SLA miss — recovery runs ' + fmtHours(actual - mtd) + ' past the point the business said it could survive.';
+    } else if (gap <= promised * 0.5 || gap <= 1) {
+      verdict.innerHTML = '<strong>Small gap, still real money.</strong> ' + fmtHours(gap) + ' beyond promise is easy to overlook until it\'s the hour that matters.';
+    } else {
+      verdict.classList.add('risk');
+      verdict.innerHTML = '<strong>Significant exposure.</strong> Reality is running ' + fmtHours(gap) + ' past what\'s promised, but still within tolerance — worth knowing before an incident tells you, not during one.';
+    }
+
+    // Regulatory clock
+    const regimeKey = regRegime.value;
+    if (regimeKey === 'none') {
+      regActive.style.display = 'none';
+    } else {
+      regActive.style.display = 'block';
+      let deadlineHours, regimeName;
+      if (regimeKey === 'custom') {
+        deadlineHours = Math.max(0, parseFloat(regCustomHours.value) || 0);
+        regimeName = 'Custom deadline';
+      } else {
+        deadlineHours = REGIMES[regimeKey].hours;
+        regimeName = REGIMES[regimeKey].name;
+      }
+      const regPct = deadlineHours > 0 ? Math.min(100, (actual / deadlineHours) * 100) : 0;
+      const fill = document.getElementById('reg-clock-fill');
+      const pctLabel = document.getElementById('reg-clock-pct');
+      const nameLabel = document.getElementById('reg-clock-name');
+      const note = document.getElementById('reg-clock-note');
+      nameLabel.textContent = regimeName + ' (' + fmtHours(deadlineHours) + ')';
+      fill.style.width = regPct + '%';
+      let color;
+      if (actual > deadlineHours) color = 'var(--risk)';
+      else if (actual > deadlineHours * 0.5) color = 'var(--amber)';
+      else color = 'var(--safe)';
+      fill.style.background = color;
+      if (actual > deadlineHours) {
+        pctLabel.style.color = 'var(--risk)';
+        pctLabel.textContent = 'Over by ' + fmtHours(actual - deadlineHours);
+        note.style.background = 'var(--risk-bg)';
+        note.style.color = 'var(--risk)';
+        note.innerHTML = '<strong>Past the deadline.</strong> Your realistic recovery time runs ' + fmtHours(actual - deadlineHours) + ' beyond the ' + regimeName + ' notification window — you could still be mid-recovery when that clock runs out.';
+      } else {
+        pctLabel.style.color = color;
+        pctLabel.textContent = Math.round(regPct) + '%';
+        note.style.background = 'var(--surface-2)';
+        note.style.color = 'var(--text)';
+        note.innerHTML = 'Your realistic recovery time uses <strong>' + Math.round(regPct) + '%</strong> of the ' + regimeName + ' notification window, if this incident counts as a notifiable breach under that regime.';
+      }
+    }
+
+    return { exposure, gap, actual, mtd, promised, mtdBreached: actual > mtd };
+  }
+
+  function calcRPO() {
+    const promised = Math.max(0, parseFloat(document.getElementById('rpo-promised').value) || 0);
+    const actual = Math.max(0, parseFloat(document.getElementById('rpo-actual').value) || 0);
+    const unit = rpoUnit.value;
+    const volumeAtRisk = Math.max(0, parseFloat(document.getElementById('rpo-volume').value) || 0);
+    const costPerUnit = Math.max(0, parseFloat(document.getElementById('rpo-cost').value) || 0);
+    const currency = document.getElementById('rpo-currency').value;
+
+    const gap = Math.max(0, actual - promised);
+    const exposure = volumeAtRisk * costPerUnit;
+
+    renderHorizon('rpo', promised, actual);
+
+    document.getElementById('rpo-gap').textContent = fmtHours(gap);
+    document.getElementById('rpo-cost-out').textContent = fmtMoney(currency, exposure);
+    document.getElementById('rpo-cost-basis').textContent = 'Based on ' + fmtVolume(volumeAtRisk, unit) + ' at ' + fmtMoney(currency, costPerUnit) + ' ' + (unit === 'GB' ? '/ GB' : '/ record');
+
+    // This verdict is purely about the TIME promise (Promised vs Realistic
+    // RPO) — it deliberately says nothing about volume or cost, since those
+    // are set independently now and could otherwise contradict it (e.g.
+    // claiming "on target" while a large, unrelated cost sits right next to it).
+    const verdict = document.getElementById('rpo-verdict');
+    verdict.classList.remove('risk', 'safe', 'severe');
+    if (gap === 0) {
+      verdict.classList.add('safe');
+      verdict.innerHTML = '<strong>On target.</strong> Your realistic figure meets what you\'ve promised — though any data within that window still has a real cost, shown below.';
+    } else if (gap <= promised * 0.5 || gap <= 1) {
+      verdict.innerHTML = '<strong>Small gap, still worth watching.</strong> ' + fmtHours(gap) + ' beyond promise is easy to overlook until it\'s the hour that matters.';
+    } else {
+      verdict.classList.add('risk');
+      verdict.innerHTML = '<strong>Significant exposure.</strong> Reality is running ' + fmtHours(gap) + ' past what\'s promised — worth knowing before an incident tells you, not during one.';
+    }
+
+    return { exposure, gap, actual, promised, volumeAtRisk, unit, costPerUnit };
+  }
+
+  function renderHorizon(prefix, promised, actual) {
+    const fillSafe = document.getElementById(prefix + '-fill-safe');
+    const fillRisk = document.getElementById(prefix + '-fill-risk');
+    const line = document.getElementById(prefix + '-line');
+    const maxLabel = document.getElementById(prefix + '-max-label');
+
+    const barMax = Math.max(actual, promised, 1) * 1.15;
+    const promisedPct = (promised / barMax) * 100;
+    const actualPct = (actual / barMax) * 100;
+    const safePct = Math.min(promisedPct, actualPct);
+    const riskStart = Math.min(promisedPct, actualPct);
+    const riskWidth = Math.max(0, actualPct - promisedPct);
+
+    fillSafe.style.width = safePct + '%';
+    fillRisk.style.left = riskStart + '%';
+    fillRisk.style.width = riskWidth + '%';
+    line.style.left = promisedPct + '%';
+    maxLabel.textContent = fmtHours(Math.round(barMax));
+  }
+
+  function renderHorizonRTO(promised, actual, mtd) {
+    const fillSafe = document.getElementById('rto-fill-safe');
+    const fillRisk = document.getElementById('rto-fill-risk');
+    const fillSevere = document.getElementById('rto-fill-severe');
+    const line = document.getElementById('rto-line');
+    const mtdLine = document.getElementById('rto-mtd-line');
+    const maxLabel = document.getElementById('rto-max-label');
+
+    const barMax = Math.max(actual, promised, mtd, 1) * 1.15;
+    const promisedPct = (promised / barMax) * 100;
+    const actualPct = (actual / barMax) * 100;
+    const mtdPct = (mtd / barMax) * 100;
+
+    const safePct = Math.min(promisedPct, actualPct);
+    const normalStart = Math.min(promisedPct, actualPct);
+    const normalEnd = Math.min(actualPct, Math.max(promisedPct, mtdPct));
+    const normalWidth = Math.max(0, normalEnd - normalStart);
+    const severeStart = Math.max(promisedPct, mtdPct) <= actualPct ? Math.max(promisedPct, mtdPct) : actualPct;
+    const severeWidth = Math.max(0, actualPct - severeStart);
+
+    fillSafe.style.width = safePct + '%';
+    fillRisk.style.left = normalStart + '%';
+    fillRisk.style.width = normalWidth + '%';
+    fillSevere.style.left = severeStart + '%';
+    fillSevere.style.width = severeWidth + '%';
+    line.style.left = promisedPct + '%';
+    mtdLine.style.left = mtdPct + '%';
+    maxLabel.textContent = fmtHours(Math.round(barMax));
+  }
+
+  function updateAll() {
+    const rto = calcRTO();
+    const rpo = calcRPO();
+    const totalExposure = rto.exposure + rpo.exposure;
+    const totalGap = rto.gap + rpo.gap;
+    const currency = document.getElementById('rto-currency').value;
+
+    document.getElementById('total-cost').textContent = fmtMoney(currency, totalExposure);
+    document.getElementById('pain-line').textContent = painLine(totalGap);
+
+    // Pass the full breakdown through to Recoverly — not just the headline
+    // number, so its Response Plan can show a real, complete cost-of-downtime
+    // picture rather than one summary figure standing in for all of it.
+    const rtoPromisedVal = document.getElementById('rto-promised').value;
+    const rpoPromisedVal = document.getElementById('rpo-promised').value;
+    const rtoText = rtoPromisedVal ? rtoPromisedVal + ' hours' : '';
+    const rpoText = rpoPromisedVal ? rpoPromisedVal + ' hours' : '';
+    const activeScenarioBtn = document.querySelector('.scenario-btn.active .name');
+    const scenarioName = activeScenarioBtn ? activeScenarioBtn.textContent : '';
+    const params = new URLSearchParams();
+    if (rtoText) params.set('rto', rtoText);
+    if (rpoText) params.set('rpo', rpoText);
+    if (totalExposure > 0) params.set('exposure', fmtMoney(currency, totalExposure));
+    if (scenarioName) params.set('scenario', scenarioName);
+    if (rto.actual > 0) params.set('rtoRealistic', fmtHours(rto.actual));
+    if (rto.gap > 0) params.set('rtoGap', fmtHours(rto.gap));
+    if (rto.exposure > 0) params.set('rtoCost', fmtMoney(currency, rto.exposure));
+    if (rto.mtd > 0) params.set('mtd', fmtHours(rto.mtd));
+    params.set('mtdBreached', rto.mtdBreached ? '1' : '0');
+    if (rpo.actual > 0) params.set('rpoRealistic', fmtHours(rpo.actual));
+    if (rpo.gap > 0) params.set('rpoGap', fmtHours(rpo.gap));
+    if (rpo.exposure > 0) params.set('rpoCost', fmtMoney(currency, rpo.exposure));
+    if (rpo.volumeAtRisk > 0) params.set('dataVolume', fmtVolume(rpo.volumeAtRisk, rpo.unit));
+    const link = document.getElementById('send-to-recoverly');
+    link.href = '/recoverly/' + (params.toString() ? '?' + params.toString() : '');
+  }
+
+  document.querySelectorAll(
+    '#phase-detect, #phase-triage, #phase-locate, #phase-restore, #phase-validate, ' +
+    '#rto-cost, #rto-currency, #rto-promised, #rto-mtd, #rto-throughput, ' +
+    '#rpo-promised, #rpo-actual, #rpo-volume, #rpo-cost, #rpo-currency'
+  ).forEach(el => el.addEventListener('input', updateAll));
+
+  // Traceability handoff: a dependency-chain recovery time (a genuine
+  // Critical Path Method figure, not a fabricated one) can arrive as
+  // ?depRestoreHours=&depNote=, pre-filling the Restore Execution phase -
+  // the honest place for "this can't be restored until its prerequisites
+  // are" to actually change the numbers, rather than sitting unused.
+  (function loadTraceabilityHandoff() {
+    const params = new URLSearchParams(location.search);
+    const hours = parseFloat(params.get('depRestoreHours'));
+    const note = params.get('depNote');
+    if (!isFinite(hours) || hours <= 0) return;
+    document.getElementById('phase-restore').value = Math.round(hours * 100) / 100;
+    const noteEl = document.getElementById('dep-chain-note');
+    noteEl.style.display = 'block';
+    noteEl.innerHTML = '<strong>Pre-filled from Traceability:</strong> ' + (note || 'a dependency chain sets this system’s minimum restore time.') + ' <a href="/traceability/">Back to Traceability &rarr;</a>';
+  })();
+
+  updateUnitSuffixes();
+  updateAll();
+</script>
+
+</body>
+</html>

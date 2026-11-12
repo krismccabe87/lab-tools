@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<!-- Apply a stored theme choice before first paint, so there's no flash
+     of the wrong theme while lab-theme.js is still loading. -->
+<script>
+(function(){try{var t=localStorage.getItem('lab-theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();
+</script>
+<!-- Google Analytics - only loads after cookie consent, see banner script below -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  function loadGoogleAnalytics(){
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-QE309XG3DJ';
+    document.head.appendChild(s);
+    gtag('js', new Date());
+    gtag('config', 'G-QE309XG3DJ');
+  }
+</script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tabletop — Incident Command Practice Exercise | Kris McCabe</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon-16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="description" content="A live tabletop exercise for practising Incident Command during a data-loss crisis — pick a scenario, assign roles, work through it as a team, score yourselves against real Incident Command practice." />
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Kris's Lab">
+<meta property="og:title" content="Tabletop — Incident Command Practice Exercise">
+<meta property="og:description" content="A live tabletop exercise for practising Incident Command during a data-loss crisis — pick a scenario, assign roles, work through it as a team, score yourselves against real Incident Command practice.">
+<meta property="og:url" content="https://lab.krismccabe.com/tabletop/">
+<meta property="og:image" content="https://lab.krismccabe.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Tabletop — Incident Command Practice Exercise">
+<meta name="twitter:description" content="A live tabletop exercise for practising Incident Command during a data-loss crisis — pick a scenario, assign roles, work through it as a team, score yourselves against real Incident Command practice.">
+<meta name="twitter:image" content="https://lab.krismccabe.com/og-image.png">
+<link rel="stylesheet" href="/assets/lab.css?v=6">
+<script src="/assets/lab-theme.js?v=1" defer></script>
+<style>
+  .lab-header-inner { max-width: 900px; display:flex; align-items:center; justify-content:space-between; }
+
+  .hero { padding: 48px 24px 40px; }
+  .hero h1 { color: #fff; font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 800; letter-spacing: -0.02em; margin: 0 0 14px; max-width: 640px; margin-left: auto; margin-right: auto; }
+  .hero p { color: #94A3B8; font-size: 15px; max-width: 560px; margin: 0 auto; }
+
+  .wrap { max-width: 900px; margin: 0 auto; padding: 24px 20px 64px; }
+  @media (min-width: 1024px) {
+    .lab-header-inner, .wrap, footer { max-width: 1180px; }
+  }
+  .panel h2 { font-size: 17px; font-weight: 700; color: var(--text); margin: 0 0 4px; }
+  .panel .sub { font-size: 13px; color: var(--text-muted); margin: 0 0 18px; }
+
+  .scenario-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px,1fr)); gap: 12px; }
+  .scenario-btn { border: 1px solid var(--border); background: var(--surface); border-radius: 10px; padding: 16px; text-align: left; cursor: pointer; font-family: inherit; transition: border-color 0.15s ease, box-shadow 0.15s ease; }
+  .scenario-btn:hover { border-color: var(--accent); box-shadow: 0 4px 12px rgba(37,99,235,0.1); }
+  .decision-card.chosen { border-color: var(--text); background: var(--navy); color: #fff; box-shadow: none; }
+  .decision-card.chosen .name, .decision-card.chosen .desc { color: #fff; }
+  .scenario-btn .name { display: block; font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .scenario-btn .desc { display: block; font-size: 12px; color: var(--text-muted); line-height: 1.4; }
+  .btn-primary { background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .btn-primary:hover { background: var(--accent-hv); }
+  .btn-ghost { background: var(--panel-bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 10px 20px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit; }
+  .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+  .role-row { display: grid; grid-template-columns: 160px 1fr; gap: 12px; align-items: center; margin-bottom: 10px; }
+  .role-row label { font-size: 13px; font-weight: 700; color: var(--text); }
+  .role-row input { padding: 8px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 13px; }
+
+  .stage-marker { display: flex; gap: 6px; margin-bottom: 20px; }
+  .stage-dot { flex: 1; height: 6px; border-radius: 3px; background: var(--border); }
+  .stage-dot.done { background: var(--accent); }
+  .stage-dot.current { background: var(--navy); }
+  .stage-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 8px; }
+  .narrative-box { background: var(--surface-2); border-left: 4px solid var(--navy); border-radius: 8px; padding: 16px 18px; margin-bottom: 18px; font-size: 14px; }
+  .complication-box { background: var(--risk-bg); border-left: 4px solid var(--risk); border-radius: 8px; padding: 16px 18px; margin-bottom: 18px; font-size: 14px; }
+  .complication-box strong { color:var(--risk); }
+  .prompt-list { font-size: 13px; margin: 0 0 14px; padding-left: 20px; color: var(--text); }
+  .prompt-list li { margin-bottom: 6px; }
+  /* background/color explicit, not left to the browser default - a plain
+     <textarea> renders its own white background regardless of page theme
+     otherwise, confirmed as a stray solid-white box against the dark
+     palette. */
+  .notes-area { width: 100%; min-height: 90px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 13px; margin-bottom: 18px; background: var(--input-bg); color: var(--text); }
+
+  .rubric-item { display: flex; align-items: flex-start; gap: 12px; padding: 12px 14px; border-radius: 8px; background: var(--surface-2); margin-bottom: 10px; }
+  .rubric-item input[type="checkbox"] { margin-top: 3px; width: 18px; height: 18px; flex-shrink: 0; }
+  .rubric-item .rubric-text { font-size: 13px; }
+  .rubric-item .rubric-why { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+  .history-box { background: var(--surface-2); border-radius: 10px; padding: 16px 18px; margin-bottom: 18px; }
+  .history-empty { font-size: 13px; color: var(--text-muted); }
+  .trend-bars { display: flex; align-items: flex-end; gap: 4px; height: 40px; margin: 10px 0; }
+  .trend-bar { flex: 1; background: var(--accent); border-radius: 3px 3px 0 0; min-height: 3px; }
+  .history-run-row { display: flex; justify-content: space-between; font-size: 12px; padding: 6px 0; border-bottom: 1px solid var(--border); }
+  .gap-flag { font-size: 12px; background: var(--risk-bg); color:var(--risk); padding: 8px 12px; border-radius: 6px; margin-top: 8px; }
+
+  footer { max-width: 900px; }
+  footer .disclaimer { max-width: 640px; }
+
+  @media (max-width: 640px) { .panel { padding: 20px; } .role-row { grid-template-columns: 1fr; } }
+
+  /* The print button existed but had no print stylesheet at all - it just
+     printed whatever the browser happened to be showing, header/hero/nav
+     included. This scopes a real printed record down to the actual summary
+     content. */
+  @media print {
+    .no-print { display: none !important; }
+    body { background: #fff; }
+    .wrap { margin-top: 0; padding-top: 24px; }
+    .panel { box-shadow: none; border: 1px solid #ccc; }
+  }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Tabletop — Incident Command Practice Exercise",
+  "description": "A live tabletop exercise for practising Incident Command during a data-loss crisis — pick a scenario, assign roles, work through it as a team, score yourselves against real Incident Command practice.",
+  "url": "https://lab.krismccabe.com/tabletop/",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Any (runs in browser)",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "author": {
+    "@type": "Person",
+    "name": "Kris McCabe",
+    "url": "https://krismccabe.com/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/assets/swiss.css?v=5">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to content</a>
+
+<div class="cookie-banner" id="cookie-banner" role="dialog" aria-label="Cookie consent">
+  <p>This site uses Google Analytics to understand how the tools are used. Nothing loads or is tracked until you accept.</p>
+  <div class="cookie-banner-actions">
+    <button type="button" id="cookie-decline" class="btn small">Decline</button>
+    <button type="button" id="cookie-accept" class="btn primary small">Accept</button>
+  </div>
+</div>
+<script>
+(function(){
+  var consent = localStorage.getItem('cookie-consent');
+  if (consent === 'granted') { loadGoogleAnalytics(); return; }
+  if (consent === 'denied') { return; }
+  var banner = document.getElementById('cookie-banner');
+  banner.style.display = 'flex';
+  document.getElementById('cookie-accept').addEventListener('click', function(){
+    localStorage.setItem('cookie-consent', 'granted');
+    banner.style.display = 'none';
+    loadGoogleAnalytics();
+  });
+  document.getElementById('cookie-decline').addEventListener('click', function(){
+    localStorage.setItem('cookie-consent', 'denied');
+    banner.style.display = 'none';
+  });
+})();
+</script>
+
+  <header class="lab-header no-print">
+    <div class="lab-header-inner">
+      <a class="lab-back" href="/">&#8592; Kris's Lab</a>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" aria-pressed="false">
+          <svg class="icon-sun" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.5"/>
+            <path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12h2.5M19 12h2.5M4.2 19.8l1.8-1.8M18 6l1.8-1.8"/>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 14.2A8.5 8.5 0 1 1 9.8 4a7 7 0 0 0 10.2 10.2Z"/>
+          </svg>
+        </button>
+        <span style="display:flex; align-items:center; gap:8px; color:#fff; font-weight:700; font-size:14px;">
+        <svg viewBox="0 0 40 40" width="26" height="26" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="7" y="7" width="26" height="26" rx="1.5" fill="none" stroke="#93C5FD" stroke-width="1.8"/>
+          <line x1="15.7" y1="7" x2="15.7" y2="33" stroke="#93C5FD" stroke-width="1.3"/>
+          <line x1="24.3" y1="7" x2="24.3" y2="33" stroke="#93C5FD" stroke-width="1.3"/>
+          <line x1="7" y1="15.7" x2="33" y2="15.7" stroke="#93C5FD" stroke-width="1.3"/>
+          <line x1="7" y1="24.3" x2="33" y2="24.3" stroke="#93C5FD" stroke-width="1.3"/>
+          <rect x="24.7" y="7.4" width="8" height="8" fill="#DC2626" opacity="0.18"/>
+          <path d="M28.7 9.4 L30.7 11.4 M30.7 9.4 L28.7 11.4" stroke="#DC2626" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="11.3" cy="24.6" r="2.3" fill="#2563EB"/>
+          <path d="M 8.6 31.2 L 9.5 27 L 13.1 27 L 14 31.2 Z" fill="#2563EB"/>
+        </svg>
+        Tabletop
+      </span>
+      </div>
+    </div>
+  </header>
+
+  <div class="hero no-print" id="main-content">
+    <svg viewBox="0 0 40 40" width="52" height="52" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="margin-bottom:16px;">
+      <rect x="7" y="7" width="26" height="26" rx="1.5" fill="none" stroke="#93C5FD" stroke-width="1.8"/>
+      <line x1="15.7" y1="7" x2="15.7" y2="33" stroke="#93C5FD" stroke-width="1.3"/>
+      <line x1="24.3" y1="7" x2="24.3" y2="33" stroke="#93C5FD" stroke-width="1.3"/>
+      <line x1="7" y1="15.7" x2="33" y2="15.7" stroke="#93C5FD" stroke-width="1.3"/>
+      <line x1="7" y1="24.3" x2="33" y2="24.3" stroke="#93C5FD" stroke-width="1.3"/>
+      <rect x="24.7" y="7.4" width="8" height="8" fill="#DC2626" opacity="0.18"/>
+      <path d="M28.7 9.4 L30.7 11.4 M30.7 9.4 L28.7 11.4" stroke="#DC2626" stroke-width="1.6" stroke-linecap="round"/>
+      <circle cx="11.3" cy="24.6" r="2.3" fill="#2563EB"/>
+      <path d="M 8.6 31.2 L 9.5 27 L 13.1 27 L 14 31.2 Z" fill="#2563EB"/>
+    </svg>
+    <p class="eyebrow">Free tool &middot; Kris McCabe</p>
+    <h1>Practise Incident Command before you actually need it.</h1>
+    <p>A live tabletop exercise, not a quiz. Pick a scenario, assign roles, work through it as a team as the situation gets messier — then score yourselves against real Incident Command practice.</p>
+  </div>
+
+  <div class="wrap">
+
+    <div class="panel no-print" id="scenario-panel">
+      <h2>Pick a scenario</h2>
+      <p class="sub">Everyone in the room should be seeing this for the first time — read it together, then start.</p>
+      <div id="history-summary"></div>
+      <div class="scenario-grid" id="scenario-grid"></div>
+    </div>
+
+    <div class="panel" id="roles-panel" style="display:none;">
+      <h2>Assemble your team</h2>
+      <p class="sub">The actual Incident Command System's core roles, not made-up titles — Command, Operations, the Public Information Officer, and Planning. Names are just for this session — nothing is saved anywhere.</p>
+      <div id="role-inputs"></div>
+      <button class="btn-primary" id="start-exercise-btn" style="margin-top:8px;">Start the exercise &rarr;</button>
+    </div>
+
+    <div class="panel" id="exercise-panel" style="display:none;"></div>
+
+    <div class="panel" id="rubric-panel" style="display:none;"></div>
+
+  </div>
+
+  <footer class="no-print">
+    <div class="links">
+      <a href="/recoverly/" target="_blank" rel="noopener">Recoverly — data recovery maturity assessment &rarr;</a>
+      <a href="/redline/" target="_blank" rel="noopener">Redline — the True Cost of Downtime calculator &rarr;</a>
+      <a href="/schema-explorer/" target="_blank" rel="noopener">Schema Explorer — what breaks if you delete this? &rarr;</a>
+      <a href="/drillmaker/" target="_blank" rel="noopener">Drillmaker — HSEEP exercise &amp; MSEL generator &rarr;</a>
+      <a href="/traceability/" target="_blank" rel="noopener">Traceability — dependency graph &amp; recovery sequencer &rarr;</a>
+      <a href="/agent-impact/" target="_blank" rel="noopener">Agent-Impact — AI agent Blast Radius &amp; guardrail simulator &rarr;</a>
+      <a href="https://krismccabe.com" target="_blank" rel="noopener">krismccabe.com</a>
+    </div>
+    <p class="disclaimer">An independent tool by Kris McCabe. Grounded in publicly documented incident command principles (the Incident Command System / NIMS, widely adapted into tech incident response by organisations like Google SRE, Atlassian, and PagerDuty) — not derived from any employer's internal or proprietary methodology. This is a practice exercise, not a real incident response plan — pair it with Recoverly's Response Plan for the real thing.</p>
+  </footer>
+
+<script>
+  // ---------------------------------------------------------------
+  // SCENARIO BANK — business-level narrative only, no technical
+  // exploit detail. Each has an initial trigger, a ticking-clock
+  // element, and a complication revealed partway through the exercise
+  // to simulate how real incidents evolve messily, not neatly.
+  // ---------------------------------------------------------------
+  const SCENARIOS = [
+    {
+      id: 'silent-corruption',
+      decisionOverrides: { 0: [
+        { lead: 'Check scope first', text: 'Someone pulls the actual affected record count and checks how far back the bad data goes.', quality: 'strong', consequence: 'Good call — knowing the real scope now means the team isn\'t chasing rumours once more reports come in.' },
+        { lead: 'Everyone checks alone', text: 'Different people each start checking different systems on their own, without comparing notes.', quality: 'weak', consequence: 'By the time everyone compares notes, there are three different theories about what\'s actually wrong — and no one agrees which is right.' },
+        { lead: 'Fix quietly', text: 'One person quietly starts correcting the addresses they can see, without flagging it to the team yet.', quality: 'mixed', consequence: 'The corrections might hold. But if the root cause is still live, those same records could just get overwritten again.' },
+        { lead: 'Assume it\'s minor', text: 'The team decides this is probably just a couple of one-off complaints and doesn\'t investigate yet.', quality: 'harmful', consequence: 'By the next morning, a dozen more customers have reported the same thing — and the team is starting from further behind.' }
+      ],
+      1: [
+        { lead: 'Name one IC', text: 'The team names one Incident Commander, separate from whoever is investigating the actual data issue.', quality: 'strong', consequence: 'Good call — with reports coming in from multiple customers, having one clear decision-maker means the investigation and the customer response don\'t end up working at cross purposes.' },
+        { lead: 'Investigator leads comms too', text: 'The person leading the data investigation also takes charge of deciding what to tell customers.', quality: 'weak', consequence: 'They\'re now tracing corrupted records and managing customer communication at once — one of those two jobs is about to suffer.' },
+        { lead: 'Co-lead informally', text: 'The support lead and the data lead informally agree to co-run this between them.', quality: 'mixed', consequence: 'Reasonable on the surface, but they\'ve already given two different customers two slightly different explanations.' },
+        { lead: 'Nobody takes charge', text: 'Support keeps handling tickets and engineering keeps investigating, in parallel, unconnected.', quality: 'harmful', consequence: 'An hour in, support has told a customer the issue is fixed, while engineering has just found three more affected records.' }
+      ],
+      2: [
+        { lead: 'Adjust scope together', text: 'The team pauses to confirm together that this isn\'t a six-hour glitch but a six-week problem, and adjusts the investigation\'s scope accordingly.', quality: 'strong', consequence: 'Good call — a six-week window means far more records could be affected than anyone assumed a moment ago, and the plan needs to reflect that now, not later.' },
+        { lead: 'Keep the narrow focus', text: 'The team keeps investigating the same handful of recent records it was already looking at.', quality: 'weak', consequence: 'The investigation stays focused on the tip of the iceberg while five and a half weeks of potentially affected records go unchecked.' },
+        { lead: 'Tell only the IC', text: 'Only the person who found this out tells the Incident Commander; the rest of the team keeps working the original, narrower theory.', quality: 'mixed', consequence: 'The IC now knows the real timeline, but the people doing the actual data checks are still working from the old, six-hour assumption.' },
+        { lead: 'Assume it doesn\'t change much', text: 'The team decides six weeks probably doesn\'t change much and continues as before.', quality: 'harmful', consequence: 'Weeks later, records nobody thought to check turn out to be corrupted too — because the real timeline was never actually acted on.' }
+      ],
+      3: [
+        { lead: 'Define scope, assign the draft', text: 'The IC sets a clear objective — determine exactly which customers are affected across the full six-week window — and assigns someone to draft the notification once that\'s known.', quality: 'strong', consequence: 'Good call — by the time the list is confirmed, the notification is already written and ready to send, not something starting from scratch under pressure.' },
+        { lead: 'Agree, but assign nobody', text: 'The team agrees affected customers will need to be told eventually, but doesn\'t set a deadline or assign anyone to draft anything.', quality: 'weak', consequence: 'A day later, the affected list is confirmed, but nobody has actually started writing what to tell them.' },
+        { lead: 'Notify before scope confirmed', text: 'One person starts emailing affected customers directly, before the full six-week scope is confirmed.', quality: 'mixed', consequence: 'Some customers get told before others, based on whoever was identified first — not because their case was actually more urgent.' },
+        { lead: 'Hope it goes unnoticed', text: 'The team decides not to proactively tell customers, hoping the corrected data goes unnoticed.', quality: 'harmful', consequence: 'A customer notices the correction themselves and asks pointedly why they weren\'t told in the first place.' }
+      ],
+      4: [
+        { lead: 'Separate corrector and checker', text: 'The person correcting the records is different from whoever confirms the corrections actually match the real data.', quality: 'strong', consequence: 'Good call — the checker catches two records that were "corrected" to a value that was itself already wrong.' },
+        { lead: 'Self-confirms own work', text: 'The person correcting the records also confirms their own work is right.', quality: 'weak', consequence: 'It looks fixed. Nobody else verified it, so nobody will know if a few records were corrected to the wrong value until a customer notices.' },
+        { lead: 'Alone for hours', text: 'The correction gets done, but the person doing it has now been checking records alone for hours.', quality: 'mixed', consequence: 'The corrections are holding up so far. But there\'s no plan for what happens if this stretches into tomorrow and they need a break.' },
+        { lead: 'Skip checking to go faster', text: 'The corrections go live with no one checking them, to get through the backlog faster.', quality: 'harmful', consequence: 'A batch of records gets corrected incorrectly, creating a second wave of the same complaint.' }
+      ],
+      5: [
+        { lead: 'Confirm scope, schedule AAR', text: 'The team confirms out loud that the corruption is fully addressed across the whole six-week window, and sets a real date to review how a six-week gap went unnoticed.', quality: 'strong', consequence: 'Two weeks later, the review actually happens — and specifically asks why nobody caught this for six weeks, not just how it got fixed.' },
+        { lead: 'Quietly move on', text: 'Once the visible complaints stop coming in, the team quietly moves on to other work.', quality: 'weak', consequence: 'No review ever gets scheduled. The same kind of silent integration failure has every chance of happening again, undetected, for just as long.' },
+        { lead: 'Vague promise', text: 'The team agrees a review should happen at some point to look at monitoring gaps.', quality: 'mixed', consequence: 'It\'s still on someone\'s to-do list a month later, several priorities down from where it started.' },
+        { lead: 'Assign blame', text: 'The closing conversation focuses on which team should have caught this sooner.', quality: 'harmful', consequence: 'Nobody wants to be the one to report a data anomaly next time, for fear of being blamed for not catching it fast enough.' }
+      ],
+      },
+      difficulty: 'foundational',
+      name: 'Silent data corruption',
+      desc: 'A bad integration has been quietly corrupting records for weeks before anyone noticed.',
+      trigger: 'A customer emails support asking why their order history shows the wrong shipping address. Support escalates it as a minor data issue. Within an hour, three more similar reports come in from different customers.',
+      clock: 'Every day this continues, more records get overwritten with bad data — and the good version of some of them is already gone from the retention window.',
+      complication: 'The integration that caused this has been running for six weeks, not six hours. Nobody knows exactly when it started, which means nobody knows how far back "clean" data actually goes.'
+    },
+    {
+      id: 'mass-deletion',
+      decisionOverrides: { 0: [
+        { lead: 'Check the bin first', text: 'Someone immediately checks the Recycle Bin and confirms exactly what was deleted and when.', quality: 'strong', consequence: 'Good call — the Recycle Bin has a limited window, and knowing exactly what\'s in it now avoids losing anything unrecoverable later.' },
+        { lead: 'Restore independently', text: 'A few people start restoring records on their own, without agreeing on what the full deleted set actually is.', quality: 'weak', consequence: 'Two people restore overlapping sets of records without realising it, and now nobody\'s sure what\'s actually been recovered.' },
+        { lead: 'Quiet self-restore', text: 'The developer who ran the script quietly starts restoring records themselves, without telling anyone yet.', quality: 'mixed', consequence: 'It might work. But if something goes wrong, nobody else knows what\'s already been attempted.' },
+        { lead: 'Assume it\'s minor', text: 'The team assumes it\'s just a handful of test records and moves on without checking.', quality: 'harmful', consequence: 'By the time anyone checks properly, the affected records have aged past the recovery window.' }
+      ],
+      1: [
+        { lead: 'Name one IC', text: 'The team names an Incident Commander, separate from the developer whose script caused this.', quality: 'strong', consequence: 'Good call — the person who caused it is often the least objective person to also be directing the response.' },
+        { lead: 'Developer leads recovery', text: 'The developer who ran the script takes charge of the recovery themselves.', quality: 'weak', consequence: 'They\'re now emotionally invested in fixing what they broke, and objectivity about what\'s actually safe to restore is the first casualty.' },
+        { lead: 'Co-lead with manager', text: 'The developer and their manager informally co-lead the response.', quality: 'mixed', consequence: 'Well-intentioned, but the manager is relying entirely on the developer\'s account of what happened, without a second perspective.' },
+        { lead: 'Assume IT will handle it', text: 'Everyone assumes IT will sort it out without anyone formally taking charge.', quality: 'harmful', consequence: 'Forty minutes pass with three different people each assuming someone else is driving the recovery.' }
+      ],
+      2: [
+        { lead: 'Map the dependencies', text: 'The team pauses to map what else might have been dependent on the deleted records, before continuing recovery.', quality: 'strong', consequence: 'Good call — this catches dependent records that would otherwise have been missed entirely by a recovery plan built around the original, narrower assumption.' },
+        { lead: 'Restore the original list only', text: 'The team continues restoring just the originally reported records.', quality: 'weak', consequence: 'The restore looks complete, but several dependent records that were never on anyone\'s radar stay missing.' },
+        { lead: 'Tell only the IC', text: 'Only the Incident Commander is told about the dependent records; the recovery team keeps working the original list.', quality: 'mixed', consequence: 'The IC knows the blast radius is bigger, but the people doing the actual restoring don\'t yet know to look beyond the original list.' },
+        { lead: 'Assume it\'s not important', text: 'The team decides the dependent records are probably not important and moves on.', quality: 'harmful', consequence: 'Reports relying on those dependent records start breaking days later, with no obvious connection back to this incident.' }
+      ],
+      3: [
+        { lead: 'Define done, assign tracking', text: 'The IC sets a clear objective for what \'fully recovered\' actually means, including the dependent records, and assigns someone to track it against that definition.', quality: 'strong', consequence: 'Good call — without a clear definition of done, it\'s easy to declare victory while dependent records are still missing.' },
+        { lead: 'Vague goal, no definition', text: 'The team agrees the goal is to get everything back without defining what that specifically includes.', quality: 'weak', consequence: 'The originally reported records get restored, and the recovery is declared finished — while the dependent records everyone forgot about stay missing.' },
+        { lead: 'Declare done unilaterally', text: 'One person unilaterally decides recovery is complete and tells stakeholders, without checking with the Incident Commander.', quality: 'mixed', consequence: 'Stakeholders are told it\'s resolved while the recovery team is still quietly working through the dependent records.' },
+        { lead: 'Don\'t mention the gap', text: 'The team decides not to mention the dependent-records issue to stakeholders at all.', quality: 'harmful', consequence: 'When those records turn up missing later, it looks like a new, separate problem rather than something already known about.' }
+      ],
+      4: [
+        { lead: 'Separate restorer and checker', text: 'The person restoring the records is different from whoever confirms the restore actually matches what was lost.', quality: 'strong', consequence: 'Good call — the checker catches a batch that restored with the wrong field values, not just the wrong records.' },
+        { lead: 'Self-declares complete', text: 'The person restoring the records also declares the restore complete themselves.', quality: 'weak', consequence: 'It looks done. Nobody else checked, so a handful of records restored with stale data go unnoticed.' },
+        { lead: 'Alone for hours', text: 'The restore gets done, but the person doing it has now been working alone on this for hours.', quality: 'mixed', consequence: 'The restore is going well so far, but there\'s no backup plan if this runs long and they need to step away.' },
+        { lead: 'Rush without checking', text: 'The restore is rushed through without anyone checking it, to close this out quickly.', quality: 'harmful', consequence: 'Several records restore with the wrong version of the data, creating a second, quieter problem behind the first.' }
+      ],
+      5: [
+        { lead: 'Confirm scope, schedule AAR', text: 'The team confirms out loud that all records, including the dependent ones, are genuinely restored, and sets a real date to review how the script reached production.', quality: 'strong', consequence: 'Two weeks later, the review happens — and specifically asks how a cleanup script meant for a sandbox reached production at all.' },
+        { lead: 'Quietly move on', text: 'Once the visible records are back, the team quietly moves on.', quality: 'weak', consequence: 'No review ever gets scheduled, and the process gap that let a sandbox script run in production stays wide open.' },
+        { lead: 'Vague promise', text: 'The team agrees a review should happen at some point to look at script permissions.', quality: 'mixed', consequence: 'It\'s still on someone\'s to-do list a month later, several priorities down from where it started.' },
+        { lead: 'Assign blame', text: 'The closing conversation focuses on the developer who ran the script.', quality: 'harmful', consequence: 'That developer, and probably others, become far more reluctant to flag their own mistakes quickly next time.' }
+      ],
+      },
+      difficulty: 'foundational',
+      name: 'Accidental mass deletion',
+      desc: 'A bulk operation intended for a test environment ran against production instead.',
+      trigger: 'A developer runs a cleanup script to delete test records. Twenty minutes later, a sales rep reports that an entire quarter\'s worth of real customer deals has vanished from their pipeline view.',
+      clock: 'Whatever soft-delete or recycle-bin window your platform provides is limited, and some of the deleted records are already old enough that permanent deletion could be imminent.',
+      complication: 'The script also deleted several other record types that were structurally dependent on the ones deleted first — meaning the actual blast radius is much larger than the original report, and nobody has mapped it yet.'
+    },
+    {
+      id: 'ransomware',
+      decisionOverrides: { 0: [
+        { lead: 'Confirm what\'s encrypted', text: 'Someone confirms exactly which systems are actually encrypted versus just disconnected, before anything else.', quality: 'strong', consequence: 'Good call — this determines whether legal and security need to be looped in immediately, or if it\'s a smaller issue.' },
+        { lead: 'Investigate separately', text: 'IT and the data team each start investigating on their own, without comparing what they\'re each finding.', quality: 'weak', consequence: 'IT treats it as a hardware problem while the data team treats it as a sync bug — neither has the full picture.' },
+        { lead: 'Quiet manual restore', text: 'Someone quietly tries to restore the sync manually, without telling anyone the server itself may be compromised.', quality: 'mixed', consequence: 'The manual restore might work, but if the server itself is compromised, this could spread the problem further.' },
+        { lead: 'Assume it\'s routine', text: 'The team assumes it\'s a routine server issue and doesn\'t treat it as a security incident yet.', quality: 'harmful', consequence: 'By the time it\'s treated seriously, the ransom note has already gone unanswered for hours — a window that matters for the response.' }
+      ],
+      1: [
+        { lead: 'Name one IC', text: 'The team names an Incident Commander, distinct from whoever is working the technical recovery.', quality: 'strong', consequence: 'Good call — a ransomware event needs someone weighing legal, communication, and technical trade-offs together, not just the most technical person in the room.' },
+        { lead: 'Senior IT leads and fixes', text: 'The most senior IT person takes charge and starts working the technical recovery themselves.', quality: 'weak', consequence: 'They\'re deep in restoring the sync when someone needs an urgent decision about involving law enforcement — and it waits.' },
+        { lead: 'IT and security co-lead', text: 'IT and security informally co-lead, without agreeing who has final say.', quality: 'mixed', consequence: 'IT wants to restore quickly; security wants to preserve evidence first. Nobody\'s actually resolved that tension yet.' },
+        { lead: 'Everyone acts independently', text: 'Nobody takes charge — everyone just does whatever seems most urgent to them individually.', quality: 'harmful', consequence: 'By the time anyone asks who\'s actually running this, several people have already taken conflicting independent actions.' }
+      ],
+      2: [
+        { lead: 'Confirm what was exposed', text: 'The team pauses to confirm together exactly what data was on the encrypted server, before deciding anything about notification.', quality: 'strong', consequence: 'Good call — the regulatory notification decision hinges entirely on this, and guessing wrong in either direction has real consequences.' },
+        { lead: 'Keep recovering regardless', text: 'The technical recovery continues without waiting to establish what was actually on that server.', quality: 'weak', consequence: 'The team is now restoring systems without knowing whether they\'re also sitting on an active regulatory notification deadline.' },
+        { lead: 'Tell only the IC', text: 'Only the Incident Commander is told about the possible regulatory angle; the recovery team keeps focused purely on the technical fix.', quality: 'mixed', consequence: 'The IC is quietly weighing legal exposure while the technical team has no idea a notification clock might already be running.' },
+        { lead: 'Defer the question', text: 'The team decides to focus on the technical recovery and worry about the regulatory question later.', quality: 'harmful', consequence: 'By the time anyone circles back to it, valuable time on a potential notification deadline has already been lost.' }
+      ],
+      3: [
+        { lead: 'Confirm exposure, assign legal', text: 'The IC sets a clear objective — confirm what data was exposed — and assigns legal specifically to own the regulatory notification decision once that\'s known.', quality: 'strong', consequence: 'Good call — this gives one clear owner to a decision with real legal consequences, rather than leaving it to whoever happens to raise it.' },
+        { lead: 'Agree, assign nobody', text: 'The team agrees regulatory notification is probably needed without assigning it to anyone specifically.', quality: 'weak', consequence: 'Days later, nobody has actually made the notification decision, because everyone assumed legal was already on it.' },
+        { lead: 'Notify without confirming', text: 'One person decides unilaterally to notify the regulator, without confirming with legal what\'s actually required.', quality: 'mixed', consequence: 'The notification goes out, but it may say more, or less, than what\'s legally necessary — and it can\'t be un-sent.' },
+        { lead: 'Avoid the question', text: 'The team decides to avoid the regulatory question entirely and hope it doesn\'t come up.', quality: 'harmful', consequence: 'Weeks later, the lack of a timely notification becomes its own separate compliance problem.' }
+      ],
+      4: [
+        { lead: 'Separate restorer and checker', text: 'The person restoring the sync is different from whoever confirms the restored data actually matches the source of truth.', quality: 'strong', consequence: 'Good call — the checker catches a batch of records that synced with stale, pre-incident data.' },
+        { lead: 'Self-confirms sync', text: 'The person restoring the sync also confirms it\'s working correctly themselves.', quality: 'weak', consequence: 'It looks restored. Nobody else checked, so a gap in the sync goes unnoticed until it causes a downstream problem.' },
+        { lead: 'Alone for hours', text: 'The restore gets done, but the person doing it has now been working this incident alone for hours.', quality: 'mixed', consequence: 'The restore is progressing, but there\'s no plan for what happens if recovery runs into a second day and they need rest.' },
+        { lead: 'Skip verification for speed', text: 'The sync gets restored without anyone verifying it, to get the business running again faster.', quality: 'harmful', consequence: 'The restored sync is quietly missing a chunk of data nobody notices until a report comes out wrong days later.' }
+      ],
+      5: [
+        { lead: 'Confirm clean, schedule AAR', text: 'The team confirms out loud that systems are genuinely clean and restored, and sets a real date for a review covering both the technical recovery and the regulatory decision.', quality: 'strong', consequence: 'Two weeks later, the review happens — covering not just the technical fix but whether the notification decision was made well and on time.' },
+        { lead: 'Quietly move on', text: 'Once systems are back online, the team quietly moves on to other priorities.', quality: 'weak', consequence: 'No review ever gets scheduled, and whatever let the attacker in stays completely unexamined.' },
+        { lead: 'Vague promise', text: 'The team agrees a review should happen at some point to look at security posture.', quality: 'mixed', consequence: 'It\'s still on someone\'s to-do list a month later, several priorities down from where it started.' },
+        { lead: 'Assign blame', text: 'The closing conversation focuses on which team left the vulnerability open.', quality: 'harmful', consequence: 'IT and security become guarded with each other rather than collaborative, making the next incident harder to respond to well.' }
+      ],
+      },
+      difficulty: 'foundational',
+      name: 'Ransomware-style encryption event',
+      desc: 'A connected system central to your workflow has been encrypted and is demanding payment.',
+      trigger: 'IT reports that the file server used for a critical nightly sync job is unreachable. Then a ransom note appears on affected machines. The nightly sync into your core business system has not run in two days.',
+      clock: 'Every day without the sync, your business system and the source-of-truth data drift further apart, and reconciling them gets exponentially harder the longer it goes on.',
+      complication: 'Legal confirms this may trigger a regulatory notification obligation depending on what data was actually on the encrypted server — and nobody is fully sure what was on there.'
+    },
+    {
+      id: 'region-outage',
+      decisionOverrides: { 0: [
+        { lead: 'Check the status page', text: 'Someone checks the vendor\'s status page and confirms the actual scope of the outage.', quality: 'strong', consequence: 'Good call — this determines whether the team needs a short workaround or a genuine extended-outage plan.' },
+        { lead: 'Independent workarounds', text: 'Different teams start independently building their own workaround plans without coordinating.', quality: 'weak', consequence: 'Three different manual workarounds spring up, and none of them will reconcile cleanly with each other once the platform returns.' },
+        { lead: 'Quiet spreadsheet fix', text: 'One person quietly starts a manual spreadsheet workaround without telling the rest of the team yet.', quality: 'mixed', consequence: 'It works for now. But once the platform returns, that spreadsheet and the live data will both have partial, conflicting versions of the truth.' },
+        { lead: 'Assume quick resolution', text: 'The team assumes it\'ll resolve itself shortly and doesn\'t plan for extended downtime.', quality: 'harmful', consequence: 'Hours pass with no plan in place, and the manually-tracked backlog grows far larger than it needed to.' }
+      ],
+      1: [
+        { lead: 'Name one IC', text: 'The team names an Incident Commander to own the outage response, separate from whoever\'s building workarounds.', quality: 'strong', consequence: 'Good call — this keeps the workaround effort focused instead of splintering into competing versions.' },
+        { lead: 'Senior person builds workaround', text: 'Whoever\'s most senior in the room takes charge and starts building a workaround themselves.', quality: 'weak', consequence: 'They\'re deep in the spreadsheet fix when sales urgently needs a decision about what to tell a customer — and it waits.' },
+        { lead: 'Two leads co-run it', text: 'Two team leads informally agree to jointly handle it.', quality: 'mixed', consequence: 'Both are handling it well individually, but they haven\'t yet had to reconcile two different workaround approaches.' },
+        { lead: 'Each team does its own thing', text: 'No one formally takes charge — each team just does its own thing until the platform returns.', quality: 'harmful', consequence: 'When the platform comes back, there are three incompatible versions of what actually happened to reconcile.' }
+      ],
+      2: [
+        { lead: 'Agree one shared method', text: 'The team pauses to agree on a single shared method for tracking manual work, now that they know it\'s already happening.', quality: 'strong', consequence: 'Good call — this is the moment to prevent multiple incompatible workarounds before they multiply further.' },
+        { lead: 'Ignore the spreadsheet', text: 'The team continues without addressing the spreadsheet that\'s already in motion.', quality: 'weak', consequence: 'By the time the platform returns, that spreadsheet is now a significant, undocumented parallel version of the truth.' },
+        { lead: 'Tell only the IC', text: 'Only the Incident Commander is told about the spreadsheet; the person using it keeps going without further guidance.', quality: 'mixed', consequence: 'The IC knows a manual workaround exists, but nobody\'s actually agreed how it\'ll get reconciled later.' },
+        { lead: 'Leave it for later', text: 'The team decides the spreadsheet is someone else\'s problem to sort out later.', quality: 'harmful', consequence: 'When the platform returns, reconciling the spreadsheet against live data turns into its own, much bigger cleanup job.' }
+      ],
+      3: [
+        { lead: 'Plan reconciliation now', text: 'The IC sets a clear objective — get the manual workaround and the eventual platform recovery to line up cleanly — and assigns someone to own that reconciliation plan now, not after the platform returns.', quality: 'strong', consequence: 'Good call — planning the reconciliation now means it\'s a known process later, not an improvised scramble.' },
+        { lead: 'Defer reconciliation planning', text: 'The team agrees reconciliation will need to happen once things are back to normal, without assigning anyone to plan it.', quality: 'weak', consequence: 'When the platform returns, reconciling the spreadsheet becomes an unplanned, urgent scramble nobody was ready for.' },
+        { lead: 'Decide approach unilaterally', text: 'One person decides unilaterally how the spreadsheet data will get re-entered, without checking with the Incident Commander.', quality: 'mixed', consequence: 'Their approach might work, but nobody else knows the plan, including whoever ends up doing the actual data entry later.' },
+        { lead: 'Worry about it later', text: 'The team decides to worry about reconciliation only once the platform is confirmed back.', quality: 'harmful', consequence: 'The platform returns with zero plan in place, and the backlog of manual entries takes far longer to reconcile than it needed to.' }
+      ],
+      4: [
+        { lead: 'Separate reconciler and checker', text: 'The person reconciling the manual spreadsheet is different from whoever confirms the reconciled data actually matches.', quality: 'strong', consequence: 'Good call — the checker catches several entries that reconciled to the wrong record.' },
+        { lead: 'Self-confirms reconciliation', text: 'The person reconciling the spreadsheet also confirms their own reconciliation is correct.', quality: 'weak', consequence: 'It looks reconciled. Nobody else checked, so a handful of mismatched entries go live unnoticed.' },
+        { lead: 'Alone for hours', text: 'The reconciliation gets done, but the person doing it has now been at it alone for hours.', quality: 'mixed', consequence: 'It\'s going well so far, but there\'s no plan for what happens if the backlog is bigger than expected and they need a break.' },
+        { lead: 'Bulk import unchecked', text: 'The spreadsheet gets bulk-imported without anyone checking the reconciliation, to save time.', quality: 'harmful', consequence: 'A batch of records import with mismatched or duplicated data, creating new cleanup work on top of the outage.' }
+      ],
+      5: [
+        { lead: 'Confirm reconciled, schedule AAR', text: 'The team confirms out loud that the manual workaround is fully reconciled, and sets a real date to review how dependent the business is on a single region.', quality: 'strong', consequence: 'Two weeks later, the review happens — and specifically asks whether more resilience is worth investing in before the next outage.' },
+        { lead: 'Quietly move on', text: 'Once the platform is back and mostly reconciled, the team quietly moves on.', quality: 'weak', consequence: 'No review ever gets scheduled, and the same single-region dependency remains exactly as exposed as before.' },
+        { lead: 'Vague promise', text: 'The team agrees a review should happen at some point to look at redundancy options.', quality: 'mixed', consequence: 'It\'s still on someone\'s to-do list a month later, several priorities down from where it started.' },
+        { lead: 'Assign blame', text: 'The closing conversation focuses on whoever built the messiest version of the manual workaround.', quality: 'harmful', consequence: 'People become more reluctant to improvise a workaround openly next time, even when one is genuinely needed.' }
+      ],
+      },
+      difficulty: 'foundational',
+      name: 'Platform region outage',
+      desc: 'Your core business platform is down, with no confirmed timeline for restoration.',
+      trigger: 'Your primary business platform becomes unreachable. The vendor\'s status page confirms a regional incident, but gives no ETA. Sales, support, and several automated workflows all depend on it being available.',
+      clock: 'Every hour of downtime is an hour of manually-tracked work that has to be reconciled back into the system once it returns — and the volume of that manual work is growing.',
+      complication: 'Someone on the team already started manually re-entering data into a spreadsheet to keep working. When the platform comes back, that spreadsheet and the platform will both have partial, conflicting versions of the truth.'
+    },
+    {
+      id: 'failed-deployment',
+      decisionOverrides: { 0: [
+        { lead: 'Pull the real numbers', text: 'Someone pulls exactly how many leads have been misrouted and since which deployment.', quality: 'strong', consequence: 'Good call — this confirms whether it\'s a handful of leads or a much bigger routing problem tied to the deployment.' },
+        { lead: 'Reassign independently', text: 'A few people start manually reassigning leads on their own, without agreeing on the full scope first.', quality: 'weak', consequence: 'Everyone reassigns a few leads they\'ve personally noticed, but nobody has the full picture of what\'s actually misrouted.' },
+        { lead: 'Quiet partial fix', text: 'One person quietly starts reassigning the leads they\'ve noticed, without flagging the deployment issue yet.', quality: 'mixed', consequence: 'The leads they\'ve noticed get fixed. The ones nobody\'s spotted yet keep going cold.' },
+        { lead: 'Assume user error', text: 'The team assumes it\'s a one-off user error and doesn\'t check the deployment logs.', quality: 'harmful', consequence: 'More leads keep routing incorrectly with every passing hour, and the deployment that caused it is never identified.' }
+      ],
+      1: [
+        { lead: 'Name one IC', text: 'The team names an Incident Commander, separate from whoever\'s investigating the deployment.', quality: 'strong', consequence: 'Good call — this keeps someone focused on the decision of what to do about it, while the investigation runs in parallel.' },
+        { lead: 'Deploying engineer investigates', text: 'The engineer who did the deployment takes charge and investigates it themselves.', quality: 'weak', consequence: 'They\'re now both defending their own deployment and objectively assessing what it broke — a genuine conflict of interest, even unintentionally.' },
+        { lead: 'Sales ops and engineering co-lead', text: 'Sales ops and engineering informally co-lead the response.', quality: 'mixed', consequence: 'Reasonable, but they haven\'t agreed yet on whether reassigning leads or fixing the deployment comes first.' },
+        { lead: 'Two groups work unconnected', text: 'Nobody takes charge — sales quietly reassigns what they notice while engineering quietly investigates, unconnected.', quality: 'harmful', consequence: 'Both groups are working the same problem from different ends, duplicating effort neither realises the other is doing.' }
+      ],
+      2: [
+        { lead: 'Check the connection', text: 'The team pauses to check whether the newly-discovered validation issue is connected to the same deployment.', quality: 'strong', consequence: 'Good call — this catches a second, related problem before it gets investigated as if it were a totally separate issue.' },
+        { lead: 'Stay focused on routing', text: 'The team keeps working the lead-routing issue without connecting it to the new validation problem.', quality: 'weak', consequence: 'The validation issue gets investigated separately, days later, by someone who has no idea it\'s connected to the same root cause.' },
+        { lead: 'Tell only the IC', text: 'Only the Incident Commander is told about the validation issue; the team keeps focused purely on lead routing.', quality: 'mixed', consequence: 'The IC now suspects a bigger deployment problem, but the people doing the actual investigation don\'t know to widen their search.' },
+        { lead: 'Dismiss it as unrelated', text: 'The team decides the validation issue is unrelated and not worth looking into right now.', quality: 'harmful', consequence: 'The validation issue keeps quietly rejecting updates for days, treated as a separate, lower-priority annoyance.' }
+      ],
+      3: [
+        { lead: 'Fix both issues as one', text: 'The IC sets a clear objective — fix both the routing and the validation issue as one connected rollback or patch — and assigns someone to own the full fix, not just the original complaint.', quality: 'strong', consequence: 'Good call — treating both issues as one connected fix avoids a second, separate deployment scramble for the part that was missed.' },
+        { lead: 'Defer the validation fix', text: 'The team agrees to fix the lead routing and look at the validation thing separately, later.', quality: 'weak', consequence: 'The validation fix gets deprioritised behind other work, since it\'s no longer visibly urgent to anyone.' },
+        { lead: 'Roll back unilaterally', text: 'One engineer unilaterally decides to roll back the whole deployment, without confirming with the Incident Commander first.', quality: 'mixed', consequence: 'The rollback might solve both issues, but it also undoes other, unrelated changes from the same deployment that were actually fine.' },
+        { lead: 'Leave validation as-is', text: 'The team decides the validation issue can just be left as-is for now.', quality: 'harmful', consequence: 'The validation issue keeps silently rejecting updates indefinitely, with no plan to ever actually fix it.' }
+      ],
+      4: [
+        { lead: 'Separate fixer and checker', text: 'The person implementing the fix is different from whoever confirms the leads are now routing correctly.', quality: 'strong', consequence: 'Good call — the checker catches that one region\'s routing rule is still wrong, even after the main fix went in.' },
+        { lead: 'Self-confirms fix', text: 'The person implementing the fix also confirms it\'s working themselves.', quality: 'weak', consequence: 'It looks fixed. Nobody else checked, so one broken routing rule keeps misrouting leads unnoticed.' },
+        { lead: 'Alone for hours', text: 'The fix gets implemented, but the person doing it has now been working this alone for hours.', quality: 'mixed', consequence: 'The fix is holding up so far, but there\'s no plan if something else turns up and they need a break.' },
+        { lead: 'Ship without validating', text: 'The fix ships without anyone validating it, to close this out quickly.', quality: 'harmful', consequence: 'The fix addresses the wrong rule, and leads keep misrouting exactly as before.' }
+      ],
+      5: [
+        { lead: 'Confirm fixed, schedule AAR', text: 'The team confirms out loud that all misrouted leads have been reassigned, and sets a real date to review why the deployment wasn\'t caught by testing.', quality: 'strong', consequence: 'Two weeks later, the review happens — and specifically asks what testing gap let a routing and validation break through undetected.' },
+        { lead: 'Quietly move on', text: 'Once the routing looks fixed, the team quietly moves on to the next deployment.', quality: 'weak', consequence: 'No review ever gets scheduled, and the same kind of untested deployment risk stays exactly as likely to happen again.' },
+        { lead: 'Vague promise', text: 'The team agrees a review should happen at some point to look at deployment testing.', quality: 'mixed', consequence: 'It\'s still on someone\'s to-do list a month later, several priorities down from where it started.' },
+        { lead: 'Assign blame', text: 'The closing conversation focuses on the engineer who wrote the deployment.', quality: 'harmful', consequence: 'That engineer, and others watching, become more cautious about deploying at all rather than more careful about how.' }
+      ],
+      },
+      difficulty: 'foundational',
+      name: 'Failed deployment, discovered late',
+      desc: 'A recent release silently broke a critical automation, and it has not been caught until now.',
+      trigger: 'An automated workflow that assigns new leads to the right sales region has not been working correctly since last week\'s deployment. Nobody noticed because the workflow "succeeded" — it just routed everything to the wrong place.',
+      clock: 'Every new lead since the deployment has gone to the wrong owner, and the ones assigned to the wrong rep are steadily going cold from lack of follow-up.',
+      complication: 'The deployment also touched a data validation check that is now silently rejecting a specific type of record update — which has been failing for a different, unrelated reason that looked like user error until now.'
+    },
+    {
+      id: 'insider-error',
+      decisionOverrides: { 0: [
+        { lead: 'Check the merge scope', text: 'Someone immediately checks exactly which accounts were merged and confirms the actual scope.', quality: 'strong', consequence: 'Good call — merges can\'t be easily undone, so knowing the real scope now matters more than moving fast.' },
+        { lead: 'Investigate separately', text: 'A few people start looking into different parts of the problem independently, without comparing notes.', quality: 'weak', consequence: 'Everyone\'s looking at a different piece of the puzzle, and nobody has the full list of what was actually merged.' },
+        { lead: 'Quiet self-fix', text: 'The admin who ran the merge quietly starts trying to fix it themselves, without escalating yet.', quality: 'mixed', consequence: 'They might be able to quietly undo some of it. But if it\'s bigger than they think, they\'re now the only one who knows anything\'s wrong.' },
+        { lead: 'Assume it\'s contained', text: 'The team assumes it\'s a small, contained mistake and doesn\'t investigate the full merge list.', quality: 'harmful', consequence: 'By the time the real scope is understood, days of new activity have already been logged against the wrong records.' }
+      ],
+      1: [
+        { lead: 'Name one IC', text: 'The team names an Incident Commander, separate from the admin who ran the merge.', quality: 'strong', consequence: 'Good call — merges can\'t be undone easily, and the person who caused it is understandably not the most objective judge of scope right now.' },
+        { lead: 'Admin leads the assessment', text: 'The admin who ran the merge takes charge of assessing and fixing it themselves.', quality: 'weak', consequence: 'They\'re focused on fixing what they broke, which makes it easy to underestimate how far it actually spread.' },
+        { lead: 'Admin and manager co-lead', text: 'The admin and their manager informally handle it together.', quality: 'mixed', consequence: 'Better than nothing, but the manager is relying entirely on the admin\'s account of what was merged.' },
+        { lead: 'No formal lead', text: 'Nobody takes charge formally — people just start checking records as they notice something\'s off.', quality: 'harmful', consequence: 'An hour in, there\'s still no single view of how many accounts were actually affected.' }
+      ],
+      2: [
+        { lead: 'Bring in HR immediately', text: 'The team pauses to bring HR and IT together immediately, given this now involves a current employee\'s credentials.', quality: 'strong', consequence: 'Good call — this changes the situation from a data cleanup into something that may need HR and security involved directly, not just IT.' },
+        { lead: 'Continue the cleanup', text: 'The team continues the merge cleanup without looping in HR further.', quality: 'weak', consequence: 'IT keeps treating this as a technical cleanup, while a potentially compromised current account goes unaddressed.' },
+        { lead: 'Tell only the IC', text: 'Only the Incident Commander is told about the current employee\'s credentials; the technical cleanup continues as before.', quality: 'mixed', consequence: 'The IC now knows this may be bigger than a mistake, but the team doing the actual data work doesn\'t know to treat it differently.' },
+        { lead: 'Finish cleanup first', text: 'The team decides to finish the cleanup first and deal with the credentials question afterwards.', quality: 'harmful', consequence: 'Whatever\'s actually happening with that account continues unaddressed while the team focuses elsewhere.' }
+      ],
+      3: [
+        { lead: 'Joint HR/IT ownership', text: 'The IC sets a clear objective — resolve the account-security question and the data cleanup as two connected workstreams — and assigns HR and IT to own them jointly.', quality: 'strong', consequence: 'Good call — this keeps the security question from getting lost behind the more visible data cleanup work.' },
+        { lead: 'Vague HR involvement', text: 'The team agrees HR should probably look into the account thing without assigning it a clear owner or timeline.', quality: 'weak', consequence: 'Days pass with the account question unresolved, because nobody was actually made responsible for chasing it.' },
+        { lead: 'Lock account unilaterally', text: 'One person unilaterally decides to lock the flagged account, without checking with HR or the Incident Commander first.', quality: 'mixed', consequence: 'The account gets locked, but if it\'s a legitimate employee whose credentials were compromised, they\'re now locked out with no explanation.' },
+        { lead: 'Deprioritise the question', text: 'The team decides the account question isn\'t urgent enough to prioritise right now.', quality: 'harmful', consequence: 'The unresolved account sits there, unaddressed, for far longer than a security question like this should.' }
+      ],
+      4: [
+        { lead: 'Separate unmerger and checker', text: 'The person undoing the merge is different from whoever confirms the records actually match their pre-merge state.', quality: 'strong', consequence: 'Good call — the checker catches a record that unmerged with some fields still missing.' },
+        { lead: 'Self-confirms unmerge', text: 'The person undoing the merge also confirms their own work is correct.', quality: 'weak', consequence: 'It looks unmerged. Nobody else checked, so a few records with missing fields go unnoticed.' },
+        { lead: 'Alone for hours', text: 'The unmerge gets done, but the person doing it has now been at it alone for hours.', quality: 'mixed', consequence: 'Progress is steady so far, but there\'s no plan for what happens if this runs long and they need a break.' },
+        { lead: 'Rush without checking', text: 'The unmerge gets rushed through without anyone checking it, to close this out.', quality: 'harmful', consequence: 'Several records unmerge with data quietly missing or duplicated, creating a second problem behind the first.' }
+      ],
+      5: [
+        { lead: 'Confirm accounts, schedule AAR', text: 'The team confirms out loud that all accounts are genuinely unmerged and correct, and sets a real date to review how merge tooling allows this scale of mistake.', quality: 'strong', consequence: 'Two weeks later, the review happens — and specifically asks whether the merge tool needs better safeguards, not just better judgement from admins.' },
+        { lead: 'Quietly move on', text: 'Once the visible accounts look fixed, the team quietly moves on.', quality: 'weak', consequence: 'No review ever gets scheduled, and the same merge tool remains just as capable of causing this again.' },
+        { lead: 'Vague promise', text: 'The team agrees a review should happen at some point to look at admin tooling.', quality: 'mixed', consequence: 'It\'s still on someone\'s to-do list a month later, several priorities down from where it started.' },
+        { lead: 'Assign blame', text: 'The closing conversation focuses on the admin who ran the merge.', quality: 'harmful', consequence: 'That admin, already mortified, becomes far less likely to report their own mistakes quickly in future — exactly the opposite of what\'s needed.' }
+      ],
+      },
+      difficulty: 'foundational',
+      name: 'Large-scale human error',
+      desc: 'Someone with broad access made a well-intentioned change that went badly wrong at scale.',
+      trigger: 'An administrator, trying to clean up duplicate customer records, runs a merge operation across what they believed was a small, manually-reviewed list. It was actually a much larger, unreviewed list pulled from an old export.',
+      clock: 'Merged records cannot be easily un-merged, and every hour that passes means more new activity (calls, emails, notes) gets logged against the wrong surviving record.',
+      complication: 'The administrator who ran it is mortified and has gone quiet rather than escalating immediately — the team only found out forty minutes later when a manager noticed records missing from a report.'
+    },
+    {
+      id: 'vendor-breach-cascade',
+      decisionOverrides: { 0: [
+        { lead: 'Contact the vendor directly', text: 'Someone reaches out directly to the vendor\'s security contact to get specifics, rather than relying on the public statement.', quality: 'strong', consequence: 'Good call — direct contact gets real information, rather than reading between the lines of a vague press statement.' },
+        { lead: 'Speculate independently', text: 'Different people start guessing what\'s affected based on the vague statement, without a clear source of truth.', quality: 'weak', consequence: 'By the time the team compares notes, everyone has a slightly different theory about what the vendor\'s statement actually means.' },
+        { lead: 'Draft before confirming', text: 'Someone quietly starts drafting a customer response before actually knowing whether your data was affected.', quality: 'mixed', consequence: 'The draft might be ready fast. But it may say more, or less, than what the team actually knows to be true.' },
+        { lead: 'Wait and see', text: 'The team decides to wait and see what the vendor says next, without proactively finding out anything themselves.', quality: 'harmful', consequence: 'Hours pass with no proactive information, and customers start asking harder questions than the team is ready to answer.' }
+      ],
+      1: [
+        { lead: 'Name one IC', text: 'The team names an Incident Commander to own the response, separate from whoever\'s liaising with the vendor.', quality: 'strong', consequence: 'Good call — someone needs to weigh customer communication and legal exposure together, not just chase the vendor for updates.' },
+        { lead: 'Vendor contact leads everything', text: 'Whoever has the vendor relationship takes charge and handles everything personally.', quality: 'weak', consequence: 'They\'re now chasing vendor updates and trying to manage customer questions at the same time — and one is being neglected.' },
+        { lead: 'Support and legal co-lead', text: 'Support and legal informally co-lead the response.', quality: 'mixed', consequence: 'Sensible pairing, but they haven\'t yet agreed who has final say if their advice conflicts.' },
+        { lead: 'Departments wait on each other', text: 'Nobody takes charge — different departments each wait for someone else to own it.', quality: 'harmful', consequence: 'By the time anyone actually owns the response, the vendor\'s own timeline has moved on without you.' }
+      ],
+      2: [
+        { lead: 'Bring in legal now', text: 'The team pauses to bring legal in immediately, given the tension between the NDA and your own customers\' right to know.', quality: 'strong', consequence: 'Good call — this is exactly the kind of conflict that needs legal judgement, not an individual person\'s best guess.' },
+        { lead: 'Keep drafting regardless', text: 'The team continues drafting customer communications without addressing the NDA conflict directly.', quality: 'weak', consequence: 'The draft sits unsent while nobody\'s actually resolved whether sending it would breach the NDA.' },
+        { lead: 'Tell only the IC', text: 'Only the Incident Commander is told about the NDA tension; the rest of the team keeps preparing to notify customers as originally planned.', quality: 'mixed', consequence: 'The IC is now navigating a legal conflict alone while the team prepares an action that might not yet be appropriate to take.' },
+        { lead: 'Notify regardless of NDA', text: 'The team decides to notify customers immediately regardless of the NDA.', quality: 'harmful', consequence: 'The NDA gets breached before anyone\'s actually weighed whether that was the right call to make.' }
+      ],
+      3: [
+        { lead: 'Get legal\'s read, pre-draft', text: 'The IC sets a clear objective — get legal\'s read on the NDA conflict — and assigns someone to have a customer notification drafted and ready the moment legal gives the go-ahead.', quality: 'strong', consequence: 'Good call — by the time legal clears it, the notification isn\'t starting from scratch.' },
+        { lead: 'Notify once clearer', text: 'The team agrees to notify customers once things are clearer, without a specific trigger or owner.', quality: 'weak', consequence: 'Legal clears it days later, and there\'s still no draft ready — the delay just moved further down the line.' },
+        { lead: 'Send partial update', text: 'One person unilaterally sends a partial customer update, without confirming with legal first.', quality: 'mixed', consequence: 'The update might be fine, or it might say something legal specifically needed reviewed first — there\'s no way to know now.' },
+        { lead: 'Wait for the vendor', text: 'The team decides to wait entirely for the vendor\'s own announcement and do nothing proactively.', quality: 'harmful', consequence: 'The journalist\'s question lands before any internal preparation has happened at all.' }
+      ],
+      4: [
+        { lead: 'Separate drafter and reviewer', text: 'The person drafting the customer notification is different from whoever reviews it against what legal actually confirmed.', quality: 'strong', consequence: 'Good call — the reviewer catches a line that overstates what\'s actually been confirmed.' },
+        { lead: 'Self-confirms accuracy', text: 'The person drafting the notification also confirms it\'s accurate themselves.', quality: 'weak', consequence: 'It reads fine. Nobody else checked it against what legal actually confirmed, so a small inaccuracy goes out.' },
+        { lead: 'Alone for hours', text: 'The notification gets drafted, but the person doing it has now been working this alone for hours.', quality: 'mixed', consequence: 'The draft is coming together, but there\'s no backup if this runs long and they need to step away before it\'s sent.' },
+        { lead: 'Send without review', text: 'The notification goes out without anyone else reviewing it, to move faster.', quality: 'harmful', consequence: 'The notification says something legal hadn\'t actually confirmed, creating a second problem on top of the original one.' }
+      ],
+      5: [
+        { lead: 'Confirm notified, schedule AAR', text: 'The team confirms out loud that customers have been properly notified, and sets a real date to review the vendor relationship and notification process together.', quality: 'strong', consequence: 'Two weeks later, the review happens — and specifically asks whether this vendor dependency needs reassessing, not just how the notification went.' },
+        { lead: 'Quietly move on', text: 'Once the immediate customer questions die down, the team quietly moves on.', quality: 'weak', consequence: 'No review ever gets scheduled, and the same vendor dependency remains exactly as exposed as before.' },
+        { lead: 'Vague promise', text: 'The team agrees a review should happen at some point to look at vendor risk.', quality: 'mixed', consequence: 'It\'s still on someone\'s to-do list a month later, several priorities down from where it started.' },
+        { lead: 'Assign blame', text: 'The closing conversation focuses on whoever chose this vendor originally.', quality: 'harmful', consequence: 'The actual, more useful question — how to handle the next vendor incident better — never gets asked.' }
+      ],
+      },
+      difficulty: 'complex',
+      name: 'A vendor\'s breach becomes your problem',
+      desc: 'A third party you integrate with has been breached, and their own disclosure has been slow and vague.',
+      trigger: 'A SaaS vendor you rely on for a core integration announces they have "identified a security incident." Their public statement gives no detail on whether your data was affected. Support is already fielding nervous questions from your own customers who read the vendor\'s press release.',
+      clock: 'Every hour without real clarity from the vendor is an hour your customers are asking questions you genuinely cannot yet answer — and the longer that goes on, the more it looks like you\'re hiding something, even if you\'re just as in the dark as they are.',
+      complication: 'Under a mutual NDA, the vendor privately confirms to you that customer data was in fact exposed — but they are not ready to make this public yet, and ask you to hold off notifying your own customers until their own disclosure is ready.',
+      complication2: 'Just as your team is quietly drafting a customer notification for when the vendor gives the go-ahead, a journalist emails your general press inbox asking whether you\'re aware of the vendor\'s breach and what your customers\' exposure is — meaning this is about to become public on someone else\'s timeline, not yours.'
+    },
+    {
+      id: 'insider-or-compromised',
+      decisionOverrides: { 0: [
+        { lead: 'Pull access logs first', text: 'Someone immediately pulls the access logs to confirm exactly which account performed the deletions and when.', quality: 'strong', consequence: 'Good call — this is the fact that actually determines whether this is sabotage, error, or something else entirely.' },
+        { lead: 'Guess at causes', text: 'A few people start assuming different explanations (sabotage, script error) without checking the actual logs.', quality: 'weak', consequence: 'Different theories circulate, but nobody has the one piece of evidence that would actually settle it.' },
+        { lead: 'Quietly pause', text: 'Someone quietly pauses their part of the migration without telling the rest of the team why.', quality: 'mixed', consequence: 'It buys a pause. But the rest of the team doesn\'t know why that part of the migration has quietly stopped.' },
+        { lead: 'Assume it\'s the plan', text: 'The team assumes it\'s just the migration working as planned and doesn\'t check the access logs at all.', quality: 'harmful', consequence: 'By the time anyone checks the logs, more of the migration has run — potentially destroying evidence of what actually happened.' }
+      ],
+      1: [
+        { lead: 'Name one IC', text: 'The team names an Incident Commander, separate from whoever\'s running the migration.', quality: 'strong', consequence: 'Good call — with sabotage genuinely on the table, this needs someone weighing evidence preservation, not just pushing the migration through.' },
+        { lead: 'Migration lead decides alone', text: 'The migration lead takes charge and decides whether to continue, alone.', quality: 'weak', consequence: 'They\'re now balancing protecting the evidence against hitting the freeze-window deadline on their own, under real time pressure.' },
+        { lead: 'IT and HR co-investigate', text: 'IT and HR informally start looking into it together, without a clear lead.', quality: 'mixed', consequence: 'Both are investigating in good faith, but neither has actually decided whether the migration itself should pause.' },
+        { lead: 'Migration continues unowned', text: 'Nobody takes charge — the migration keeps running while people separately wonder what\'s going on.', quality: 'harmful', consequence: 'The migration continues unpaused while the question of whether it should have stopped goes unanswered.' }
+      ],
+      2: [
+        { lead: 'Pause and escalate to security', text: 'The team pauses the migration and brings IT security in immediately, given the deletions trace to a departed employee\'s account.', quality: 'strong', consequence: 'Good call — an account that should have been deactivated performing deletions is exactly the kind of fact that changes what happens next.' },
+        { lead: 'Keep the migration running', text: 'The migration continues without addressing the departed employee\'s account finding.', quality: 'weak', consequence: 'The migration keeps running while a serious access-control question goes unanswered.' },
+        { lead: 'Tell only the IC', text: 'Only the Incident Commander is told about the account finding; the migration team keeps working toward the freeze-window deadline.', quality: 'mixed', consequence: 'The IC now suspects something more serious, but the team under deadline pressure doesn\'t know to slow down.' },
+        { lead: 'Assume oversight', text: 'The team decides the account should have been deactivated is probably just an oversight and keeps going.', quality: 'harmful', consequence: 'The migration keeps running on an assumption that turns out to matter a great deal once the second account is found.' }
+      ],
+      3: [
+        { lead: 'Assign security, set deadline', text: 'The IC sets a clear objective — determine definitively whether this is sabotage, error, or compromise — and assigns security to own that investigation with a clear deadline.', quality: 'strong', consequence: 'Good call — this question needs a definitive answer before the migration question can be properly resolved, and a deadline keeps it from drifting.' },
+        { lead: 'Needs looking into', text: 'The team agrees the account question needs looking into without assigning it to anyone specifically.', quality: 'weak', consequence: 'The investigation stalls, because nobody was actually made responsible for driving it to a conclusion.' },
+        { lead: 'Resume migration unilaterally', text: 'One person unilaterally decides to resume the migration, assuming the account issue will sort itself out.', quality: 'mixed', consequence: 'The migration continues on an assumption nobody has actually confirmed, while the real explanation is still unknown.' },
+        { lead: 'Treat as distraction', text: 'The team decides the account question is a distraction from the actual migration deadline.', quality: 'harmful', consequence: 'The genuinely serious security question gets sidelined in favour of a schedule that may not even matter if this turns out to be sabotage.' }
+      ],
+      4: [
+        { lead: 'Separate investigator and checker', text: 'The person investigating the access logs is different from whoever confirms their findings against a second source.', quality: 'strong', consequence: 'Good call — the second check catches a detail in the logs that was initially misread.' },
+        { lead: 'Self-confirms conclusion', text: 'The person investigating the logs also confirms their own conclusion is correct.', quality: 'weak', consequence: 'Their read looks solid. Nobody else checked it, so a misreading of the evidence goes unchallenged.' },
+        { lead: 'Alone for hours', text: 'The investigation continues, but the person doing it has now been at it alone for hours.', quality: 'mixed', consequence: 'Progress is being made, but there\'s no plan if this runs long and a fresh set of eyes would help.' },
+        { lead: 'Act without review', text: 'A conclusion gets reached and acted on without anyone else reviewing the evidence.', quality: 'harmful', consequence: 'The team acts on a conclusion that turns out to have missed something a second reviewer would likely have caught.' }
+      ],
+      5: [
+        { lead: 'Confirm resolved, schedule AAR', text: 'The team confirms out loud that the account question is genuinely resolved, and sets a real date to review access deprovisioning for departed employees.', quality: 'strong', consequence: 'Two weeks later, the review happens — and specifically asks why a departed employee\'s account was still active at all.' },
+        { lead: 'Quietly move on', text: 'Once the migration is complete, the team quietly moves on without resolving the account question fully.', quality: 'weak', consequence: 'No review ever gets scheduled, and the underlying question of what actually happened is never definitively answered.' },
+        { lead: 'Vague promise', text: 'The team agrees a review should happen at some point to look at access controls.', quality: 'mixed', consequence: 'It\'s still on someone\'s to-do list a month later, several priorities down from where it started.' },
+        { lead: 'Premature blame', text: 'The closing conversation focuses on assigning blame before the investigation is even fully concluded.', quality: 'harmful', consequence: 'A conclusion gets treated as settled before the evidence actually supports it, which could be unfair to whoever\'s actually innocent.' }
+      ],
+      },
+      difficulty: 'complex',
+      name: 'Sabotage, error, or compromised account?',
+      desc: 'Records are vanishing in a pattern too clean to be an accident — during a migration that was legitimately supposed to delete some records anyway.',
+      trigger: 'Records are disappearing during a planned data migration. The pattern looks deliberate. But the migration was always going to delete some old records anyway — so nobody yet knows if this is sabotage, a script error, or the plan just running messier than expected.',
+      clock: 'The maintenance freeze window ends in a few hours. That\'s real pressure to just push through and sort out questions later. But if this is deliberate, continuing could destroy the evidence needed to understand what happened.',
+      complication: 'Access logs show the deletions were performed under the account of someone who left the company two weeks ago — an account that should have been deactivated before this migration ever started.',
+      complication2: 'HR confirms a current employee\'s credentials were also used around the same time, logged in from the same IP address as the departed employee\'s last known login — meaning either a current employee\'s account has been compromised, or a current employee is somehow involved.'
+    },
+    {
+      id: 'fix-makes-it-worse',
+      decisionOverrides: { 0: [
+        { lead: 'Monitor before starting', text: 'Someone sets up close monitoring on the affected records before recovery work begins, not after.', quality: 'strong', consequence: 'Good call — this is exactly what catches a recovery process causing new damage, before it goes much further.' },
+        { lead: 'Start without agreement', text: 'The team starts the recovery plan without agreeing on what \'still on track\' actually looks like.', quality: 'weak', consequence: 'Ten minutes in, one person thinks it\'s going fine and another thinks it\'s stalled — nobody agreed on what to actually watch for.' },
+        { lead: 'Quiet mid-course change', text: 'One person quietly tweaks the recovery approach mid-way without telling the rest of the team.', quality: 'mixed', consequence: 'It might genuinely improve things. But nobody else knows the approach changed, if something needs to be traced back later.' },
+        { lead: 'Skip monitoring to save time', text: 'The team decides monitoring can wait until after recovery is done, to save time.', quality: 'harmful', consequence: 'By the time anyone notices something\'s wrong, the recovery process has already run much further than it should have.' }
+      ],
+      1: [
+        { lead: 'Name one IC', text: 'The team names an Incident Commander, separate from whoever\'s running the recovery itself.', quality: 'strong', consequence: 'Good call — someone needs to be watching for exactly this kind of compounding failure, not just pushing the recovery forward.' },
+        { lead: 'Recovery lead self-checks', text: 'Whoever\'s running the recovery also decides whether it\'s working, with no outside check.', quality: 'weak', consequence: 'They\'re emotionally invested in their own plan succeeding, which makes it harder to notice early signs it\'s causing new problems.' },
+        { lead: 'Two engineers co-run it', text: 'Two engineers informally co-run the recovery.', quality: 'mixed', consequence: 'Reasonable, but neither has explicitly been assigned to watch for new, unrelated damage appearing.' },
+        { lead: 'Recovery runs unsupervised', text: 'Nobody takes charge — the recovery just continues under whoever started it, unsupervised.', quality: 'harmful', consequence: 'There\'s no one whose job it is to notice if the recovery itself starts causing harm.' }
+      ],
+      2: [
+        { lead: 'Pause the recovery', text: 'The team pauses the recovery process immediately to check whether it\'s the actual cause of the new corruption.', quality: 'strong', consequence: 'Good call — continuing to run a process that might be causing active damage is exactly the risk this step exists to catch.' },
+        { lead: 'Keep it running alongside', text: 'The recovery process keeps running while the team investigates the new corruption separately.', quality: 'weak', consequence: 'If the recovery process really is the cause, it just keeps causing more damage while the investigation runs in parallel.' },
+        { lead: 'Tell only the IC', text: 'Only the Incident Commander is told about the possible connection; the recovery keeps running as before.', quality: 'mixed', consequence: 'The IC is now worried the fix is the problem, but nobody running the recovery has been told to watch for it.' },
+        { lead: 'Assume unrelated', text: 'The team decides the new corruption is probably unrelated and keeps the recovery running unchanged.', quality: 'harmful', consequence: 'The recovery process continues unchecked, and the new corruption keeps spreading.' }
+      ],
+      3: [
+        { lead: 'Confirm cause before resuming', text: 'The IC sets a clear objective — confirm definitively whether the recovery process caused the new corruption before resuming anything — and assigns someone to own that specific investigation.', quality: 'strong', consequence: 'Good call — resuming the recovery without knowing this risks repeating the exact same damage.' },
+        { lead: 'Keep an eye on it', text: 'The team agrees to keep an eye on it without assigning anyone to specifically investigate the cause.', quality: 'weak', consequence: 'Nobody is actually driving the investigation, so the uncertainty about the cause just lingers unresolved.' },
+        { lead: 'Resume unilaterally', text: 'One engineer unilaterally decides to resume the recovery, assuming it wasn\'t the actual cause.', quality: 'mixed', consequence: 'The recovery resumes on an assumption nobody has actually confirmed, with real potential to cause the same damage again.' },
+        { lead: 'Push forward regardless', text: 'The team decides to keep pushing the original recovery plan forward regardless.', quality: 'harmful', consequence: 'The recovery process runs on, and the new corruption keeps spreading right alongside it.' }
+      ],
+      4: [
+        { lead: 'Separate resumer and checker', text: 'The person resuming the recovery is different from whoever confirms the earlier corruption is actually understood and contained.', quality: 'strong', consequence: 'Good call — the checker catches that the earlier corruption wasn\'t as contained as assumed.' },
+        { lead: 'Self-confirms containment', text: 'The person resuming the recovery also confirms the earlier issue is resolved themselves.', quality: 'weak', consequence: 'It looks contained. Nobody else checked, so the same compounding risk from before is still live.' },
+        { lead: 'Alone for hours', text: 'The recovery resumes, but the person running it has now been at it alone for hours.', quality: 'mixed', consequence: 'It\'s going carefully so far, but there\'s no plan if this runs long and a second, fresher perspective would catch something.' },
+        { lead: 'Resume at full speed', text: 'The recovery resumes at full speed without re-checking the earlier corruption, to save time.', quality: 'harmful', consequence: 'The same compounding issue from before happens again, this time with less patience left to catch it.' }
+      ],
+      5: [
+        { lead: 'Confirm both resolved, schedule AAR', text: 'The team confirms out loud that both the original issue and the recovery-caused damage are genuinely resolved, and sets a real date to review how the recovery plan missed this risk.', quality: 'strong', consequence: 'Two weeks later, the review happens — and specifically asks what should have been in place to catch a recovery process causing new damage sooner.' },
+        { lead: 'Quietly move on', text: 'Once things look stable, the team quietly moves on.', quality: 'weak', consequence: 'No review ever gets scheduled, and the next recovery plan has the same blind spot this one did.' },
+        { lead: 'Vague promise', text: 'The team agrees a review should happen at some point to look at recovery planning.', quality: 'mixed', consequence: 'It\'s still on someone\'s to-do list a month later, several priorities down from where it started.' },
+        { lead: 'Assign blame', text: 'The closing conversation focuses on whoever designed the recovery plan that caused the new damage.', quality: 'harmful', consequence: 'People become more cautious about proposing recovery plans at all, rather than better at building in safeguards.' }
+      ],
+      },
+      difficulty: 'complex',
+      name: 'The recovery plan causes new damage',
+      desc: 'A well-understood problem gets a sensible recovery plan — which then appears to make things worse, not better.',
+      trigger: 'A clearly diagnosed data corruption issue is found, and the team agrees on a sensible, well-reasoned recovery plan. Work begins, and progress looks steady, if a little slower than hoped.',
+      clock: 'The team is watching recovery progress against the clock, reasonably confident this is now just a matter of time.',
+      complication: 'Partway through, monitoring shows a second, different set of records now also corrupted — in a pattern that suggests the recovery process itself may be the cause of this new damage, not a separate, unrelated fault.',
+      complication2: null
+    },
+    {
+      id: 'slow-burn-repeat',
+      decisionOverrides: { 0: [
+        { lead: 'Log what\'s confirmed', text: 'Someone starts a clear written log of exactly what\'s confirmed safe versus still unknown, before anything else.', quality: 'strong', consequence: 'Good call — across a three-week gap, a clear record of what\'s actually been checked is the only way not to go in circles.' },
+        { lead: 'Check independently', text: 'A few people start checking different systems on their own, without a shared view of what\'s been covered.', quality: 'weak', consequence: 'Two people each assume the other has checked a particular system, and it turns out neither has.' },
+        { lead: 'Quiet gap patch', text: 'Someone quietly starts trying to patch the monitoring gap themselves, before the scope of the three weeks is understood.', quality: 'mixed', consequence: 'It might close the immediate gap. But the full three-week window of what\'s actually at risk still isn\'t understood.' },
+        { lead: 'Assume minimal impact', text: 'The team assumes the impact is probably small and doesn\'t investigate the full three-week window.', quality: 'harmful', consequence: 'Weeks later, something else from that same window turns out to be missing too — and nobody thought to check.' }
+      ],
+      1: [
+        { lead: 'Name one IC', text: 'The team names an Incident Commander to own untangling the full three-week window.', quality: 'strong', consequence: 'Good call — this kind of sprawling investigation needs one person actually driving it, or it stalls.' },
+        { lead: 'Discoverer leads alone', text: 'Whoever discovered the gap takes charge of the whole investigation themselves.', quality: 'weak', consequence: 'One person is now trying to reconstruct three weeks of history alone, which is exactly the kind of task that benefits from more than one set of eyes.' },
+        { lead: 'A couple dig in together', text: 'A couple of engineers informally start digging through the history together.', quality: 'mixed', consequence: 'Useful progress, but nobody\'s actually been assigned to own pulling it all together into one clear picture.' },
+        { lead: 'Scattered individual digging', text: 'Nobody takes charge — people investigate whatever seems interesting to them individually.', quality: 'harmful', consequence: 'Three weeks of history get investigated in a scattered, uncoordinated way, and nobody can say with confidence what\'s actually been covered.' }
+      ],
+      2: [
+        { lead: 'Pull past documentation', text: 'The team pauses to pull whatever documentation exists from the incident eight months ago, before continuing.', quality: 'strong', consequence: 'Good call — whatever was learned, or missed, last time is directly relevant to not repeating the same mistake now.' },
+        { lead: 'Ignore the earlier incident', text: 'The team continues the current investigation without looking into what happened eight months ago.', quality: 'weak', consequence: 'The team re-learns, the hard way, whatever lessons from eight months ago were never actually written down.' },
+        { lead: 'Tell only the IC', text: 'Only the Incident Commander is told about the earlier incident; the investigation continues as before.', quality: 'mixed', consequence: 'The IC now knows this has happened before, but the people doing the actual digging don\'t know there\'s a precedent to learn from.' },
+        { lead: 'Dismiss as old news', text: 'The team decides the earlier incident is old news and not relevant to fixing today\'s problem.', quality: 'harmful', consequence: 'Whatever gap allowed this to happen twice stays open for a third time.' }
+      ],
+      3: [
+        { lead: 'Assign the connection', text: 'The IC sets a clear objective — fully understand what\'s at risk across the three-week window — and assigns someone to own connecting today\'s investigation with whatever\'s left from the incident eight months ago.', quality: 'strong', consequence: 'Good call — this gives someone explicit responsibility for closing a gap that\'s now clearly been missed once already.' },
+        { lead: 'Seem related, no owner', text: 'The team agrees the two incidents seem related without assigning anyone to actually connect the findings.', quality: 'weak', consequence: 'The two investigations run in parallel without ever actually being compared against each other.' },
+        { lead: 'Apply old fix unilaterally', text: 'One person unilaterally decides this is basically the same issue as eight months ago and applies the same fix without confirming.', quality: 'mixed', consequence: 'The old fix might not even address what\'s actually different this time, and nobody\'s checked.' },
+        { lead: 'Not relevant enough', text: 'The team decides the eight-month-old incident isn\'t relevant enough to bring into this response.', quality: 'harmful', consequence: 'Whatever gap let this happen twice goes completely unaddressed a third time.' }
+      ],
+      4: [
+        { lead: 'Separate patcher and checker', text: 'The person patching the monitoring gap is different from whoever confirms the fix actually covers what failed before.', quality: 'strong', consequence: 'Good call — the checker catches that the patch covers this failure but not the one from eight months ago.' },
+        { lead: 'Self-confirms patch', text: 'The person patching the gap also confirms their own fix is complete.', quality: 'weak', consequence: 'It looks patched. Nobody else checked it against the earlier incident, so a related gap stays open.' },
+        { lead: 'Alone for hours', text: 'The patch gets implemented, but the person doing it has now been at it alone for hours.', quality: 'mixed', consequence: 'Progress is steady, but there\'s no plan if this runs long and a second perspective on the historical incident would help.' },
+        { lead: 'Ship without cross-check', text: 'The patch ships without checking it against what happened eight months ago.', quality: 'harmful', consequence: 'The new patch closes this specific gap while leaving open whatever let the earlier incident happen too.' }
+      ],
+      5: [
+        { lead: 'Confirm scope, schedule real AAR', text: 'The team confirms out loud that the full three-week window is understood, and sets a real date for a review that explicitly covers why this happened twice.', quality: 'strong', consequence: 'Two weeks later, the review happens — and this time it explicitly documents why the previous review never happened, so it can\'t be skipped again.' },
+        { lead: 'Quietly move on', text: 'Once the immediate gap is patched, the team quietly moves on.', quality: 'weak', consequence: 'No review happens this time either — exactly the pattern that let this repeat once already.' },
+        { lead: 'Vague promise again', text: 'The team agrees a review should happen at some point, without addressing why the last one never did.', quality: 'mixed', consequence: 'It\'s still on someone\'s to-do list a month later — the same fate as the review that should have happened eight months ago.' },
+        { lead: 'Blame the original gap', text: 'The closing conversation focuses on who should have caught the original gap eight months ago.', quality: 'harmful', consequence: 'The person who happens to have been around longest gets blamed for a systemic monitoring gap that wasn\'t really about any one person.' }
+      ],
+      },
+      difficulty: 'complex',
+      name: 'A three-week silent failure — and it has happened before',
+      desc: 'A monitoring gap let a backup job fail silently for three weeks. Then it turns out this happened once already.',
+      trigger: 'A monitoring gap let a critical backup job fail silently for three weeks, not hours or days. Nobody noticed until someone needed a specific old record — and found it unrecoverable. Nobody yet knows how much else across those three weeks is actually at risk.',
+      clock: 'The longer this goes uninvestigated, the harder it gets to work out what\'s safe versus at risk. This tests sustained investigation and documentation — not one decisive action.',
+      complication: 'While investigating, the team discovers this isn\'t the first time. A near-identical failure happened eight months ago. It was fixed quietly, with no proper After-Action Review — so the team may be about to relearn a lesson it already learned once, and let slip.',
+      complication2: null
+    },
+    {
+      id: 'legal-hold-conflict',
+      decisionOverrides: { 0: [
+        { lead: 'Check hold status first', text: 'Someone immediately checks which specific records are under legal hold before anyone touches anything.', quality: 'strong', consequence: 'Good call — this is exactly the fact that determines what can and can\'t be touched safely.' },
+        { lead: 'Plan fixes independently', text: 'Different people start planning fixes on their own, without first confirming which records are actually under hold.', quality: 'weak', consequence: 'Two different fixes get proposed before anyone confirms which records are actually restricted.' },
+        { lead: 'Quiet correction', text: 'Someone quietly starts correcting the records they can see, without checking legal hold status first.', quality: 'mixed', consequence: 'The correction might be fine. Or it might touch something under hold — and there\'s no way to know without checking first.' },
+        { lead: 'Fix now, ask later', text: 'The team decides to fix everything now and sort out the legal question afterwards.', quality: 'harmful', consequence: 'Something under legal hold gets modified before anyone realises it was restricted.' }
+      ],
+      1: [
+        { lead: 'Name one IC', text: 'The team names an Incident Commander who can weigh the technical and legal sides together.', quality: 'strong', consequence: 'Good call — this is exactly the kind of situation where technical urgency and legal caution need one person balancing both, not two teams pulling in different directions.' },
+        { lead: 'Engineer plans fix alone', text: 'Whoever found the data issue takes charge and starts planning the technical fix alone.', quality: 'weak', consequence: 'They\'re moving toward a fix without yet knowing that legal hold makes some of it off-limits.' },
+        { lead: 'Engineering and legal coordinate', text: 'Engineering and legal informally coordinate, without one clear owner.', quality: 'mixed', consequence: 'Both are engaged, but neither has actually been given final say if their priorities conflict.' },
+        { lead: 'Fix gets ahead of review', text: 'Nobody takes charge — engineering quietly starts fixing what it can see while legal is still working out the hold\'s exact scope.', quality: 'harmful', consequence: 'The technical fix gets ahead of the legal review that should have gated it.' }
+      ],
+      2: [
+        { lead: 'Build the distinction first', text: 'The team pauses to build a clear list distinguishing which specific records are under hold and which aren\'t, before touching anything.', quality: 'strong', consequence: 'Good call — this exact distinction is what stands between a safe fix and a real legal problem.' },
+        { lead: 'Plan one fix for all', text: 'The team continues planning a fix for all affected records as one group.', quality: 'weak', consequence: 'Without the distinction made clear, the plan is one step away from treating protected and unprotected records the same way.' },
+        { lead: 'Tell only the IC', text: 'Only the Incident Commander is told the two categories exist; engineering keeps planning the fix as originally scoped.', quality: 'mixed', consequence: 'The IC knows there\'s a critical distinction to make, but the people building the fix don\'t know to build it in.' },
+        { lead: 'Sort it out after', text: 'The team decides to sort the legal-hold distinction out after implementing the fix.', quality: 'harmful', consequence: 'The fix moves ahead without the one piece of information that would have kept it safe.' }
+      ],
+      3: [
+        { lead: 'Get sign-off, bound the fix', text: 'The IC sets a clear objective — get legal\'s sign-off on which records can be safely touched — and assigns someone to own executing the fix only within that boundary.', quality: 'strong', consequence: 'Good call — this keeps the technical fix from ever moving faster than the legal review that should gate it.' },
+        { lead: 'Be careful, no formal check', text: 'The team agrees to be careful about the legal hold stuff without assigning anyone to formally confirm the boundary.', quality: 'weak', consequence: 'The fix proceeds on an informal understanding of what\'s safe, rather than a confirmed one.' },
+        { lead: 'Decide safety unilaterally', text: 'One engineer unilaterally decides which records are safe to touch, without formal legal sign-off.', quality: 'mixed', consequence: 'Their judgement might be right, but if it\'s wrong, there\'s no formal record that legal ever actually confirmed it.' },
+        { lead: 'Fix now, review after', text: 'The team decides to proceed with the fix and let legal review it after the fact.', quality: 'harmful', consequence: 'The fix touches records legal hadn\'t yet confirmed were safe — exactly the outcome this was meant to prevent.' }
+      ],
+      4: [
+        { lead: 'Separate fixer and checker', text: 'The person implementing the fix is different from whoever confirms it only touched records legal actually cleared.', quality: 'strong', consequence: 'Good call — the checker catches that one cleared-looking record was actually still under hold.' },
+        { lead: 'Self-confirms scope', text: 'The person implementing the fix also confirms their own scope was correct.', quality: 'weak', consequence: 'It looks correctly scoped. Nobody else checked it against the legal list, so a hold violation goes unnoticed.' },
+        { lead: 'Alone for hours', text: 'The fix gets implemented, but the person doing it has now been cross-checking records alone for hours.', quality: 'mixed', consequence: 'Progress is careful so far, but there\'s no plan if this runs long and a second set of eyes on the list would help.' },
+        { lead: 'Skip the cross-check', text: 'The fix goes out without anyone cross-checking it against the legal list, to move faster.', quality: 'harmful', consequence: 'A record still under legal hold gets modified, exactly the outcome the whole process was meant to prevent.' }
+      ],
+      5: [
+        { lead: 'Confirm compliant, schedule AAR', text: 'The team confirms out loud that the fix respected every legal hold boundary, and sets a real date to review how technical and legal teams coordinate under time pressure.', quality: 'strong', consequence: 'Two weeks later, the review happens — and specifically asks how to make this coordination faster next time without cutting corners.' },
+        { lead: 'Quietly move on', text: 'Once the fix is confirmed safe, the team quietly moves on.', quality: 'weak', consequence: 'No review ever gets scheduled, and the next legal-hold conflict starts from the same slow, informal coordination as this one.' },
+        { lead: 'Vague promise', text: 'The team agrees a review should happen at some point to look at the legal-technical process.', quality: 'mixed', consequence: 'It\'s still on someone\'s to-do list a month later, several priorities down from where it started.' },
+        { lead: 'Assign blame', text: 'The closing conversation focuses on whether engineering or legal moved too slowly.', quality: 'harmful', consequence: 'The two teams become more guarded with each other, making the next time-sensitive legal question even slower to resolve.' }
+      ],
+      },
+      difficulty: 'complex',
+      name: 'The fix everyone wants might be evidence tampering',
+      desc: 'A data integrity issue touches records currently under legal hold for an active dispute.',
+      trigger: 'A data integrity issue is found in a set of customer records. Some of these records are under legal hold for an ongoing dispute. The obvious fix — correct and re-save the records — is exactly the kind of action that could count as evidence tampering if it touches anything under hold.',
+      clock: 'The business wants this fixed quickly, since it is visibly affecting live customers right now. Legal wants nothing touched until they have reviewed exactly what is affected, which could take days they don\'t feel they have the luxury of promising quickly.',
+      complication: 'Some affected records are genuinely under legal hold. Others look identical but aren\'t. The team must tell them apart correctly before touching anything — getting this wrong either way has real consequences.',
+      complication2: null
+    },
+    {
+      id: 'multi-region-ambiguity',
+      decisionOverrides: { 0: [
+        { lead: 'Check other regions', text: 'Someone checks the other regions immediately for any early signs of the same issue, before assuming it\'s isolated.', quality: 'strong', consequence: 'Good call — this is the fastest way to tell an isolated incident from an early symptom of something bigger.' },
+        { lead: 'Work the known region only', text: 'Different people start working the one known region\'s fix independently, without checking the others.', quality: 'weak', consequence: 'The one known region gets fixed while the others go unchecked — and if it\'s systemic, that exposure just keeps growing.' },
+        { lead: 'Quiet second check', text: 'Someone quietly starts monitoring a second region themselves, without telling the team why.', quality: 'mixed', consequence: 'It catches things early in that one region. But the rest of the team doesn\'t know to be watching yet.' },
+        { lead: 'Assume it\'s isolated', text: 'The team assumes it\'s isolated to the one region and doesn\'t check the others.', quality: 'harmful', consequence: 'Hours later, a second region reports the same issue — time that could have been used to prepare was spent assuming it was isolated.' }
+      ],
+      1: [
+        { lead: 'Name one IC', text: 'The team names an Incident Commander to own the whole multi-region question, not just the one confirmed region.', quality: 'strong', consequence: 'Good call — this keeps someone thinking about the other regions, not just the one that\'s visibly broken.' },
+        { lead: 'Fixer decides on other regions too', text: 'Whoever\'s fixing the known region also decides whether to check the others, on their own.', quality: 'weak', consequence: 'They\'re focused on the fix in front of them, and checking the other regions understandably slips down their list.' },
+        { lead: 'Regional leads coordinate own patches', text: 'Two regional leads informally coordinate on their own regions.', quality: 'mixed', consequence: 'Each is handling their own patch well, but nobody\'s actually looking at the two together for a shared pattern.' },
+        { lead: 'Each region handled in isolation', text: 'Nobody takes charge across regions — each region\'s team handles its own issue in isolation.', quality: 'harmful', consequence: 'If this is systemic, each region is now independently rediscovering the same problem instead of once, together.' }
+      ],
+      2: [
+        { lead: 'Compare regions directly', text: 'The team pauses to directly compare the two regions\' symptoms side by side, before deciding whether this is one issue or two.', quality: 'strong', consequence: 'Good call — this is exactly the kind of comparison that determines whether the team is fighting one fire or two.' },
+        { lead: 'Keep working region one', text: 'The team keeps working the first region\'s fix without directly comparing it to the second.', quality: 'weak', consequence: 'Two separate fixes get planned for what might be the exact same root cause, without anyone noticing the overlap.' },
+        { lead: 'Tell only the IC', text: 'Only the Incident Commander is told about the second region; the first region\'s fix continues as planned.', quality: 'mixed', consequence: 'The IC suspects a shared cause, but the team fixing the first region isn\'t looking for it.' },
+        { lead: 'Assume coincidence', text: 'The team decides the second region is probably coincidental and keeps treating them as separate issues.', quality: 'harmful', consequence: 'If it really is the same root cause, both regions\' fixes miss it, and a third region turns up with the same symptom later.' }
+      ],
+      3: [
+        { lead: 'Confirm cause before finalising', text: 'The IC sets a clear objective — determine whether this is one root cause or two — and assigns someone to own that specific comparison before either region\'s fix is finalised.', quality: 'strong', consequence: 'Good call — finalising either fix before this is answered risks solving the wrong problem in one or both regions.' },
+        { lead: 'Might be related, no owner', text: 'The team agrees the two regions might be related without assigning anyone to formally investigate the connection.', quality: 'weak', consequence: 'Both regions get fixed independently, and whether they were actually the same root cause is never actually confirmed either way.' },
+        { lead: 'Apply same fix unilaterally', text: 'One engineer unilaterally applies the first region\'s fix to the second, assuming it\'s the same issue.', quality: 'mixed', consequence: 'It might work. But if the two regions aren\'t actually the same root cause, this fix may not address what\'s really wrong in the second one.' },
+        { lead: 'Treat as unrelated', text: 'The team decides to treat the two regions as unrelated and finalise each fix independently.', quality: 'harmful', consequence: 'If they really were connected, the shared root cause survives in whatever form neither fix actually addressed.' }
+      ],
+      4: [
+        { lead: 'Separate fixer and checker', text: 'The person implementing the fix in one region is different from whoever confirms it actually resolves the symptom in the other too.', quality: 'strong', consequence: 'Good call — the checker catches that the fix resolves region one\'s symptom but not region two\'s slightly different one.' },
+        { lead: 'Self-confirms both regions', text: 'The person implementing the fix also confirms it worked in both regions themselves.', quality: 'weak', consequence: 'It looks resolved. Nobody else checked the second region closely, so a lingering difference goes unnoticed.' },
+        { lead: 'Alone for hours', text: 'The fix gets implemented, but the person doing it has now been working across two regions alone for hours.', quality: 'mixed', consequence: 'Progress is steady so far, but there\'s no plan if this runs long and comparing both regions closely gets rushed.' },
+        { lead: 'Ship without confirming both', text: 'The fix ships to both regions without confirming it actually addresses both symptoms, to move faster.', quality: 'harmful', consequence: 'Region one looks fixed while region two\'s slightly different symptom quietly persists.' }
+      ],
+      5: [
+        { lead: 'Confirm both regions, schedule AAR', text: 'The team confirms out loud that both regions are genuinely resolved, and sets a real date to review whether the root cause could affect regions not yet checked.', quality: 'strong', consequence: 'Two weeks later, the review happens — and specifically asks whether other regions need proactive checking, not just the two that were visibly affected.' },
+        { lead: 'Quietly move on', text: 'Once both known regions look fixed, the team quietly moves on.', quality: 'weak', consequence: 'No review ever gets scheduled, and whether other regions share the same exposure is never actually checked.' },
+        { lead: 'Vague promise', text: 'The team agrees a review should happen at some point to look at cross-region monitoring.', quality: 'mixed', consequence: 'It\'s still on someone\'s to-do list a month later, several priorities down from where it started.' },
+        { lead: 'Assign blame', text: 'The closing conversation focuses on which region\'s team should have caught this first.', quality: 'harmful', consequence: 'Regional teams become more territorial about their own systems, making the next cross-region pattern even harder to spot early.' }
+      ],
+      },
+      difficulty: 'complex',
+      name: 'One region is down. Is it just one region?',
+      desc: 'An issue in one region might be isolated, or might be the first sign of something affecting all of them.',
+      trigger: 'Your platform runs across multiple regions for redundancy. An issue has just been found in one of them. Nobody yet knows if this is isolated, or an early sign of something bigger.',
+      clock: 'If this is isolated, the fix is straightforward and low-risk. If it is systemic, every hour spent treating it as isolated is an hour of avoidable exposure building up in the regions nobody has checked yet.',
+      complication: 'A second region reports a similar symptom — close enough to worry about, different enough that the team can\'t be sure if it\'s the same root cause or just coincidence.',
+      complication2: null
+    }
+  ];
+
+  // ---------------------------------------------------------------
+  // EXERCISE STAGES — follows the real ICS incident lifecycle, not a
+  // generic made-up sequence: Notification, Establish Command, ongoing
+  // reassessment, developing the Incident Action Plan (ICS's actual
+  // planning artefact — objectives, tactics, and a communications
+  // plan together), Operations executing it, then Demobilization and
+  // After-Action Review — ICS's own terms for closing out and
+  // debriefing. The complication is deliberately revealed at Stage 3,
+  // not Stage 1.
+  // ---------------------------------------------------------------
+  const STAGES = [
+    {
+      label: 'Stage 1 — Notification & initial size-up',
+      recommendation: 'Before your next drill or real incident, agree in advance who verifies scope first, before the wider team reacts — don\'t let that get decided live, under pressure.',
+      narrative: (s) => s.trigger,
+      decisionPrompt: 'How does the team respond to this first report?',
+      decisions: [
+        { lead: 'Verify first', text: 'Someone checks scope and severity before the wider team reacts.', quality: 'strong', consequence: 'Good call. A few minutes confirming scope saves far more time than reacting to a wrong assumption.' },
+        { lead: 'Everyone investigates alone', text: 'Each person who hears about it starts digging in on their own.', quality: 'weak', consequence: 'Feels fast. But by the time the team compares notes, there are three different theories — and nobody agrees which is right.' },
+        { lead: 'Fix it quietly', text: 'The first person to notice tries to fix it alone, without telling anyone yet.', quality: 'mixed', consequence: 'It might work. But if it doesn\'t, the team is now further behind than if they\'d known from the start.' },
+        { lead: 'Downplay it', text: 'Someone decides this is probably nothing and tells the team not to worry about it yet.', quality: 'harmful', consequence: 'Twenty minutes later, it\'s clearly not nothing — and the head start that could have been used to prepare is gone.' }
+      ]
+    },
+    {
+      label: 'Stage 2 — Establish Incident Command',
+      recommendation: 'Explicitly split Incident Commander and Operations Lead in your on-call rotation, even on a small team — force the conscious handoff rather than letting whoever\'s most technical default into both.',
+      narrative: (s, path) => {
+        if (path === 'strained') return 'The confusion from a moment ago hasn\'t cleared. Conflicting versions of what\'s happening are already circulating, and whoever takes charge here is doing it without everyone on the same page yet.';
+        if (path === 'mixed') return 'The quiet, solo fix attempt from a moment ago is still just between one person and the problem — nobody else in the room yet knows whether it worked.';
+        return 'ICS is explicit on this point: the Incident Commander is always the first role designated, no matter how small the incident, and the last role stood down.';
+      },
+      decisionPrompt: 'Who takes charge, and how?',
+      decisions: [
+        { lead: 'Name one IC', text: 'The team names one Incident Commander out loud. That person does not also do the technical fix.', quality: 'strong', consequence: 'This is the ICS default, and it already helps: everyone knows who makes the final call, without having to check.' },
+        { lead: 'IC does both jobs', text: 'The most senior person takes charge and starts fixing it themselves at the same time.', quality: 'weak', consequence: 'Works, until it doesn\'t. They\'re deep in the fix when a decision only they can make comes up — and they miss it for ten minutes.' },
+        { lead: 'Co-lead informally', text: 'Two people who both know the system well informally share the lead.', quality: 'mixed', consequence: 'Amicable, but they\'ve already given a third person two slightly different plans. There\'s no single source of truth.' },
+        { lead: 'Nobody takes charge', text: 'Everyone assumes someone else will step up, so no one actually does.', quality: 'harmful', consequence: 'An hour in, there\'s still no single decision-maker — and the team is improvising individually under pressure, exactly what Command exists to prevent.' }
+      ]
+    },
+    {
+      label: 'Stage 3 — New information changes the picture',
+      recommendation: 'Build a habit of an explicit \'re-brief\' moment whenever new information changes the picture — a fixed pause, not something that only happens if someone remembers to call it.',
+      narrative: (s, path) => {
+        if (path === 'strained') return s.clock + ' The confusion from earlier hasn\'t fully cleared either, which makes this next shift harder to process cleanly.';
+        if (path === 'mixed') return s.clock + ' The two informal co-leads haven\'t yet had to test whether they actually agree on what happens next.';
+        return s.clock;
+      },
+      complication: (s) => s.complication,
+      decisionPrompt: 'How does the team react to this new information?',
+      decisions: [
+        { lead: 'Re-brief the room', text: 'The team pauses to restate the situation and confirm everyone understands it the same way.', quality: 'strong', consequence: 'Costs a couple of minutes. Also catches one team member still working from the old, outdated assumption.' },
+        { lead: 'Keep going', text: 'The team sticks with the original plan since it\'s already in motion.', quality: 'weak', consequence: 'The plan continues — but it\'s now solving a slightly different problem than the one in front of the team.' },
+        { lead: 'Tell only the IC', text: 'Only the Incident Commander is told. Everyone else keeps working on their existing tasks.', quality: 'mixed', consequence: 'The IC now knows more than the people doing the work. Their next instructions may not make sense without more context.' },
+        { lead: 'Dismiss it', text: 'Someone decides the new information probably isn\'t significant and the team should stay focused on the original plan.', quality: 'harmful', consequence: 'It was significant. The team finds out later, at a worse moment, after acting on a plan that no longer matched reality.' }
+      ]
+    },
+    {
+      label: 'Stage 4 — Develop the Incident Action Plan',
+      recommendation: 'Define clear, written thresholds in advance for what triggers customer, regulatory, or executive escalation, and who owns drafting it — so it\'s a pre-agreed rule, not an in-the-moment judgement call.',
+      narrative: (s, path) => {
+        if (path === 'strained') return 'The team is already playing catch-up from earlier decisions that didn\'t land cleanly. That makes it tempting to skip straight to action without a real plan — exactly when a clear plan matters most.';
+        if (path === 'mixed') return 'The Incident Commander is working from more complete information than the rest of the team right now — which makes it easy to issue instructions that make sense to the IC, but not obviously to everyone else.';
+        return 'ICS builds every response around an Incident Action Plan: what are we trying to achieve (objectives), how will we get there (tactics), and who needs to hear what, and when (the communications plan) — set by Command, not improvised on the fly by whoever\'s free.';
+      },
+      decisionPrompt: 'How does the team decide what to do about external notification?',
+      decisions: [
+        { lead: 'Set objective and owner', text: 'The IC sets a clear objective and threshold for escalation, and assigns someone to draft the notification.', quality: 'strong', consequence: 'By the time notification is confirmed, the message is already drafted and ready to send.' },
+        { lead: 'Agree, but assign nobody', text: 'The team agrees notification is probably needed, but doesn\'t set a trigger or assign anyone.', quality: 'weak', consequence: 'An hour later, nobody has sent anything — everyone assumed someone else was already on it.' },
+        { lead: 'Go around the IC', text: 'One person decides to notify without checking with the Incident Commander first.', quality: 'mixed', consequence: 'Fast, but it may not reflect what the IC actually knows right now — and it can\'t be un-sent.' },
+        { lead: 'Decide not to notify', text: 'The team actively decides not to tell anyone outside the group, hoping it resolves before anyone needs to know.', quality: 'harmful', consequence: 'It doesn\'t resolve quietly. When it eventually surfaces, the fact that it was deliberately withheld becomes its own separate problem.' }
+      ]
+    },
+    {
+      label: 'Stage 5 — Operations executes the plan',
+      recommendation: 'Make a second-person validation step a non-negotiable part of closing out any fix, and build a minimum of two people deep on every critical incident role.',
+      narrative: (s, path) => {
+        if (path === 'strained') return 'Whoever ends up doing the hands-on work is already carrying the weight of a response that\'s had more rough edges than it needed to — which makes cutting corners just to get this over with more tempting, not less.';
+        if (path === 'mixed') return 'A notification already went out without the Incident Commander\'s sign-off — whatever gets fixed now needs to match a message that\'s already been sent, not the other way around.';
+        return 'This is ICS\'s Operations function: turning the Incident Commander\'s objectives into tactical action, separate from the command decision itself.';
+      },
+      complication: (s) => s.complication2 || null,
+      decisionPrompt: 'How is the fix actually implemented?',
+      decisions: [
+        { lead: 'Separate builder and checker', text: 'The person who implements the fix is different from the person who validates it.', quality: 'strong', consequence: 'The validator catches a small edge case the implementer missed — exactly the point of a second set of eyes.' },
+        { lead: 'Same person, no check', text: 'The person who built the fix also declares it done, since they\'re confident in it.', quality: 'weak', consequence: 'Looks fine on the surface. Nobody else checked, so nobody will know otherwise until it resurfaces.' },
+        { lead: 'One person, no relief', text: 'The fix gets done, but the person doing it has now worked this incident alone for hours straight.', quality: 'mixed', consequence: 'The fix works. But there\'s no plan for what happens if this runs into a second day and they need to sleep.' },
+        { lead: 'Skip validation entirely', text: 'The fix ships straight to production with no one checking it, to save time.', quality: 'harmful', consequence: 'It breaks something else within the hour — something a five-minute check would have caught.' }
+      ]
+    },
+    {
+      label: 'Stage 6 — Demobilization & After-Action Review',
+      recommendation: 'Make scheduling the After-Action Review a mandatory last step of Demobilization — put a real date on the calendar before anyone leaves the room.',
+      narrative: (s, path) => {
+        if (path === 'strained') return 'This response had more rough edges than it needed to. That\'s exactly when the pull to just quietly move on, rather than sit with what went wrong, is strongest — and exactly when it matters most not to.';
+        if (path === 'mixed') return 'Whoever just closed this out has been at it alone for hours. That\'s not nothing to carry into a conversation about what should happen next time.';
+        return 'ICS treats these as two distinct, deliberate steps, not something that just happens once people quietly drift back to normal work: formally standing resources down, then a structured After-Action Review.';
+      },
+      decisionPrompt: 'How does the team close this out?',
+      decisions: [
+        { lead: 'Confirm and schedule', text: 'The team confirms out loud that it\'s over, and sets a real date for the After-Action Review.', quality: 'strong', consequence: 'Two weeks later, the review actually happens — because it was already on the calendar.' },
+        { lead: 'Just move on', text: 'Everyone quietly returns to normal work once the pressure is off.', quality: 'weak', consequence: 'No review ever gets scheduled. A similar incident happens later, and today\'s lessons never made it in.' },
+        { lead: 'Vague promise', text: 'The team agrees a review should happen soon, without a specific date.', quality: 'mixed', consequence: 'It\'s still on someone\'s to-do list a month later, several priorities down from where it started.' },
+        { lead: 'Assign blame instead', text: 'The closing conversation focuses on who\'s at fault, rather than what happened.', quality: 'harmful', consequence: 'Nobody wants to volunteer information next time something goes wrong, for fear of being blamed again — future incidents just got harder to catch early.' }
+      ]
+    }
+  ];
+
+  // ---------------------------------------------------------------
+  // SELF-SCORING RUBRIC — grounded in well-documented ICS anti-patterns
+  // and good practice, not a pass/fail judgement from the tool itself.
+  // ---------------------------------------------------------------
+  const RUBRIC = [
+    { text: 'The team used plain, clear language — not jargon only some people in the room understood.', why: 'ICS calls this "common terminology." Confusion during a live incident compounds fast.', recommendation: 'Agree a shared, plain-language vocabulary for severity levels and status updates before you need it — not while you\'re already in one.' }
+  ];
+
+  let selectedScenario = null;
+  let currentStageIndex = 0;
+  const stageNotes = [];
+  const stageChoices = [];
+  const stageShuffleOrder = [];
+
+  // Fisher-Yates shuffle - so the "correct" option isn't reliably in the
+  // same position every time. Without this, anyone who runs the exercise
+  // more than once (or compares notes with a colleague who has) can just
+  // learn "always pick the first option" without engaging with the actual
+  // reasoning at all - which would quietly defeat the entire point.
+  function shuffledIndices(n) {
+    const arr = Array.from({ length: n }, (_, i) => i);
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  // ---------------------------------------------------------------
+  // RUN HISTORY — opt-in localStorage, same pattern already used
+  // elsewhere in the Lab (explicit save action, never silent). The
+  // point isn't just a log of past runs - it's surfacing a pattern no
+  // single run can show: the same stage scoring weak across many
+  // drills, which is exactly the kind of thing worth knowing before a
+  // real incident, not after.
+  // ---------------------------------------------------------------
+  const HISTORY_KEY = 'tabletop_run_history_v1';
+
+  function loadRunHistory() {
+    try {
+      const raw = localStorage.getItem(HISTORY_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+
+  function saveRunToHistory() {
+    const stageQualities = stageChoices.map(c => c.quality);
+    const terminologyChecked = document.getElementById('rubric-0').checked;
+    const totalPossible = STAGES.length + 1;
+    const earned = stageQualities.reduce((sum, q) => sum + QUALITY_POINTS[q], 0) + (terminologyChecked ? 1 : 0);
+    const score = Math.round((earned / totalPossible) * 100);
+
+    const history = loadRunHistory();
+    history.push({
+      timestamp: new Date().toISOString(),
+      scenarioId: selectedScenario.id,
+      scenarioName: selectedScenario.name,
+      difficulty: selectedScenario.difficulty,
+      score,
+      stageQualities,
+      terminologyChecked
+    });
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    } catch (e) {
+      console.warn('Could not save run to history:', e);
+      return;
+    }
+    document.getElementById('save-run-status').textContent = 'Saved — now ' + history.length + ' run' + (history.length === 1 ? '' : 's') + ' in your team\'s history.';
+    document.getElementById('save-run-btn').disabled = true;
+    renderHistorySummary();
+  }
+
+  function renderHistorySummary() {
+    const el = document.getElementById('history-summary');
+    if (!el) return;
+    const history = loadRunHistory();
+
+    if (history.length === 0) {
+      el.innerHTML = '';
+      return;
+    }
+
+    const avgScore = Math.round(history.reduce((sum, r) => sum + r.score, 0) / history.length);
+    const maxBar = Math.max(...history.map(r => r.score), 1);
+
+    let html = '<div class="history-box">';
+    html += '<div style="display:flex; justify-content:space-between; align-items:baseline;"><strong style="font-size:13px;">Your team\'s history: ' + history.length + ' run' + (history.length === 1 ? '' : 's') + ', average ' + avgScore + '%</strong><button id="clear-history-btn" style="border:none; background:none; color:var(--text-muted); font-size:11px; text-decoration:underline; cursor:pointer;">Clear history</button></div>';
+
+    html += '<div class="trend-bars">' + history.map(r =>
+      '<div class="trend-bar" style="height:' + Math.max(6, (r.score / maxBar) * 40) + 'px;" title="' + r.scenarioName + ': ' + r.score + '%"></div>'
+    ).join('') + '</div>';
+
+    // Aggregate per-stage weakness across all runs - the part a single
+    // run's score can never show on its own.
+    const stageWeakCounts = STAGES.map((stage, i) => {
+      const relevant = history.filter(r => r.stageQualities[i]);
+      const weakCount = relevant.filter(r => r.stageQualities[i] !== 'strong').length;
+      return { label: stage.label, weakCount, total: relevant.length };
+    });
+    const worstStage = stageWeakCounts.filter(s => s.total >= 2).sort((a, b) => (b.weakCount / b.total) - (a.weakCount / a.total))[0];
+    if (worstStage && worstStage.weakCount / worstStage.total >= 0.5) {
+      const pct = Math.round((worstStage.weakCount / worstStage.total) * 100);
+      html += '<div class="gap-flag">Recurring pattern: <strong>' + worstStage.label + '</strong> scored weak or mixed in ' + worstStage.weakCount + ' of ' + worstStage.total + ' runs (' + pct + '%) — worth deliberately focusing on next time, not just noting.</div>';
+    }
+
+    html += '</div>';
+    el.innerHTML = html;
+
+    const clearBtn = document.getElementById('clear-history-btn');
+    if (clearBtn) clearBtn.addEventListener('click', () => {
+      localStorage.removeItem(HISTORY_KEY);
+      renderHistorySummary();
+    });
+  }
+
+  function renderScenarios() {
+    const grid = document.getElementById('scenario-grid');
+    const custom = SCENARIOS.filter(s => s.difficulty === 'custom');
+    const foundational = SCENARIOS.filter(s => s.difficulty === 'foundational');
+    const complex = SCENARIOS.filter(s => s.difficulty === 'complex');
+
+    function cardsFor(list) {
+      return list.map(s =>
+        '<button class="scenario-btn" data-id="' + s.id + '"><span class="name">' + s.name + '</span><span class="desc">' + s.desc + '</span></button>'
+      ).join('');
+    }
+
+    let html = '';
+    if (custom.length > 0) {
+      html += '<div style="grid-column:1/-1; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--accent); margin-top:4px;">From Drillmaker — your generated exercise</div>';
+      html += cardsFor(custom);
+    }
+    html += '<div style="grid-column:1/-1; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-muted); margin-top:16px;">Foundational — one clear cause</div>';
+    html += cardsFor(foundational);
+    html += '<div style="grid-column:1/-1; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--risk); margin-top:16px;">Complex — competing priorities, ambiguous cause, or a second twist partway through</div>';
+    html += cardsFor(complex);
+
+    grid.innerHTML = html;
+    grid.querySelectorAll('.scenario-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedScenario = SCENARIOS.find(s => s.id === btn.dataset.id);
+        // Clear the previous run's answers - without this, starting a new
+        // scenario after finishing one left the old stageChoices/stageNotes
+        // in place, so stage 1 of the new run looked like it was already
+        // answered.
+        stageChoices.length = 0;
+        stageNotes.length = 0;
+        stageShuffleOrder.length = 0;
+        currentStageIndex = 0;
+        document.getElementById('rubric-panel').style.display = 'none';
+        document.getElementById('exercise-panel').style.display = 'none';
+        document.getElementById('roles-panel').style.display = 'block';
+        document.getElementById('roles-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  }
+
+  function renderRoles() {
+    const el = document.getElementById('role-inputs');
+    const roles = [
+      { key: 'ic', label: 'Incident Commander' },
+      { key: 'ops', label: 'Operations Lead' },
+      { key: 'pio', label: 'Public Information Officer (Comms)' },
+      { key: 'planning', label: 'Planning / Documentation Lead' }
+    ];
+    el.innerHTML = roles.map(r =>
+      '<div class="role-row"><label>' + r.label + '</label><input type="text" id="role-' + r.key + '" placeholder="Name (optional)"></div>'
+    ).join('');
+  }
+
+  function renderStage() {
+    const panel = document.getElementById('exercise-panel');
+    panel.style.display = 'block';
+    const stage = STAGES[currentStageIndex];
+    const madeChoice = stageChoices[currentStageIndex];
+
+    let html = '<div class="stage-marker">' + STAGES.map((s, i) =>
+      '<div class="stage-dot ' + (i < currentStageIndex ? 'done' : i === currentStageIndex ? 'current' : '') + '"></div>'
+    ).join('') + '</div>';
+
+    const pathState = precedingPathState(currentStageIndex);
+    if (currentStageIndex > 0 && pathState === 'strained') {
+      html += '<p style="font-size:12px; font-weight:700; color:var(--risk); margin-bottom:8px;">&#9888; Your response so far has had more rough edges than usual — this stage reflects that, not a separate penalty.</p>';
+    }
+
+    html += '<p class="stage-label">' + stage.label + '</p>';
+    html += '<h2 style="margin-bottom:14px;">' + selectedScenario.name + '</h2>';
+    html += '<div class="narrative-box">' + stage.narrative(selectedScenario, pathState) + '</div>';
+    const complicationText = stage.complication ? stage.complication(selectedScenario) : null;
+    if (complicationText) {
+      html += '<div class="complication-box"><strong>The situation just changed:</strong> ' + complicationText + '</div>';
+    }
+    html += '<p style="font-size:13px; font-weight:700; color: var(--text); margin-bottom:10px;">' + stage.decisionPrompt + '</p>';
+
+    // Scenario-specific decisions take priority when defined for this stage,
+    // falling back to the shared ICS-generic set otherwise - lets scenarios
+    // be filled in with tailored wording incrementally, stage by stage,
+    // without needing every scenario to define every stage up front.
+    const decisions = (selectedScenario.decisionOverrides && selectedScenario.decisionOverrides[currentStageIndex]) || stage.decisions;
+
+    if (!stageShuffleOrder[currentStageIndex]) {
+      stageShuffleOrder[currentStageIndex] = shuffledIndices(decisions.length);
+    }
+    const order = stageShuffleOrder[currentStageIndex];
+
+    html += '<div id="decision-cards">';
+    order.forEach(i => {
+      const d = decisions[i];
+      const isChosen = madeChoice && madeChoice.index === i;
+      const isDimmed = madeChoice && !isChosen;
+      const leadHtml = d.lead ? '<strong>' + d.lead + '.</strong> ' : '';
+      html += '<button class="scenario-btn decision-card' + (isChosen ? ' chosen' : '') + '" data-index="' + i + '" style="width:100%; margin-bottom:10px; display:block;' + (isDimmed ? ' opacity:0.45;' : '') + (madeChoice ? ' cursor:default;' : '') + '">' + leadHtml + d.text + '</button>';
+    });
+    html += '</div>';
+
+    if (madeChoice) {
+      const qualityColor = (madeChoice.quality === 'strong') ? '#16A34A' : (madeChoice.quality === 'weak' || madeChoice.quality === 'harmful') ? '#DC2626' : '#D97706';
+      const qualityBg = (madeChoice.quality === 'strong') ? '#DCFCE7' : (madeChoice.quality === 'weak' || madeChoice.quality === 'harmful') ? '#FEE2E2' : '#FEF3C7';
+      html += '<div style="background:' + qualityBg + '; border-left:4px solid ' + qualityColor + '; border-radius:8px; padding:14px 16px; margin:14px 0;"><strong style="color:' + qualityColor + ';">What happens next:</strong> ' + madeChoice.consequence + '</div>';
+    }
+
+    html += '<textarea class="notes-area" id="stage-notes" placeholder="Anything else worth capturing about this stage (optional)&hellip;">' + (stageNotes[currentStageIndex] || '') + '</textarea>';
+    html += '<div style="display:flex; justify-content:space-between;">';
+    html += currentStageIndex > 0 ? '<button class="btn-ghost" id="prev-stage-btn">&larr; Back</button>' : '<span></span>';
+    if (madeChoice) {
+      html += currentStageIndex < STAGES.length - 1
+        ? '<button class="btn-primary" id="next-stage-btn">Next stage &rarr;</button>'
+        : '<button class="btn-primary" id="finish-exercise-btn">Finish &amp; see your score &rarr;</button>';
+    } else {
+      html += '<span style="font-size:12px; color:var(--text-muted); align-self:center;">Pick what your team would actually do to continue</span>';
+    }
+    html += '</div>';
+
+    panel.innerHTML = html;
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    document.getElementById('stage-notes').addEventListener('input', e => { stageNotes[currentStageIndex] = e.target.value; });
+    if (!madeChoice) {
+      document.querySelectorAll('.decision-card').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const i = parseInt(btn.dataset.index, 10);
+          stageChoices[currentStageIndex] = { index: i, quality: decisions[i].quality, consequence: decisions[i].consequence, text: decisions[i].text };
+          renderStage();
+        });
+      });
+    }
+    const prevBtn = document.getElementById('prev-stage-btn');
+    if (prevBtn) prevBtn.addEventListener('click', () => { currentStageIndex--; renderStage(); });
+    const nextBtn = document.getElementById('next-stage-btn');
+    if (nextBtn) nextBtn.addEventListener('click', () => { currentStageIndex++; renderStage(); });
+    const finishBtn = document.getElementById('finish-exercise-btn');
+    if (finishBtn) finishBtn.addEventListener('click', renderRubric);
+  }
+
+  function scoreTier(pct) {
+    if (pct === 100) return { label: 'Strong', color: '#16A34A', bg: '#DCFCE7', note: 'This looks like a well-run response by ICS standards. The value of a drill at this level is keeping it sharp, not fixing it.' };
+    if (pct >= 75) return { label: 'Solid, with specific gaps', color: '#D97706', bg: '#FEF3C7', note: 'The core discipline is mostly there. The gaps below are worth closing before they show up in a real incident, not this drill.' };
+    if (pct >= 50) return { label: 'Developing', color: '#D97706', bg: '#FEF3C7', note: 'Several foundational ICS practices weren\'t in place this time. Worth picking one or two gaps below to focus on before the next drill, rather than all of them at once.' };
+    return { label: 'Needs work', color: '#DC2626', bg: '#FEE2E2', note: 'Most of the core ICS discipline wasn\'t demonstrated in this run — which is exactly what a drill is for finding out safely. Start with naming a single Incident Commander next time; most of the rest follows from that one decision.' };
+  }
+
+  // Score is computed from what the team actually chose during the
+  // exercise (6 stage decisions, strong=1 point/mixed=0.5/weak=0), plus
+  // one remaining self-report item for the one thing a discrete choice
+  // genuinely can't capture (whether the room's language stayed clear).
+  // This replaces pure self-report with something driven by real
+  // decisions and their visible consequences.
+  const QUALITY_POINTS = { strong: 1, mixed: 0.6, weak: 0.2, harmful: 0 };
+
+  // Real branching: later stages read genuinely differently depending on
+  // the team's actual track record so far, not just a one-off consequence
+  // shown once and forgotten. 'strained' requires the average of everything
+  // chosen up to this point to have meaningfully slipped, not just one
+  // mixed call among otherwise strong ones.
+  // Direct, per-choice branching - the SPECIFIC quality of the choice made
+  // at the immediately preceding stage determines this stage's narrative,
+  // not an average smoothed across the whole run. A single bad call
+  // visibly changes what happens next; it doesn't get quietly absorbed by
+  // otherwise-good choices elsewhere. 'weak' and 'harmful' share the
+  // 'strained' narrative branch (both represent a preceding choice that
+  // didn't help), which keeps authored content tractable at 3 variants per
+  // stage rather than 4, while scoring still tells them apart.
+  function precedingPathState(stageIndex) {
+    if (stageIndex === 0) return 'steady';
+    const preceding = stageChoices[stageIndex - 1];
+    if (!preceding) return 'steady';
+    if (preceding.quality === 'strong') return 'steady';
+    if (preceding.quality === 'mixed') return 'mixed';
+    return 'strained'; // weak or harmful
+  }
+
+  function updateScoreSummary() {
+    const terminologyChecked = document.getElementById('rubric-0').checked;
+    const totalPossible = STAGES.length + 1;
+    let earned = stageChoices.reduce((sum, choice) => sum + QUALITY_POINTS[choice.quality], 0);
+    if (terminologyChecked) earned += 1;
+    const pct = Math.round((earned / totalPossible) * 100);
+    const tier = scoreTier(pct);
+
+    let html = '<div style="background:' + tier.bg + '; border-radius:12px; padding:20px; margin:20px 0;">';
+    html += '<div style="display:flex; align-items:baseline; gap:12px; margin-bottom:6px;"><span style="font-size:32px; font-weight:800; color:' + tier.color + ';">' + pct + '%</span><span style="font-size:15px; font-weight:700; color:' + tier.color + ';">Incident Readiness Score — ' + tier.label + '</span></div>';
+    html += '<p style="font-size:13px; color:var(--text); margin:0;">' + tier.note + '</p>';
+    html += '</div>';
+
+    const gaps = [];
+    STAGES.forEach((stage, i) => {
+      if (stageChoices[i].quality !== 'strong') gaps.push({ label: stage.label, chosen: stageChoices[i].text, consequence: stageChoices[i].consequence, recommendation: stage.recommendation, quality: stageChoices[i].quality });
+    });
+    if (!terminologyChecked) gaps.push({ label: 'Communication clarity', chosen: null, recommendation: RUBRIC[0].recommendation });
+
+    if (gaps.length > 0) {
+      html += '<h3 style="font-size:14px; margin-bottom:10px;">Identified gaps &amp; recommendations</h3>';
+      gaps.forEach(g => {
+        html += '<div class="rubric-item" style="background:var(--risk-bg); border-left:3px solid var(--risk); display:block;">';
+        html += '<div class="rubric-text" style="color:var(--risk); font-weight:700;">' + g.label + (g.quality ? ' — ' + (g.quality === 'weak' ? 'weak choice' : 'mixed choice') : '') + '</div>';
+        if (g.chosen) html += '<div class="rubric-why" style="margin-top:4px; font-style:italic;">Your team chose: "' + g.chosen + '"</div>';
+        html += '<div class="rubric-why" style="margin-top:6px;"><strong>Recommendation:</strong> ' + g.recommendation + '</div></div>';
+      });
+    } else {
+      html += '<p style="font-size:13px; color:var(--safe); font-weight:600;">No gaps identified — every stage scored strong on this run.</p>';
+    }
+
+    document.getElementById('score-summary').innerHTML = html;
+  }
+
+  function renderRubric() {
+    document.getElementById('exercise-panel').style.display = 'none';
+    const panel = document.getElementById('rubric-panel');
+    panel.style.display = 'block';
+
+    let html = '<h2>' + selectedScenario.name + '</h2>';
+    html += '<p class="sub">' + selectedScenario.trigger + '</p>';
+
+    html += '<h2 style="margin-top:8px;">Your decision path</h2>';
+    html += '<p class="sub">What your team actually chose at each stage — this is what the score below is built from, not a separate self-assessment. Later stages genuinely read differently depending on this path, not just the score at the end.</p>';
+    STAGES.forEach((stage, i) => {
+      const choice = stageChoices[i];
+      const color = choice.quality === 'strong' ? '#16A34A' : (choice.quality === 'weak' ? '#DC2626' : '#D97706');
+      html += '<div style="padding:10px 0; border-bottom:1px solid var(--border);"><div style="font-size:12px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.04em;">' + stage.label + '</div><div style="font-size:13px; margin-top:2px;">' + choice.text + ' <span style="color:' + color + '; font-weight:700;">(' + choice.quality + ')</span></div>' +
+        (stageNotes[i] ? '<div style="font-size:12px; color:var(--text-muted); margin-top:4px; font-style:italic;">Note: ' + stageNotes[i] + '</div>' : '') +
+        '</div>';
+    });
+
+    html += '<h2 style="margin-top:24px;">One more thing only your team can judge</h2>';
+    html += '<p class="sub">Nobody is grading this but you — be honest, that\'s the entire point of a drill.</p>';
+    RUBRIC.forEach((item, i) => {
+      html += '<div class="rubric-item"><input type="checkbox" id="rubric-' + i + '"><div><div class="rubric-text">' + item.text + '</div><div class="rubric-why">' + item.why + '</div></div></div>';
+    });
+    html += '<div id="score-summary" aria-live="polite"></div>';
+    html += '<div class="no-print" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">';
+    html += '<button class="btn-primary" id="save-run-btn">Save this run to your team\'s history</button>';
+    html += '<button class="btn-ghost" id="print-summary-btn">Print this session\'s summary</button>';
+    html += '<button class="btn-ghost" id="download-md-btn">&#8681; Download Markdown Summary</button>';
+    html += '</div>';
+    html += '<p id="save-run-status" style="font-size:12px; color:var(--safe); margin-top:8px;"></p>';
+    panel.innerHTML = html;
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    RUBRIC.forEach((item, i) => {
+      document.getElementById('rubric-' + i).addEventListener('change', updateScoreSummary);
+    });
+    updateScoreSummary();
+    document.getElementById('print-summary-btn').addEventListener('click', () => window.print());
+    document.getElementById('save-run-btn').addEventListener('click', saveRunToHistory);
+    document.getElementById('download-md-btn').addEventListener('click', downloadMarkdownSummary);
+  }
+
+  // A completed run previously had no way to leave the browser except the
+  // opt-in, score-only history entry or an unstyled full-page print - the
+  // actual narrative, consequences, and notes were locked to the tab. This
+  // gives the full session record a real export, matching the other tools.
+  function downloadMarkdownSummary() {
+    const lines = [];
+    lines.push('# Tabletop Exercise Summary');
+    lines.push('');
+    lines.push('**Scenario:** ' + selectedScenario.name);
+    lines.push('**Generated:** ' + new Date().toISOString().slice(0, 10));
+    lines.push('');
+    lines.push('## Opening situation');
+    lines.push('');
+    lines.push(selectedScenario.trigger);
+    lines.push('');
+    lines.push('## Decision path');
+    lines.push('');
+    STAGES.forEach((stage, i) => {
+      const choice = stageChoices[i];
+      lines.push('### ' + stage.label);
+      lines.push('');
+      lines.push('- **Chosen:** ' + choice.text + ' (' + choice.quality + ')');
+      lines.push('- **What happened next:** ' + choice.consequence);
+      if (stageNotes[i]) lines.push('- **Team note:** ' + stageNotes[i]);
+      lines.push('');
+    });
+    const terminologyChecked = document.getElementById('rubric-0').checked;
+    const totalPossible = STAGES.length + 1;
+    const earned = stageChoices.reduce((sum, c) => sum + QUALITY_POINTS[c.quality], 0) + (terminologyChecked ? 1 : 0);
+    const pct = Math.round((earned / totalPossible) * 100);
+    const tier = scoreTier(pct);
+    lines.push('## Score');
+    lines.push('');
+    lines.push('**' + pct + '% — ' + tier.label + '**');
+    lines.push('');
+    lines.push(tier.note);
+    lines.push('');
+    lines.push('## Disclaimer');
+    lines.push('');
+    lines.push('An independent tool by Kris McCabe, grounded in publicly documented Incident Command System (ICS) / NIMS principles. This is a practice exercise record, not a real incident response plan.');
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = selectedScenario.id + '-tabletop-summary.md';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  document.getElementById('start-exercise-btn').addEventListener('click', () => {
+    document.getElementById('roles-panel').style.display = 'none';
+    currentStageIndex = 0;
+    renderStage();
+  });
+
+  // Drillmaker handoff: a generated MSEL can arrive here as ?scenario=<base64
+  // JSON>, decoded and slotted in as one more pickable scenario, using the
+  // same generic ICS stage decisions as any scenario without decisionOverrides
+  // - no different from picking a built-in one, just sourced from Drillmaker.
+  function b64DecodeUnicode(str) {
+    return decodeURIComponent(atob(str).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+  }
+  (function loadDrillmakerScenario() {
+    const raw = new URLSearchParams(location.search).get('scenario');
+    if (!raw) return;
+    try {
+      const data = JSON.parse(b64DecodeUnicode(raw));
+      if (!data || !data.trigger) return;
+      SCENARIOS.unshift({
+        id: 'from-drillmaker',
+        difficulty: 'custom',
+        name: data.name || 'Custom exercise from Drillmaker',
+        desc: data.desc || 'A generated MSEL, handed off from Drillmaker.',
+        trigger: data.trigger,
+        clock: data.clock || 'The exercise controller sets the pace from here based on the injects already generated.',
+        complication: data.complication || 'A further inject lands, changing the picture - see the full MSEL in Drillmaker for the complete timeline.'
+      });
+    } catch (e) {
+      console.warn('Could not load scenario from Drillmaker URL params:', e);
+    }
+  })();
+
+  renderScenarios();
+  renderHistorySummary();
+  renderRoles();
+</script>
+
+</body>
+</html>

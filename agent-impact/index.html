@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<!-- Apply a stored theme choice before first paint, so there's no flash
+     of the wrong theme while lab-theme.js is still loading. -->
+<script>
+(function(){try{var t=localStorage.getItem('lab-theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();
+</script>
+<!-- Google Analytics - only loads after cookie consent, see banner script below -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  function loadGoogleAnalytics(){
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-QE309XG3DJ';
+    document.head.appendChild(s);
+    gtag('js', new Date());
+    gtag('config', 'G-QE309XG3DJ');
+  }
+</script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Agent-Impact — AI Agent Blast Radius &amp; Guardrail Policy Simulator | Kris McCabe</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon-16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="description" content="Drop a Salesforce Describe payload, dial in what an AI agent is about to do, and get a Blast Radius score, an Irreversibility Index, and a machine-readable guardrail policy — entirely client-side.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Kris's Lab">
+<meta property="og:title" content="Agent-Impact — AI Agent Blast Radius &amp; Guardrail Policy Simulator">
+<meta property="og:description" content="Drop a Salesforce Describe payload, dial in what an AI agent is about to do, and get a Blast Radius score, an Irreversibility Index, and a machine-readable guardrail policy — entirely client-side.">
+<meta property="og:url" content="https://lab.krismccabe.com/agent-impact/">
+<meta property="og:image" content="https://lab.krismccabe.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Agent-Impact — AI Agent Blast Radius &amp; Guardrail Policy Simulator">
+<meta name="twitter:description" content="Drop a Salesforce Describe payload, dial in what an AI agent is about to do, and get a Blast Radius score, an Irreversibility Index, and a machine-readable guardrail policy — entirely client-side.">
+<meta name="twitter:image" content="https://lab.krismccabe.com/og-image.png">
+<link rel="stylesheet" href="/assets/lab.css?v=6">
+<script src="/assets/lab-theme.js?v=1" defer></script>
+<style>
+  .lab-header-inner { max-width: 1160px; display:flex; align-items:center; justify-content:space-between; }
+
+  .hero { padding: 48px 24px 40px; }
+  .hero h1 { color: #fff; font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 800; letter-spacing: -0.02em; margin: 0 0 14px; max-width: 700px; margin-left: auto; margin-right: auto; }
+  .hero p { color: #94A3B8; font-size: 15px; max-width: 640px; margin: 0 auto; }
+  .hero .legal-link-wrap { margin-top: 14px; }
+  .hero .legal-link-wrap button { background: none; border: none; color: #93C5FD; font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 0; }
+
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 24px 20px 64px; }
+  @media (min-width: 1024px) {
+    .lab-header-inner, .wrap, footer { max-width: 1360px; }
+  }
+
+  .panel h2 { font-size: 17px; font-weight: 700; color: var(--text); margin: 0 0 4px; }
+  .panel h3 { font-size: 13px; font-weight: 700; color: var(--text); margin: 0 0 10px; }
+  .panel .sub { font-size: 13px; color: var(--text-muted); margin: 0 0 18px; }
+
+  .two-col-ai { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 20px; align-items: start; }
+  @media (max-width: 1023px) { .two-col-ai { grid-template-columns: minmax(0, 1fr); } }
+  .col-stack { display: flex; flex-direction: column; gap: 20px; }
+
+  /* --- Drop zone + toast (pattern shared with Schema Explorer's importer) --- */
+  #drop-zone { border: 2px dashed var(--border); border-radius: 10px; padding: 22px; text-align: center; cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease; }
+  #drop-zone:hover { border-color: var(--accent); background: rgba(37, 99, 235, 0.12); }
+  #drop-zone.dragover { border-color: var(--accent); background: rgba(37, 99, 235, 0.12); border-style: solid; }
+  #drop-zone p { margin: 0; font-size: 13px; color: var(--text-muted); }
+  #drop-zone .drop-icon { margin-bottom: 8px; opacity: 0.7; }
+  #drop-filename { font-size: 11.5px; color: var(--text-muted); margin-top: 8px; }
+  #import-toast { display: none; margin-top: 10px; padding: 10px 14px; border-radius: 8px; font-size: 13px; }
+  #import-status { font-size: 12.5px; margin-top: 8px; min-height: 16px; }
+
+  textarea.ai-textarea { width: 100%; min-height: 90px; margin-top: 10px; font-family: monospace; font-size: 12px; border: 1px solid var(--border); border-radius: 8px; padding: 10px; background: var(--input-bg); color: var(--text); }
+
+  .object-summary { margin-top: 14px; padding: 12px 14px; border-radius: 8px; background: var(--surface-2); font-size: 12.5px; }
+  .object-summary .obj-name { font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .object-summary .obj-counts { display: flex; flex-wrap: wrap; gap: 10px; color: var(--text-muted); }
+  .object-summary .obj-counts b { color: var(--text); }
+  .object-summary.empty { color: var(--text-muted); font-style: italic; }
+
+  /* --- Inputs --- */
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 11.5px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+  .field .field-sub { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+  select.ai-select, input.ai-input { width: 100%; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); padding: 9px 11px; font-family: inherit; font-size: 13px; color: var(--text); font-weight: 500; box-sizing: border-box; }
+  select.ai-select:focus, input.ai-input:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+  .batch-row { display: flex; gap: 10px; align-items: center; }
+  .batch-row input[type="range"] { flex: 1 1 auto; }
+  .batch-row input[type="number"] { width: 84px; flex-shrink: 0; }
+
+  input[type="range"] { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 2px; background: var(--surface-3); }
+  input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--accent); border: 2px solid var(--panel-bg); cursor: pointer; }
+  input[type="range"]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--accent); border: 2px solid var(--panel-bg); cursor: pointer; }
+  input[type="range"]::-moz-range-track { background: var(--surface-3); height: 4px; border-radius: 2px; }
+
+  .toggle-row { display: flex; align-items: flex-start; gap: 10px; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); }
+  .toggle-row input[type="checkbox"] { margin-top: 2px; width: 16px; height: 16px; flex-shrink: 0; }
+  .toggle-row .toggle-label { font-size: 12.5px; color: var(--text); font-weight: 600; }
+  .toggle-row .toggle-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+
+  /* --- Module D disclosure --- */
+  .module-d { border: 1px dashed var(--border); border-radius: 10px; padding: 14px 16px; background: var(--surface-2); }
+  .module-d h3 { display: flex; align-items: center; gap: 8px; }
+  .module-d .badge-soon { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); background: var(--surface-3); border-radius: 999px; padding: 2px 8px; }
+  .module-d p { font-size: 12px; color: var(--text-muted); line-height: 1.6; margin: 6px 0 0; }
+  .module-d button { margin-top: 10px; }
+  .module-d button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* --- Metric cards --- */
+  .metric-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 12px; margin-bottom: 18px; }
+  .metric-card { border-radius: 10px; padding: 16px; background: var(--surface-2); border: 1px solid var(--border); }
+  .metric-card .metric-value { font-size: 26px; font-weight: 800; font-family: monospace; }
+  .metric-card .metric-label { font-size: 11px; font-weight: 600; margin-top: 4px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .metric-card.tier-LOW .metric-value { color: var(--safe); }
+  .metric-card.tier-MEDIUM .metric-value { color: var(--amber); }
+  .metric-card.tier-HIGH .metric-value { color: var(--risk); }
+  .metric-card.tier-CRITICAL .metric-value { color: var(--severe); }
+  .metric-card.approval-required { background: var(--risk-bg); }
+  .metric-card.approval-not-required { background: var(--safe-bg); }
+  .metric-card.approval-required .metric-value { color: var(--risk); font-size: 16px; }
+  .metric-card.approval-not-required .metric-value { color: var(--safe); font-size: 16px; }
+
+  .risk-tier-banner { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 700; margin-bottom: 16px; }
+  .risk-tier-banner.tier-LOW { background: var(--safe-bg); color: var(--safe); }
+  .risk-tier-banner.tier-MEDIUM { background: var(--amber-bg); color: var(--amber); }
+  .risk-tier-banner.tier-HIGH { background: var(--risk-bg); color: var(--risk); }
+  .risk-tier-banner.tier-CRITICAL { background: var(--severe-bg); color: var(--severe); }
+
+  /* --- Terminal viewer --- */
+  .terminal-tabs { display: flex; flex-wrap: wrap; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 0; }
+  .terminal-tab { background: none; border: none; border-bottom: 2px solid transparent; color: var(--text-muted); font-family: inherit; font-size: 12.5px; font-weight: 700; padding: 9px 12px; cursor: pointer; }
+  .terminal-tab:hover { color: var(--text); }
+  .terminal-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .terminal-wrap { position: relative; background: var(--navy); border-radius: 0 0 10px 10px; overflow: hidden; }
+  .terminal-actions { display: flex; justify-content: flex-end; padding: 8px 10px 0; }
+  #copy-btn { border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); color: #E7ECF3; font-family: inherit; font-size: 11.5px; font-weight: 700; padding: 6px 11px; border-radius: 6px; cursor: pointer; }
+  #copy-btn:hover { background: rgba(255,255,255,0.14); }
+  #terminal-content { margin: 0; padding: 8px 16px 16px; font-family: 'SFMono-Regular', Consolas, monospace; font-size: 12px; line-height: 1.6; color: #E7ECF3; white-space: pre-wrap; word-break: break-word; max-height: 420px; overflow-y: auto; }
+  #copy-toast { position: absolute; top: 8px; right: 10px; font-size: 11px; font-weight: 700; color: var(--safe); background: var(--safe-bg, #DCFCE7); border-radius: 6px; padding: 3px 8px; opacity: 0; transition: opacity 0.2s ease; pointer-events: none; }
+  #copy-toast.show { opacity: 1; }
+
+  .btn { border: 1px solid var(--border); background: var(--surface); color: var(--text); font-family: inherit; font-size: 13px; font-weight: 700; padding: 10px 18px; border-radius: 8px; cursor: pointer; text-decoration: none; transition: border-color 0.15s ease, background 0.15s ease; display: inline-flex; align-items: center; gap: 6px; }
+  .btn:hover { border-color: var(--accent); background: rgba(37, 99, 235, 0.12); text-decoration: none; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { background: var(--accent-hv); border-color: var(--accent-hv); color: #fff; }
+  .btn.small { padding: 6px 12px; font-size: 12px; }
+
+  /* --- Legal / privacy modal --- */
+  .modal-backdrop { display: none; position: fixed; inset: 0; background: rgba(15,23,42,0.6); z-index: 100; align-items: center; justify-content: center; padding: 20px; }
+  .modal-backdrop.open { display: flex; }
+  .modal { background: var(--panel-bg); border-radius: 12px; max-width: 560px; width: 100%; max-height: 84vh; overflow-y: auto; padding: 26px 28px; border: 1px solid var(--border); }
+  .modal h2 { font-size: 17px; font-weight: 800; color: var(--text); margin: 0 0 14px; }
+  .modal h3 { font-size: 13px; font-weight: 700; color: var(--text); margin: 16px 0 6px; }
+  .modal p, .modal li { font-size: 13px; color: var(--text-muted); line-height: 1.65; }
+  .modal ul { margin: 0; padding-left: 20px; }
+  .modal .modal-close-row { text-align: right; margin-top: 18px; }
+
+  footer { max-width: 1160px; }
+  footer .disclaimer { max-width: 700px; }
+
+  @media (max-width: 640px) { .panel { padding: 20px; } }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Agent-Impact — AI Agent Blast Radius & Guardrail Policy Simulator",
+  "description": "Drop a Salesforce Describe payload, dial in what an AI agent is about to do, and get a Blast Radius score, an Irreversibility Index, and a machine-readable guardrail policy — entirely client-side.",
+  "url": "https://lab.krismccabe.com/agent-impact/",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Any (runs in browser)",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "author": {
+    "@type": "Person",
+    "name": "Kris McCabe",
+    "url": "https://krismccabe.com/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/assets/swiss.css?v=5">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to content</a>
+
+<div class="cookie-banner" id="cookie-banner" role="dialog" aria-label="Cookie consent">
+  <p>This site uses Google Analytics to understand how the tools are used. Nothing loads or is tracked until you accept.</p>
+  <div class="cookie-banner-actions">
+    <button type="button" id="cookie-decline" class="btn small">Decline</button>
+    <button type="button" id="cookie-accept" class="btn primary small">Accept</button>
+  </div>
+</div>
+<script>
+(function(){
+  var consent = localStorage.getItem('cookie-consent');
+  if (consent === 'granted') { loadGoogleAnalytics(); return; }
+  if (consent === 'denied') { return; }
+  var banner = document.getElementById('cookie-banner');
+  banner.style.display = 'flex';
+  document.getElementById('cookie-accept').addEventListener('click', function(){
+    localStorage.setItem('cookie-consent', 'granted');
+    banner.style.display = 'none';
+    loadGoogleAnalytics();
+  });
+  document.getElementById('cookie-decline').addEventListener('click', function(){
+    localStorage.setItem('cookie-consent', 'denied');
+    banner.style.display = 'none';
+  });
+})();
+</script>
+
+  <header class="lab-header">
+    <div class="lab-header-inner">
+      <a class="lab-back" href="/">&#8592; Kris's Lab</a>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" aria-pressed="false">
+          <svg class="icon-sun" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.5"/>
+            <path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12h2.5M19 12h2.5M4.2 19.8l1.8-1.8M18 6l1.8-1.8"/>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 14.2A8.5 8.5 0 1 1 9.8 4a7 7 0 0 0 10.2 10.2Z"/>
+          </svg>
+        </button>
+        <span style="display:flex; align-items:center; gap:8px; color:#fff; font-weight:700; font-size:14px;">
+        <svg viewBox="0 0 40 40" width="22" height="22" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="20" cy="20" r="15" fill="none" stroke="#93C5FD" stroke-width="1.4" stroke-dasharray="3 3"/>
+          <circle cx="20" cy="20" r="9.5" fill="none" stroke="#93C5FD" stroke-width="1.8"/>
+          <rect x="16.5" y="16.5" width="7" height="7" rx="1.5" fill="#2563EB" transform="rotate(45 20 20)"/>
+          <path d="M27 27.5 L29.5 30 L34 25" fill="none" stroke="#DC2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Agent-Impact
+      </span>
+      </div>
+    </div>
+  </header>
+
+  <div class="hero" id="main-content">
+    <svg viewBox="0 0 40 40" width="48" height="48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="margin-bottom:16px;">
+      <circle cx="20" cy="20" r="15" fill="none" stroke="#93C5FD" stroke-width="1.4" stroke-dasharray="3 3"/>
+      <circle cx="20" cy="20" r="9.5" fill="none" stroke="#93C5FD" stroke-width="1.8"/>
+      <rect x="16.5" y="16.5" width="7" height="7" rx="1.5" fill="#2563EB" transform="rotate(45 20 20)"/>
+      <path d="M27 27.5 L29.5 30 L34 25" fill="none" stroke="#DC2626" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <p class="eyebrow">Free tool &middot; Kris McCabe</p>
+    <h1>AI Agent Blast Radius &amp; Guardrail Policy Simulator</h1>
+    <p>Before an AI agent touches production Salesforce data, dry-run it here. Drop a Describe payload, dial in the action, and get a Blast Radius score, an Irreversibility Index, and a guardrail policy you can hand straight to Agentforce, LangChain, or a system prompt — every calculation stays in this browser tab.</p>
+    <div class="legal-link-wrap"><button type="button" id="legal-link">Privacy &amp; methodology &rarr;</button></div>
+  </div>
+
+  <div class="wrap">
+    <div class="two-col-ai">
+
+      <!-- LEFT COLUMN: inputs -->
+      <div class="col-stack">
+
+        <div class="panel">
+          <h2>1. Describe payload</h2>
+          <p class="sub">Drop a Salesforce SObject Describe JSON (or paste one below). Parsed entirely in your browser — nothing is uploaded.</p>
+
+          <div id="drop-zone">
+            <svg class="drop-icon" viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" style="color:var(--text-muted);">
+              <path d="M12 4v11m0 0l-4-4m4 4l4-4M5 19h14" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <p><strong>Drop a Describe JSON file here</strong>, or click to browse.</p>
+            <p id="drop-filename"></p>
+          </div>
+          <input type="file" id="file-input" accept=".json,application/json" style="display:none;">
+
+          <details style="margin-top:12px;">
+            <summary style="cursor:pointer; font-size:12px; font-weight:700; color:var(--accent);">Or paste JSON directly</summary>
+            <textarea class="ai-textarea" id="paste-textarea" placeholder='{"name":"Account","childRelationships":[...],"fields":[...]}'></textarea>
+            <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="btn small" id="import-paste-btn">Parse pasted JSON</button>
+              <button class="btn small" id="load-sample-btn">Load sample payload (Account)</button>
+            </div>
+          </details>
+
+          <p id="import-status"></p>
+          <div id="import-toast"></div>
+
+          <div class="object-summary empty" id="object-summary">No object loaded yet — load a Describe payload to begin.</div>
+        </div>
+
+        <div class="panel">
+          <h2>2. Agent action</h2>
+          <p class="sub">What is the agent about to do, and how?</p>
+
+          <div class="field">
+            <label for="action-type">Action type</label>
+            <select class="ai-select" id="action-type">
+              <option value="READ">READ — read-only query</option>
+              <option value="CREATE">CREATE — insert new records</option>
+              <option value="UPDATE" selected>UPDATE — modify existing records</option>
+              <option value="DELETE">DELETE — hard delete records</option>
+              <option value="BULK_EXECUTE">BULK_EXECUTE — batch/bulk API job</option>
+              <option value="EXTERNAL_API">EXTERNAL_API — outbound callout as a side effect</option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label for="batch-size-number">Batch size</label>
+            <div class="batch-row">
+              <input type="range" id="batch-size-range" min="1" max="4" step="0.01" value="0">
+              <input type="number" class="ai-input" id="batch-size-number" min="1" max="1000000" value="1">
+            </div>
+            <p class="field-sub">Records touched in a single execution.</p>
+          </div>
+
+          <div class="field">
+            <label for="flow-count">Active record-triggered flows on this object</label>
+            <input type="number" class="ai-input" id="flow-count" min="0" max="50" value="0">
+          </div>
+
+          <div class="field toggle-row">
+            <input type="checkbox" id="side-effects-toggle">
+            <div>
+              <div class="toggle-label">This action triggers external side effects</div>
+              <div class="toggle-sub">Outbound webhooks, emails, or third-party API calls fired as a result — these can't be undone by rolling back the record.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="module-d">
+          <h3>Live Salesforce connector <span class="badge-soon">Coming soon</span></h3>
+          <p>Module D — pulling Describe metadata directly from a Salesforce org via OAuth 2.0 PKCE — needs a registered Connected App (a real Client ID and callback URL) before it can run for real. Rather than fake it, it's disabled until that's set up. Everything above works fully offline with a Describe payload you already have.</p>
+          <button class="btn small" disabled>Connect to Salesforce org (not yet available)</button>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: analytics + output -->
+      <div class="col-stack">
+
+        <div class="panel">
+          <h2>Impact analysis</h2>
+          <p class="sub" id="analysis-sub">Load a payload and set the action above — this updates instantly as you change anything.</p>
+
+          <div class="risk-tier-banner tier-LOW" id="risk-tier-banner">LOW RISK — no additional guardrails required</div>
+
+          <div class="metric-cards">
+            <div class="metric-card tier-LOW" id="card-blast">
+              <div class="metric-value" id="metric-blast">0</div>
+              <div class="metric-label">Blast Radius (0&ndash;100)</div>
+            </div>
+            <div class="metric-card tier-LOW" id="card-irrev">
+              <div class="metric-value" id="metric-irrev">0%</div>
+              <div class="metric-label">Irreversibility Index</div>
+            </div>
+            <div class="metric-card approval-not-required" id="card-approval">
+              <div class="metric-value" id="metric-approval">NOT REQUIRED</div>
+              <div class="metric-label">Human Approval Status</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" style="padding:0; overflow:hidden;">
+          <div style="padding:22px 28px 0;">
+            <h2>Guardrail policy export</h2>
+            <p class="sub">Machine-readable output, generated live from the metrics above.</p>
+          </div>
+          <div class="terminal-tabs" style="margin:0 28px;">
+            <button class="terminal-tab active" data-tab="json">JSON Policy</button>
+            <button class="terminal-tab" data-tab="agentforce">Agentforce Config</button>
+            <button class="terminal-tab" data-tab="langchain">LangChain Wrapper</button>
+            <button class="terminal-tab" data-tab="prompt">System Prompt Directive</button>
+          </div>
+          <div class="terminal-wrap" style="margin:0 28px 28px; border-radius:10px;">
+            <div class="terminal-actions">
+              <button id="copy-btn">Copy to clipboard</button>
+              <span id="copy-toast">Copied!</span>
+            </div>
+            <pre id="terminal-content">Load a payload to generate a policy.</pre>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="legal-modal-backdrop">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="legal-modal-title">
+      <h2 id="legal-modal-title">Privacy &amp; methodology</h2>
+      <p>Agent-Impact is a static, client-side simulator. There is no backend for it to call.</p>
+      <h3>What happens to what you drop in</h3>
+      <ul>
+        <li>The Describe payload you drop or paste is parsed entirely in this browser tab, in memory. It is never uploaded, logged, or sent anywhere.</li>
+        <li>Nothing is written to disk or to any server. Refreshing the page clears everything.</li>
+        <li>Opening this page and dropping a local JSON file will show zero outbound network requests in DevTools' Network tab.</li>
+      </ul>
+      <h3>Read-only, opt-in scope only</h3>
+      <p>The optional live Salesforce connector (not yet enabled — see the panel on the page) would request only the <code>id</code> and <code>api</code> OAuth scopes and only ever call read-only Describe/Tooling endpoints. It would never write to your org.</p>
+      <h3>What the scores mean</h3>
+      <p>Blast Radius, Irreversibility, and the resulting risk tier are heuristic estimates built from your inputs and generic, publicly documented Salesforce metadata concepts (cascade-delete relationships, record-triggered flows, bulk API batching). They're a starting point for a guardrail conversation, not a certified risk assessment, and not derived from any employer's internal systems or proprietary data.</p>
+      <h3>Independent project</h3>
+      <p>This is an independent tool built by Kris McCabe on his own time. It isn't affiliated with, endorsed by, or built using confidential material from Salesforce, Anthropic, or any employer, past or present.</p>
+      <div class="modal-close-row"><button class="btn primary small" id="legal-modal-close">Close</button></div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="links">
+      <a href="/schema-explorer/" target="_blank" rel="noopener">Schema Explorer &mdash; what breaks if you delete this? &rarr;</a>
+      <a href="/traceability/" target="_blank" rel="noopener">Traceability &mdash; data lineage &amp; recovery sequencing &rarr;</a>
+      <a href="/redline/" target="_blank" rel="noopener">Redline &mdash; the True Cost of Downtime calculator &rarr;</a>
+      <a href="/recoverly/" target="_blank" rel="noopener">Recoverly &mdash; data recovery maturity assessment &rarr;</a>
+      <a href="/tabletop/" target="_blank" rel="noopener">Tabletop &mdash; Incident Command practice exercise &rarr;</a>
+      <a href="/drillmaker/" target="_blank" rel="noopener">Drillmaker &mdash; tabletop exercise generator &rarr;</a>
+      <a href="/ai-shield/" target="_blank" rel="noopener">AI-SHIELD &mdash; AI security &amp; trust maturity assessment &rarr;</a>
+      <a href="/flare/" target="_blank" rel="noopener">Flare &mdash; live AI/LLM library vulnerability tracker &rarr;</a>
+      <a href="https://krismccabe.com" target="_blank" rel="noopener">krismccabe.com</a>
+    </div>
+    <p class="disclaimer">An independent tool by Kris McCabe. Grounded in generic, publicly documented Salesforce platform concepts (Describe metadata, cascade-delete relationships, record-triggered flows, Bulk API batching) and common AI-agent guardrail patterns (human-in-the-loop confirmation, tool-call wrapping) &mdash; not derived from any employer's internal or proprietary architecture. Scores and exported policies are illustrative starting points for a guardrail conversation, not a certified risk assessment or a substitute for real security review.</p>
+  </footer>
+
+<script>
+(function () {
+  'use strict';
+
+  // ---------------------------------------------------------------
+  // MODULE A: Data ingestion & metadata sanitizer
+  // ---------------------------------------------------------------
+  var SYSTEM_FIELDS = ['Id','IsDeleted','CreatedDate','CreatedById','LastModifiedDate','LastModifiedById','SystemModstamp','LastActivityDate','LastViewedDate','LastReferencedDate'];
+  var PII_FIELD_PATTERN = /email|phone|ssn|mobile|address|birthdate|passport|salary|licen[cs]e/i;
+  var NOISE_CHILD_PATTERN = /(History|Share|Feed)$/;
+
+  function sanitizeSchemaDescribe(rawDescribe) {
+    var desc = rawDescribe;
+    if (Array.isArray(desc)) desc = desc[0];
+    desc = desc || {};
+
+    var cascadeChildren = [];
+    var standardChildren = [];
+    (Array.isArray(desc.childRelationships) ? desc.childRelationships : []).forEach(function (cr) {
+      if (!cr || !cr.childSObject) return;
+      if (NOISE_CHILD_PATTERN.test(cr.childSObject)) return;
+      var entry = { childSObject: cr.childSObject, field: cr.field || null, cascadeDelete: !!cr.cascadeDelete };
+      if (entry.cascadeDelete) cascadeChildren.push(entry);
+      else standardChildren.push(entry);
+    });
+
+    var outboundLookups = [];
+    var structuralFlags = [];
+    (Array.isArray(desc.fields) ? desc.fields : []).forEach(function (f) {
+      if (!f || !f.name) return;
+      if (SYSTEM_FIELDS.indexOf(f.name) !== -1) return;
+      if (Array.isArray(f.referenceTo) && f.referenceTo.length) {
+        outboundLookups.push({ field: f.name, referenceTo: f.referenceTo, cascadeDelete: !!f.cascadeDelete });
+      }
+      if (!PII_FIELD_PATTERN.test(f.name) && (f.unique || f.externalId || f.encrypted)) {
+        structuralFlags.push({ field: f.name, unique: !!f.unique, externalId: !!f.externalId, encrypted: !!f.encrypted });
+      }
+    });
+
+    return {
+      name: desc.name || desc.label || 'UnknownObject',
+      label: desc.label || desc.name || 'Unknown Object',
+      cascadeChildren: cascadeChildren,
+      standardChildren: standardChildren,
+      outboundLookups: outboundLookups,
+      structuralFlags: structuralFlags
+    };
+  }
+
+  // ---------------------------------------------------------------
+  // MODULE B: Blast Radius & Irreversibility calculation engine
+  // ---------------------------------------------------------------
+  var ACTION_MULTIPLIERS = { READ: 0.1, CREATE: 1.0, UPDATE: 2.0, DELETE: 5.0, BULK_EXECUTE: 4.0, EXTERNAL_API: 3.5 };
+  var CASCADE_WEIGHT = 12.0, STANDARD_WEIGHT = 3.5, LOOKUP_WEIGHT = 1.5;
+  // Saturating curve constant. rawImpact is unbounded (deep schemas x large
+  // batches can run into the thousands), but the score needs to stay in
+  // 0-100 while still separating everyday actions from severe ones - a
+  // hard clamp would flatten every serious scenario to the same "100".
+  var SATURATION_K = 50;
+
+  function calculateBlastRadius(schemaTree, actionConfig) {
+    var st = schemaTree || {};
+    var cascadeCount = (st.cascadeChildren || []).length;
+    var standardCount = (st.standardChildren || []).length;
+    var lookupCount = (st.outboundLookups || []).length;
+
+    var schemaExposure = (cascadeCount * CASCADE_WEIGHT) + (standardCount * STANDARD_WEIGHT) + (lookupCount * LOOKUP_WEIGHT);
+    var actionMultiplier = ACTION_MULTIPLIERS[actionConfig.actionType] || ACTION_MULTIPLIERS.READ;
+    var automationMultiplier = 1.0 + (Math.max(0, actionConfig.activeFlowCount || 0) * 0.4);
+    var batchSize = Math.max(1, actionConfig.batchSize || 1);
+    var batchScalingFactor = Math.log(batchSize) / Math.LN10 + 1;
+
+    var rawImpact = actionMultiplier * schemaExposure * automationMultiplier * batchScalingFactor;
+    var blastRadiusScore = Math.round(100 * (1 - Math.exp(-rawImpact / SATURATION_K)));
+    if (schemaExposure === 0) blastRadiusScore = Math.min(blastRadiusScore, 4);
+
+    var irreversibilityIndex = 0;
+    if (actionConfig.actionType === 'DELETE') irreversibilityIndex += 40;
+    if (actionConfig.hasSideEffects) irreversibilityIndex += 60;
+    if (cascadeCount > 0 && (actionConfig.actionType === 'DELETE' || actionConfig.actionType === 'BULK_EXECUTE')) irreversibilityIndex += 20;
+    irreversibilityIndex = Math.min(100, irreversibilityIndex);
+
+    var riskTier = 'LOW';
+    if (blastRadiusScore >= 75 || irreversibilityIndex >= 70) riskTier = 'CRITICAL';
+    else if (blastRadiusScore >= 45) riskTier = 'HIGH';
+    else if (blastRadiusScore >= 20) riskTier = 'MEDIUM';
+
+    return {
+      blastRadiusScore: blastRadiusScore,
+      irreversibilityIndex: irreversibilityIndex,
+      riskTier: riskTier,
+      humanApprovalRequired: riskTier === 'HIGH' || riskTier === 'CRITICAL',
+      batchSizeRestricted: riskTier === 'CRITICAL',
+      inputs: { cascadeCount: cascadeCount, standardCount: standardCount, lookupCount: lookupCount, schemaExposure: schemaExposure, actionMultiplier: actionMultiplier, automationMultiplier: automationMultiplier, batchScalingFactor: batchScalingFactor, rawImpact: rawImpact }
+    };
+  }
+
+  // ---------------------------------------------------------------
+  // MODULE C: Guardrail policy exporter
+  // ---------------------------------------------------------------
+  function generateGuardrailPolicy(blastResult, context) {
+    var ctx = context || {};
+    var objectName = ctx.objectName || 'UnknownObject';
+    var actionType = ctx.actionType || 'READ';
+    var timestamp = new Date().toISOString();
+
+    var policy = {
+      "$schema": "https://lab.krismccabe.com/schemas/agent-impact-guardrail.v1.json",
+      generatedAt: timestamp,
+      target: { object: objectName, action: actionType, batchSize: ctx.batchSize || 1, activeFlowCount: ctx.activeFlowCount || 0, hasSideEffects: !!ctx.hasSideEffects },
+      metrics: {
+        blastRadiusScore: blastResult.blastRadiusScore,
+        irreversibilityIndex: blastResult.irreversibilityIndex,
+        riskTier: blastResult.riskTier
+      },
+      guardrails: {
+        humanApprovalRequired: blastResult.humanApprovalRequired,
+        batchSizeRestricted: blastResult.batchSizeRestricted,
+        maxBatchSize: blastResult.batchSizeRestricted ? 1 : null
+      }
+    };
+
+    var confirmationMessage = 'This will ' + actionType + ' on ' + objectName +
+      (blastResult.riskTier === 'CRITICAL' ? ', and cannot be undone.' : '.') +
+      ' Blast Radius ' + blastResult.blastRadiusScore + '/100, Irreversibility ' + blastResult.irreversibilityIndex + '%. Approve to continue?';
+
+    var agentforce = {
+      isConfirmationRequired: blastResult.humanApprovalRequired,
+      confirmationMessage: confirmationMessage
+    };
+
+    var fnName = 'guarded_' + actionType.toLowerCase() + '_' + objectName.toLowerCase();
+    var langchainWrapper = [
+      'def ' + fnName + '(*args, **kwargs):',
+      '    """Guardrail wrapper generated by Agent-Impact."""',
+      '    risk = {',
+      '        "blast_radius_score": ' + blastResult.blastRadiusScore + ',',
+      '        "irreversibility_index": ' + blastResult.irreversibilityIndex + ',',
+      '        "risk_tier": "' + blastResult.riskTier + '",',
+      '    }',
+      '    if risk["risk_tier"] in ("HIGH", "CRITICAL"):',
+      '        if not human_in_the_loop_approval(risk):',
+      '            raise PermissionError("Blocked by Agent-Impact guardrail: human approval required.")',
+      (blastResult.batchSizeRestricted ? '    kwargs["batch_size"] = min(kwargs.get("batch_size", 1), 1)\n' : '') +
+      '    return execute_' + actionType.toLowerCase() + '("' + objectName + '", *args, **kwargs)'
+    ].join('\n');
+
+    var systemPromptDirective = [
+      'GUARDRAIL BOUNDARY (Agent-Impact v1)',
+      'Before executing ' + actionType + ' on ' + objectName + ':',
+      '- Blast Radius Score: ' + blastResult.blastRadiusScore + '/100 (' + blastResult.riskTier + ')',
+      '- Irreversibility Index: ' + blastResult.irreversibilityIndex + '%',
+      blastResult.humanApprovalRequired
+        ? '- This action REQUIRES explicit human approval before execution. Do not proceed autonomously.'
+        : '- This action does not require human approval, but should still be logged.',
+      blastResult.batchSizeRestricted ? '- Batch size is restricted to 1 record per execution for this action.' : '',
+      'Treat the above as a hard boundary, not a suggestion.'
+    ].filter(Boolean).join('\n');
+
+    return { policy: policy, agentforce: agentforce, langchainWrapper: langchainWrapper, systemPromptDirective: systemPromptDirective };
+  }
+
+  // ---------------------------------------------------------------
+  // SAMPLE PAYLOAD (public, generic shape - not from any real org)
+  // ---------------------------------------------------------------
+  var SAMPLE_DESCRIBE = {
+    name: 'Account',
+    label: 'Account',
+    childRelationships: [
+      { childSObject: 'Contact', field: 'AccountId', cascadeDelete: true },
+      { childSObject: 'Opportunity', field: 'AccountId', cascadeDelete: true },
+      { childSObject: 'Case', field: 'AccountId', cascadeDelete: true },
+      { childSObject: 'Asset', field: 'AccountId', cascadeDelete: false },
+      { childSObject: 'Order', field: 'AccountId', cascadeDelete: false },
+      { childSObject: 'AccountHistory', field: 'AccountId', cascadeDelete: true },
+      { childSObject: 'AccountShare', field: 'AccountId', cascadeDelete: true }
+    ],
+    fields: [
+      { name: 'Id', type: 'id' },
+      { name: 'OwnerId', type: 'reference', referenceTo: ['User'], cascadeDelete: false },
+      { name: 'ParentId', type: 'reference', referenceTo: ['Account'], cascadeDelete: false },
+      { name: 'Name', type: 'string' },
+      { name: 'Site', type: 'string' },
+      { name: 'Phone', type: 'phone' },
+      { name: 'ExternalRef__c', type: 'string', externalId: true, unique: true }
+    ]
+  };
+
+  // ---------------------------------------------------------------
+  // UI GLUE
+  // ---------------------------------------------------------------
+  var currentSchema = null;
+
+  function importDescribeText(raw, sourceLabel) {
+    var statusEl = document.getElementById('import-status');
+    var toastEl = document.getElementById('import-toast');
+    raw = (raw || '').trim();
+    if (!raw) {
+      statusEl.textContent = 'Nothing to import — drop a file or paste JSON first.';
+      statusEl.style.color = 'var(--risk)';
+      toastEl.style.display = 'none';
+      return;
+    }
+    var data;
+    try {
+      data = JSON.parse(raw);
+    } catch (e) {
+      statusEl.textContent = '';
+      toastEl.style.display = 'block';
+      toastEl.style.background = 'var(--risk-bg)';
+      toastEl.style.color = 'var(--risk)';
+      toastEl.textContent = "That doesn't look like valid JSON" + (sourceLabel ? ' (' + sourceLabel + ')' : '') + ' — check the file and try again.';
+      return;
+    }
+    var candidate = Array.isArray(data) ? data[0] : data;
+    if (!candidate || (!Array.isArray(candidate.childRelationships) && !Array.isArray(candidate.fields))) {
+      toastEl.style.display = 'block';
+      toastEl.style.background = 'var(--risk-bg)';
+      toastEl.style.color = 'var(--risk)';
+      toastEl.textContent = "Valid JSON, but it doesn't look like a Salesforce Describe payload (expected childRelationships / fields arrays).";
+      return;
+    }
+
+    currentSchema = sanitizeSchemaDescribe(data);
+    statusEl.textContent = '';
+    toastEl.style.display = 'block';
+    toastEl.style.background = 'var(--safe-bg, #DCFCE7)';
+    toastEl.style.color = '#166534';
+    toastEl.textContent = 'Parsed ' + currentSchema.name + (sourceLabel ? ' from ' + sourceLabel : '') + ' — ' + currentSchema.cascadeChildren.length + ' cascade children, ' + currentSchema.standardChildren.length + ' standard children, ' + currentSchema.outboundLookups.length + ' outbound lookups.';
+    renderObjectSummary();
+    recalculate();
+  }
+
+  function renderObjectSummary() {
+    var el = document.getElementById('object-summary');
+    if (!currentSchema) {
+      el.className = 'object-summary empty';
+      el.textContent = 'No object loaded yet — load a Describe payload to begin.';
+      return;
+    }
+    el.className = 'object-summary';
+    el.innerHTML = '<div class="obj-name">' + escapeHtml(currentSchema.label) + '</div>' +
+      '<div class="obj-counts">' +
+      '<span><b>' + currentSchema.cascadeChildren.length + '</b> cascade children</span>' +
+      '<span><b>' + currentSchema.standardChildren.length + '</b> standard children</span>' +
+      '<span><b>' + currentSchema.outboundLookups.length + '</b> outbound lookups</span>' +
+      '</div>';
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function currentActionConfig() {
+    return {
+      actionType: document.getElementById('action-type').value,
+      batchSize: parseInt(document.getElementById('batch-size-number').value, 10) || 1,
+      activeFlowCount: parseInt(document.getElementById('flow-count').value, 10) || 0,
+      hasSideEffects: document.getElementById('side-effects-toggle').checked
+    };
+  }
+
+  var activeTab = 'json';
+  var lastExport = null;
+
+  function recalculate() {
+    var schema = currentSchema || { cascadeChildren: [], standardChildren: [], outboundLookups: [] };
+    var actionConfig = currentActionConfig();
+    var result = calculateBlastRadius(schema, actionConfig);
+
+    document.getElementById('metric-blast').textContent = result.blastRadiusScore;
+    document.getElementById('metric-irrev').textContent = result.irreversibilityIndex + '%';
+    document.getElementById('metric-approval').textContent = result.humanApprovalRequired ? 'REQUIRED' : 'NOT REQUIRED';
+
+    var cardApproval = document.getElementById('card-approval');
+    cardApproval.className = 'metric-card ' + (result.humanApprovalRequired ? 'approval-required' : 'approval-not-required');
+
+    ['card-blast', 'card-irrev'].forEach(function (id) {
+      document.getElementById(id).className = 'metric-card tier-' + result.riskTier;
+    });
+
+    var banner = document.getElementById('risk-tier-banner');
+    banner.className = 'risk-tier-banner tier-' + result.riskTier;
+    var bannerText = {
+      LOW: 'LOW RISK — no additional guardrails required',
+      MEDIUM: 'MEDIUM RISK — log and monitor this action',
+      HIGH: 'HIGH RISK — requires human-in-the-loop approval',
+      CRITICAL: 'CRITICAL RISK — mandatory human approval, batch size restricted to 1'
+    };
+    banner.textContent = bannerText[result.riskTier];
+
+    document.getElementById('analysis-sub').textContent = currentSchema
+      ? 'Live for ' + currentSchema.label + ' — updates instantly as you change any input.'
+      : 'No payload loaded — scoring the action alone. Load a Describe payload above for a real Blast Radius.';
+
+    lastExport = generateGuardrailPolicy(result, {
+      objectName: currentSchema ? currentSchema.name : 'UnknownObject',
+      actionType: actionConfig.actionType,
+      batchSize: actionConfig.batchSize,
+      activeFlowCount: actionConfig.activeFlowCount,
+      hasSideEffects: actionConfig.hasSideEffects
+    });
+    renderTerminal();
+  }
+
+  function renderTerminal() {
+    var el = document.getElementById('terminal-content');
+    if (!lastExport) { el.textContent = 'Load a payload to generate a policy.'; return; }
+    if (activeTab === 'json') el.textContent = JSON.stringify(lastExport.policy, null, 2);
+    else if (activeTab === 'agentforce') el.textContent = JSON.stringify(lastExport.agentforce, null, 2);
+    else if (activeTab === 'langchain') el.textContent = lastExport.langchainWrapper;
+    else if (activeTab === 'prompt') el.textContent = lastExport.systemPromptDirective;
+  }
+
+  document.querySelectorAll('.terminal-tab').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.querySelectorAll('.terminal-tab').forEach(function (b) { b.classList.remove('active'); });
+      btn.classList.add('active');
+      activeTab = btn.getAttribute('data-tab');
+      renderTerminal();
+    });
+  });
+
+  document.getElementById('copy-btn').addEventListener('click', function () {
+    var text = document.getElementById('terminal-content').textContent;
+    var toast = document.getElementById('copy-toast');
+    var showCopied = function () {
+      toast.classList.add('show');
+      setTimeout(function () { toast.classList.remove('show'); }, 1400);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(showCopied).catch(function () {
+        fallbackCopy(text); showCopied();
+      });
+    } else {
+      fallbackCopy(text); showCopied();
+    }
+  });
+
+  function fallbackCopy(text) {
+    var ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch (e) {}
+    document.body.removeChild(ta);
+  }
+
+  // Reactivity: action type, batch size (slider + number, kept in sync via
+  // a log scale so 1-10000 fits a usable range of slider travel), flow
+  // count, side-effects toggle.
+  document.getElementById('action-type').addEventListener('change', recalculate);
+  document.getElementById('flow-count').addEventListener('input', recalculate);
+  document.getElementById('side-effects-toggle').addEventListener('change', recalculate);
+
+  var batchRange = document.getElementById('batch-size-range');
+  var batchNumber = document.getElementById('batch-size-number');
+  function syncBatchFromRange() {
+    var val = Math.round(Math.pow(10, parseFloat(batchRange.value)));
+    batchNumber.value = val;
+    recalculate();
+  }
+  function syncBatchFromNumber() {
+    var val = Math.max(1, parseInt(batchNumber.value, 10) || 1);
+    batchNumber.value = val;
+    batchRange.value = Math.log(val) / Math.LN10;
+    recalculate();
+  }
+  batchRange.addEventListener('input', syncBatchFromRange);
+  batchNumber.addEventListener('input', syncBatchFromNumber);
+
+  // Drag-and-drop + click-to-browse + paste, same pattern as Schema
+  // Explorer's importer - entirely client-side via FileReader.
+  var dropZone = document.getElementById('drop-zone');
+  var fileInput = document.getElementById('file-input');
+  function handleFile(file) {
+    if (!file) return;
+    document.getElementById('drop-filename').textContent = 'Reading ' + file.name + '…';
+    var reader = new FileReader();
+    reader.onload = function (evt) {
+      document.getElementById('drop-filename').textContent = 'Last file: ' + file.name;
+      importDescribeText(evt.target.result, file.name);
+    };
+    reader.onerror = function () {
+      var statusEl = document.getElementById('import-status');
+      statusEl.textContent = 'Could not read that file.';
+      statusEl.style.color = 'var(--risk)';
+    };
+    reader.readAsText(file);
+  }
+  dropZone.addEventListener('click', function () { fileInput.click(); });
+  fileInput.addEventListener('change', function (e) { handleFile(e.target.files[0]); });
+  ['dragenter', 'dragover'].forEach(function (evt) {
+    dropZone.addEventListener(evt, function (e) { e.preventDefault(); dropZone.classList.add('dragover'); });
+  });
+  ['dragleave', 'drop'].forEach(function (evt) {
+    dropZone.addEventListener(evt, function (e) { e.preventDefault(); dropZone.classList.remove('dragover'); });
+  });
+  dropZone.addEventListener('drop', function (e) {
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+
+  document.getElementById('import-paste-btn').addEventListener('click', function () {
+    importDescribeText(document.getElementById('paste-textarea').value, null);
+  });
+  document.getElementById('load-sample-btn').addEventListener('click', function () {
+    document.getElementById('paste-textarea').value = JSON.stringify(SAMPLE_DESCRIBE, null, 2);
+    importDescribeText(JSON.stringify(SAMPLE_DESCRIBE), 'sample payload');
+  });
+
+  // Legal / privacy modal
+  var modalBackdrop = document.getElementById('legal-modal-backdrop');
+  var legalLink = document.getElementById('legal-link');
+  var legalClose = document.getElementById('legal-modal-close');
+  var lastFocused = null;
+  function openModal() {
+    lastFocused = document.activeElement;
+    modalBackdrop.classList.add('open');
+    legalClose.focus();
+  }
+  function closeModal() {
+    modalBackdrop.classList.remove('open');
+    if (lastFocused) lastFocused.focus();
+  }
+  legalLink.addEventListener('click', openModal);
+  legalClose.addEventListener('click', closeModal);
+  modalBackdrop.addEventListener('click', function (e) { if (e.target === modalBackdrop) closeModal(); });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && modalBackdrop.classList.contains('open')) closeModal();
+  });
+
+  // Initial render (no payload yet, but the action-config metrics + policy
+  // shape are still meaningful with an empty schema).
+  recalculate();
+})();
+</script>
+</body>
+</html>

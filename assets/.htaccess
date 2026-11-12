@@ -1,0 +1,13 @@
+# Long-lived caching for this lab's shared static assets. Safe as
+# immutable because both are cache-busted or invariant by nature:
+# lab.css is referenced everywhere as lab.css?v=N (bump N to force a
+# refetch), and the self-hosted Inter font files never change once
+# built. Replaces the old Cloudflare Pages/Workers-specific `_headers`
+# convention, which this Hostinger (Apache/LiteSpeed) origin ignores.
+<IfModule mod_headers.c>
+  Header set Cache-Control "public, max-age=31536000, immutable"
+</IfModule>
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresDefault "access plus 1 year"
+</IfModule>

@@ -1,0 +1,230 @@
+<a class="skip-link" href="#main-content">Skip to content</a>
+
+<div class="cookie-banner" id="cookie-banner" role="dialog" aria-label="Cookie consent">
+  <p>This site uses Google Analytics to understand how the tools are used. Nothing loads or is tracked until you accept.</p>
+  <div class="cookie-banner-actions">
+    <button type="button" id="cookie-decline" class="btn small">Decline</button>
+    <button type="button" id="cookie-accept" class="btn primary small">Accept</button>
+  </div>
+</div>
+<script>
+(function(){
+  var consent = localStorage.getItem('cookie-consent');
+  if (consent === 'granted') { loadGoogleAnalytics(); return; }
+  if (consent === 'denied') { return; }
+  var banner = document.getElementById('cookie-banner');
+  banner.style.display = 'flex';
+  document.getElementById('cookie-accept').addEventListener('click', function(){
+    localStorage.setItem('cookie-consent', 'granted');
+    banner.style.display = 'none';
+    loadGoogleAnalytics();
+  });
+  document.getElementById('cookie-decline').addEventListener('click', function(){
+    localStorage.setItem('cookie-consent', 'denied');
+    banner.style.display = 'none';
+  });
+})();
+</script>
+
+  <div id="print-root"></div>
+
+  <header class="lab-header">
+    <div class="lab-header-inner" style="display:flex; align-items:center; justify-content:space-between;">
+      <a class="lab-back" href="/">&#8592; Kris's Lab</a>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" aria-pressed="false">
+          <svg class="icon-sun" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.5"/>
+            <path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12h2.5M19 12h2.5M4.2 19.8l1.8-1.8M18 6l1.8-1.8"/>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 14.2A8.5 8.5 0 1 1 9.8 4a7 7 0 0 0 10.2 10.2Z"/>
+          </svg>
+        </button>
+        <span style="display:flex; align-items:center; gap:8px; color:#fff; font-weight:700; font-size:14px;">
+          <svg viewBox="0 0 40 40" width="20" height="20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M20 5 L33 12.5 L33 27.5 L20 35 L7 27.5 L7 12.5 Z" fill="none" stroke="#93C5FD" stroke-width="1.8" stroke-linejoin="round"/>
+            <circle cx="20" cy="23" r="2.2" fill="#2563EB"/>
+            <path d="M14.5 23 A5.5 5.5 0 0 0 25.5 23" stroke="#93C5FD" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="0.75"/>
+            <path d="M11 23 A9 9 0 0 0 29 23" stroke="#93C5FD" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.4"/>
+          </svg>
+          AI-SHIELD
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <div class="hero" id="main-content">
+    <svg viewBox="0 0 40 40" width="50" height="50" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="margin-bottom:16px;">
+      <path d="M20 5 L33 12.5 L33 27.5 L20 35 L7 27.5 L7 12.5 Z" fill="none" stroke="#93C5FD" stroke-width="1.6"/>
+      <circle cx="20" cy="23" r="2.4" fill="#2563EB"/>
+      <path d="M14 23 A6 6 0 0 0 26 23" stroke="#93C5FD" stroke-width="1.5" fill="none" stroke-linecap="round" opacity="0.75"/>
+      <path d="M10 23 A10 10 0 0 0 30 23" stroke="#93C5FD" stroke-width="1.3" fill="none" stroke-linecap="round" opacity="0.4"/>
+    </svg>
+    <p class="eyebrow">AI-SHIELD &middot; Free tool by Kris McCabe</p>
+    <h1>How exposed is your AI, really?</h1>
+    <p>An 18-question maturity assessment across six pillars &mdash; Supply chain, Human oversight, Identity &amp; access, Evaluation, Logging, and Data &mdash; with evidence-anchored scoring and a governance cap designed to resist self-assessment inflation.</p>
+  </div>
+
+  <div class="wrap">
+
+    <div class="panel no-print" id="assessments-panel" style="padding:16px 20px; margin-bottom:12px;">
+      <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color:var(--text); cursor:pointer;">
+        <input type="checkbox" id="remember-toggle" checked> Remember my answers on this device (nothing leaves your browser)
+      </label>
+    </div>
+
+    <div class="toolbar no-print">
+      <span class="progress-text" id="progress-text">0 of 18 answered</span>
+      <div class="actions" id="toolbar-actions">
+        <button class="btn" id="new-assessment-btn">&#10133; New assessment</button>
+        <button class="btn" id="btn-load">&#128193; Load saved answers</button>
+        <button class="btn" id="btn-save">&#128190; Save answers</button>
+        <button class="btn" id="btn-import">&#128229; Import responses</button>
+      </div>
+      <input type="file" id="file-input" accept="application/json" style="display:none;" />
+      <input type="file" id="import-file-input" accept="application/json" style="display:none;" />
+    </div>
+
+    <div class="tabs no-print">
+      <button class="tab-btn active" data-tab="framework">The Framework</button>
+      <button class="tab-btn" data-tab="assessment">Take the Assessment</button>
+      <button class="tab-btn" data-tab="results" disabled id="tab-btn-results">Your Results</button>
+    </div>
+
+    <!-- FRAMEWORK TAB -->
+    <div class="tab-panel active" id="tab-framework">
+      <div class="panel">
+        <p class="eyebrow" style="margin-bottom:8px;">Why not just use what exists</p>
+        <h2>The frameworks are thorough. That's the problem.</h2>
+        <p style="font-size:13.5px; color:var(--text-muted); line-height:1.7; margin:0 0 12px;">Every major AI security framework published in the last two years &mdash; NIST's AI RMF, ISO/IEC 42001, the Cloud Security Alliance's 243-control AI Controls Matrix &mdash; is built for an organization with a security team and months to run an audit. AI-SHIELD is scoped differently on purpose: eighteen questions a person who actually built or operates the system can answer honestly in fifteen minutes.</p>
+        <div class="compare-scroll">
+          <table class="compare">
+            <thead><tr><th>Framework</th><th>What it actually is</th><th>Time to a score</th></tr></thead>
+            <tbody>
+              <tr><td class="frame-name">NIST AI RMF + GenAI Profile</td><td>72 subcategories across 19 categories</td><td>Weeks</td></tr>
+              <tr><td class="frame-name">ISO/IEC 42001</td><td>Certifiable management system, audit cycle</td><td>Months</td></tr>
+              <tr><td class="frame-name">CSA AI Controls Matrix</td><td>243 control objectives, 18 domains</td><td>Weeks</td></tr>
+              <tr><td class="frame-name">OWASP LLM / ASI Top 10</td><td>Ranked vulnerability lists, no score</td><td>N/A</td></tr>
+              <tr class="this-row"><td class="frame-name">AI-SHIELD</td><td>18-question self-assessment</td><td>~15&ndash;20 minutes</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Six pillars, one word</h2>
+        <p class="sub" style="margin-bottom:0;">Each pillar maps to a real, current body of work &mdash; condensed into three questions.</p>
+        <div class="pillar-strip" id="pillar-strip"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Scoring that resists checkbox theater</h2>
+        <p class="sub">Three design decisions push back on self-assessment inflation.</p>
+        <div class="method-list">
+          <div class="method-item">
+            <div class="step">1</div>
+            <div><h3>Answers describe evidence, not feelings</h3><p>Every level (0&ndash;4) describes a concrete, checkable state &mdash; a document that exists, a test that ran &mdash; not a vibe.</p></div>
+          </div>
+          <div class="method-item">
+            <div class="step">2</div>
+            <div><h3>One weak pillar caps the whole score</h3><p>Your <b>Human Oversight &amp; Governance</b> score acts as a ceiling: the overall score can't exceed it by more than one point.</p>
+              <div class="formula">Overall = min( average(S, H, I, E, L, D), &nbsp;H + 1 )</div>
+            </div>
+          </div>
+          <div class="method-item">
+            <div class="step">3</div>
+            <div><h3>A single zero is flagged regardless of the average</h3><p>Any question scored 0 &mdash; a total absence of a control &mdash; surfaces as a named <b>Critical Gap</b> in your results, independent of your overall score.</p></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Five ratings, plainly named</h2>
+        <div class="band-track" id="band-track"></div>
+        <div class="band-grid" id="band-grid"></div>
+      </div>
+
+      <div class="panel" id="framework-detail-panel">
+        <h2>The full framework</h2>
+        <p class="sub">All eighteen questions, in detail, with the specific control each one maps to in other frameworks, and why each one matters in plain terms.</p>
+        <div id="framework-content"></div>
+      </div>
+
+      <div class="panel">
+        <h2>Sources</h2>
+        <p class="sub" style="margin-bottom:0;">AI-SHIELD doesn't invent risks &mdash; it re-scopes real, current frameworks into something answerable in one sitting.</p>
+        <ul class="sources-list">
+          <li><a href="https://www.nist.gov/itl/ai-risk-management-framework" target="_blank" rel="noopener">NIST AI Risk Management Framework</a></li>
+          <li><a href="https://airc.nist.gov/airmf-resources/airmf/6-sec-profile" target="_blank" rel="noopener">NIST AI RMF Generative AI Profile (AI 600-1)</a></li>
+          <li><a href="https://genai.owasp.org/resource/owasp-genai-llm-top-10-2026/" target="_blank" rel="noopener">OWASP Top 10 for LLM Applications 2026</a></li>
+          <li><a href="https://owasp.org/www-project-top-10-for-large-language-model-applications/" target="_blank" rel="noopener">OWASP Top 10 for Agentic Applications (ASI)</a></li>
+          <li><a href="https://www.konfirmity.com/blog/iso-42001-requirements" target="_blank" rel="noopener">ISO/IEC 42001 requirements overview</a></li>
+          <li><a href="https://www.paloaltonetworks.com/cyberpedia/ai-trism" target="_blank" rel="noopener">Gartner AI TRiSM framework</a></li>
+          <li><a href="https://atlas.mitre.org./" target="_blank" rel="noopener">MITRE ATLAS</a></li>
+          <li><a href="https://safety.google/intl/en_in/safety/saif/" target="_blank" rel="noopener">Google Secure AI Framework (SAIF)</a></li>
+          <li><a href="https://www.databricks.com/resources/whitepaper/databricks-ai-security-framework-dasf" target="_blank" rel="noopener">Databricks AI Security Framework (DASF)</a></li>
+          <li><a href="https://cloudsecurityalliance.org/artifacts/ai-security-maturity-model" target="_blank" rel="noopener">CSA AI Security Maturity Model (AISMM)</a></li>
+          <li><a href="https://cloudsecurityalliance.org/artifacts/ai-controls-matrix-v1-1" target="_blank" rel="noopener">CSA AI Controls Matrix (AICM) v1.1</a></li>
+          <li><a href="https://www.rockcybermusings.com/p/ai-security-maturity-model-your-score-is-fiction" target="_blank" rel="noopener">"AI Security Maturity Model: Your Score Is Fiction"</a> <span class="src-note">(commentary that inspired this framework, not a standards body)</span></li>
+          <li><a href="https://seers.ai/blogs/eu-ai-act-risk-levels/" target="_blank" rel="noopener">EU AI Act risk classification tiers</a></li>
+          <li><a href="https://artificialintelligenceact.eu/article/14/" target="_blank" rel="noopener">EU AI Act Article 14 (Human Oversight)</a></li>
+          <li><a href="https://artificialintelligenceact.eu/article/50/" target="_blank" rel="noopener">EU AI Act Article 50 (Transparency Obligations)</a></li>
+        </ul>
+      </div>
+
+      <div class="panel no-print" style="text-align:center;">
+        <p style="font-size:14px; color:var(--text-muted); margin:0 0 14px;">Ready to see where you stand?</p>
+        <button class="btn primary" id="start-assessment-btn">Take the assessment &rarr;</button>
+      </div>
+    </div>
+
+    <!-- ASSESSMENT TAB -->
+    <div class="tab-panel" id="tab-assessment">
+
+      <div class="panel" id="screen-start">
+        <div id="portfolio-wrap" style="display:none;">
+          <h2>Your assessments</h2>
+          <p class="sub">Saved on this device only &mdash; nothing leaves your browser.</p>
+          <div id="portfolio-list" class="portfolio-list"></div>
+          <div class="portfolio-divider"><span>or start a new one</span></div>
+        </div>
+        <h2>Name this assessment</h2>
+        <p class="sub">Give it a name so you can keep it separate from other systems you assess later &mdash; e.g. "Customer support agent, production". Assessing several AI systems separately is more honest than blending them into one score.</p>
+        <input type="text" id="assessment-name-input" class="name-input" placeholder="e.g. Customer support agent, production">
+        <p class="name-required-note" id="name-required-note" style="display:none;">Give this assessment a name to continue.</p>
+        <h2 style="margin-top:28px;">How do you primarily use AI?</h2>
+        <p class="sub">Select all that apply &mdash; most systems aren't just one of these. This sets a short context note under each pillar as you go; it doesn't skip or hide any questions.</p>
+        <div class="deploy-grid" id="deploy-grid"></div>
+        <div style="margin-top:24px; text-align:center;">
+          <button class="btn primary" id="begin-assessment-btn">Begin assessment &rarr;</button>
+        </div>
+      </div>
+
+      <div class="panel" id="screen-questions" style="display:none;">
+        <div id="questions-container"></div>
+      </div>
+
+      <div class="panel" id="screen-review" style="display:none;"></div>
+
+    </div>
+
+    <!-- RESULTS TAB -->
+    <div class="tab-panel" id="tab-results">
+      <div class="panel" id="results-panel-content" aria-live="polite">
+        <div class="empty-state"><p>Answer all 18 questions to see your results.</p></div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="links">
+      <a href="/flare/" target="_blank" rel="noopener">Flare &mdash; live AI stack exposure checker &rarr;</a>
+      <a href="/recoverly/" target="_blank" rel="noopener">Recoverly &mdash; data recovery maturity assessment &rarr;</a>
+      <a href="/redline/" target="_blank" rel="noopener">Redline &mdash; the True Cost of Downtime calculator &rarr;</a>
+      <a href="/schema-explorer/" target="_blank" rel="noopener">Schema Explorer &mdash; what breaks if you delete this? &rarr;</a>
+      <a href="https://krismccabe.com" target="_blank" rel="noopener">krismccabe.com</a>
+    </div>
+    <p class="disclaimer">AI-SHIELD is released as open source under the MIT License &mdash; free to use, copy, adapt, and build on. It is provided "as is," without warranty of any kind. The framework, its scoring model, and any assessment produced with it are indicative tools to aid your own thinking &mdash; not a certified audit, a substitute for professional security or legal advice, or a guarantee of compliance with any law, regulation, or standard it references. Use it entirely at your own risk. To the fullest extent permitted by law, the author accepts no liability for any loss, damage, or harm of any kind arising from its use. Nothing here is saved to a server &mdash; your answers stay in your browser unless you choose to save them yourself, with one exception: if you explicitly opt in to the "See how you compare" feature on the Results tab, your overall score, band, per-pillar scores, deployment pattern, industry, and organisation size (never your answers, evidence, owner names, or organisation name) are sent to an anonymous aggregate on a server the author controls, solely to compute a comparison percentile. AI-SHIELD references NIST, ISO/IEC, OWASP, MITRE, the Cloud Security Alliance, Gartner, Google, Databricks, and the EU AI Act for context; it is not endorsed by, certified by, or affiliated with any of them, nor with Salesforce or any other named vendor.</p>
+  </footer>

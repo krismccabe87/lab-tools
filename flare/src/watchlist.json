@@ -1,0 +1,64 @@
+{
+  "groups": [
+    { "id": "providers", "name": "Model provider SDKs", "blurb": "The libraries that actually talk to a model — OpenAI, Anthropic, Google, and the rest." },
+    { "id": "orchestration", "name": "Orchestration & agents", "blurb": "Frameworks that wire a model up to tools, memory, and multi-step reasoning." },
+    { "id": "serving", "name": "Serving & inference", "blurb": "What actually runs the model and answers requests." },
+    { "id": "vector", "name": "Vector & retrieval", "blurb": "Where embeddings live and how RAG finds context." },
+    { "id": "mlops", "name": "Model tooling & MLOps", "blurb": "Everything between a checkpoint and a deployed model." },
+    { "id": "app", "name": "Application surface", "blurb": "What a user actually sees and clicks." },
+    { "id": "sdks", "name": "LangChain (JS/TS)", "blurb": "The npm side of the LangChain stack." }
+  ],
+  "packages": [
+    { "key": "pypi:openai",               "name": "openai",               "ecosystem": "PyPI", "group": "providers", "label": "OpenAI",                "default": true },
+    { "key": "pypi:anthropic",            "name": "anthropic",            "ecosystem": "PyPI", "group": "providers", "label": "Anthropic",             "default": true },
+    { "key": "pypi:google-genai",         "name": "google-genai",         "ecosystem": "PyPI", "group": "providers", "label": "Google Gen AI",         "default": false },
+    { "key": "pypi:cohere",               "name": "cohere",               "ecosystem": "PyPI", "group": "providers", "label": "Cohere",                "default": false },
+    { "key": "pypi:mistralai",            "name": "mistralai",            "ecosystem": "PyPI", "group": "providers", "label": "Mistral AI",            "default": false },
+    { "key": "pypi:groq",                 "name": "groq",                 "ecosystem": "PyPI", "group": "providers", "label": "Groq",                  "default": false },
+    { "key": "pypi:replicate",            "name": "replicate",            "ecosystem": "PyPI", "group": "providers", "label": "Replicate",             "default": false },
+    { "key": "pypi:together",             "name": "together",             "ecosystem": "PyPI", "group": "providers", "label": "Together AI",           "default": false },
+    { "key": "npm:openai",                "name": "openai",               "ecosystem": "npm",  "group": "providers", "label": "OpenAI (npm)",          "default": true },
+    { "key": "npm:@anthropic-ai/sdk",     "name": "@anthropic-ai/sdk",    "ecosystem": "npm",  "group": "providers", "label": "Anthropic SDK (npm)",   "default": false },
+    { "key": "npm:@google/genai",         "name": "@google/genai",        "ecosystem": "npm",  "group": "providers", "label": "Google Gen AI (npm)",   "default": false },
+    { "key": "npm:cohere-ai",             "name": "cohere-ai",            "ecosystem": "npm",  "group": "providers", "label": "Cohere (npm)",          "default": false },
+    { "key": "npm:@mistralai/mistralai",  "name": "@mistralai/mistralai", "ecosystem": "npm",  "group": "providers", "label": "Mistral AI (npm)",      "default": false },
+    { "key": "npm:groq-sdk",              "name": "groq-sdk",             "ecosystem": "npm",  "group": "providers", "label": "Groq (npm)",            "default": false },
+    { "key": "npm:replicate",             "name": "replicate",            "ecosystem": "npm",  "group": "providers", "label": "Replicate (npm)",       "default": false },
+    { "key": "npm:together-ai",           "name": "together-ai",          "ecosystem": "npm",  "group": "providers", "label": "Together AI (npm)",     "default": false },
+
+    { "key": "pypi:langchain",            "name": "langchain",            "ecosystem": "PyPI", "group": "orchestration", "label": "LangChain",        "default": true },
+    { "key": "pypi:langgraph",            "name": "langgraph",            "ecosystem": "PyPI", "group": "orchestration", "label": "LangGraph",        "default": false },
+    { "key": "pypi:llama-index",          "name": "llama-index",          "ecosystem": "PyPI", "group": "orchestration", "label": "LlamaIndex",       "default": false },
+    { "key": "pypi:crewai",               "name": "crewai",               "ecosystem": "PyPI", "group": "orchestration", "label": "CrewAI",           "default": false },
+    { "key": "pypi:litellm",              "name": "litellm",              "ecosystem": "PyPI", "group": "orchestration", "label": "LiteLLM",          "default": true },
+    { "key": "pypi:haystack-ai",          "name": "haystack-ai",          "ecosystem": "PyPI", "group": "orchestration", "label": "Haystack",         "default": false },
+
+    { "key": "pypi:vllm",                 "name": "vllm",                 "ecosystem": "PyPI", "group": "serving", "label": "vLLM",                 "default": true },
+    { "key": "pypi:ollama",               "name": "ollama",               "ecosystem": "PyPI", "group": "serving", "label": "Ollama",               "default": false },
+    { "key": "pypi:llama-cpp-python",     "name": "llama-cpp-python",     "ecosystem": "PyPI", "group": "serving", "label": "llama-cpp-python",     "default": false },
+    { "key": "pypi:text-generation",      "name": "text-generation",      "ecosystem": "PyPI", "group": "serving", "label": "Text Generation client","default": false },
+    { "key": "pypi:bentoml",              "name": "bentoml",              "ecosystem": "PyPI", "group": "serving", "label": "BentoML",              "default": false },
+
+    { "key": "pypi:chromadb",             "name": "chromadb",             "ecosystem": "PyPI", "group": "vector", "label": "Chroma",                "default": true },
+    { "key": "pypi:qdrant-client",        "name": "qdrant-client",        "ecosystem": "PyPI", "group": "vector", "label": "Qdrant client",         "default": false },
+    { "key": "pypi:weaviate-client",      "name": "weaviate-client",      "ecosystem": "PyPI", "group": "vector", "label": "Weaviate client",       "default": false },
+    { "key": "pypi:pymilvus",             "name": "pymilvus",             "ecosystem": "PyPI", "group": "vector", "label": "Milvus client",         "default": false },
+    { "key": "pypi:sentence-transformers","name": "sentence-transformers","ecosystem": "PyPI", "group": "vector", "label": "Sentence Transformers", "default": false },
+    { "key": "pypi:faiss-cpu",            "name": "faiss-cpu",            "ecosystem": "PyPI", "group": "vector", "label": "FAISS",                 "default": false },
+    { "key": "pypi:pinecone",             "name": "pinecone",             "ecosystem": "PyPI", "group": "vector", "label": "Pinecone client",       "default": false },
+
+    { "key": "pypi:transformers",         "name": "transformers",         "ecosystem": "PyPI", "group": "mlops", "label": "Transformers",           "default": true },
+    { "key": "pypi:huggingface-hub",      "name": "huggingface-hub",      "ecosystem": "PyPI", "group": "mlops", "label": "Hugging Face Hub",       "default": false },
+    { "key": "pypi:mlflow",               "name": "mlflow",               "ecosystem": "PyPI", "group": "mlops", "label": "MLflow",                 "default": false },
+    { "key": "pypi:ray",                  "name": "ray",                  "ecosystem": "PyPI", "group": "mlops", "label": "Ray",                    "default": false },
+    { "key": "pypi:torch",                "name": "torch",                "ecosystem": "PyPI", "group": "mlops", "label": "PyTorch",                "default": false },
+    { "key": "pypi:diffusers",            "name": "diffusers",            "ecosystem": "PyPI", "group": "mlops", "label": "Diffusers",              "default": false },
+
+    { "key": "pypi:gradio",               "name": "gradio",               "ecosystem": "PyPI", "group": "app", "label": "Gradio",                   "default": true },
+    { "key": "pypi:streamlit",            "name": "streamlit",            "ecosystem": "PyPI", "group": "app", "label": "Streamlit",                "default": false },
+    { "key": "pypi:open-webui",           "name": "open-webui",           "ecosystem": "PyPI", "group": "app", "label": "Open WebUI",               "default": false },
+
+    { "key": "npm:langchain",             "name": "langchain",            "ecosystem": "npm",  "group": "sdks", "label": "LangChain (npm)",         "default": false },
+    { "key": "npm:@langchain/core",       "name": "@langchain/core",      "ecosystem": "npm",  "group": "sdks", "label": "LangChain Core (npm)",    "default": false }
+  ]
+}

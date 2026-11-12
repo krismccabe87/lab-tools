@@ -1,0 +1,1803 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<!-- Apply a stored theme choice before first paint, so there's no flash
+     of the wrong theme while lab-theme.js is still loading. -->
+<script>
+(function(){try{var t=localStorage.getItem('lab-theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();
+</script>
+<!-- Google Analytics - only loads after cookie consent, see banner script below -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  function loadGoogleAnalytics(){
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-QE309XG3DJ';
+    document.head.appendChild(s);
+    gtag('js', new Date());
+    gtag('config', 'G-QE309XG3DJ');
+  }
+</script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Schema Explorer — What Breaks If You Delete This? | Kris McCabe</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon-16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="description" content="Pick a Salesforce standard object and see exactly what would cascade-delete or get orphaned if you deleted a record of it." />
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Kris's Lab">
+<meta property="og:title" content="Schema Explorer — What Breaks If You Delete This?">
+<meta property="og:description" content="Pick a Salesforce standard object and see exactly what would cascade-delete or get orphaned if you deleted a record of it.">
+<meta property="og:url" content="https://lab.krismccabe.com/schema-explorer/">
+<meta property="og:image" content="https://lab.krismccabe.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Schema Explorer — What Breaks If You Delete This?">
+<meta name="twitter:description" content="Pick a Salesforce standard object and see exactly what would cascade-delete or get orphaned if you deleted a record of it.">
+<meta name="twitter:image" content="https://lab.krismccabe.com/og-image.png">
+<link rel="stylesheet" href="/assets/lab.css?v=6">
+<script src="/assets/lab-theme.js?v=1" defer></script>
+<style>
+  .lab-header-inner { max-width: 1000px; }
+
+  .hero { padding: 48px 24px 40px; }
+  .hero h1 { color: #fff; font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 800; letter-spacing: -0.02em; margin: 0 0 14px; max-width: 640px; margin-left: auto; margin-right: auto; }
+  .hero p { color: #94A3B8; font-size: 15px; max-width: 560px; margin: 0 auto; }
+
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 24px 20px 64px; }
+  @media (min-width: 1024px) {
+    .lab-header-inner, .wrap, footer { max-width: 1320px; }
+  }
+  .panel h2 { font-size: 17px; font-weight: 700; color: var(--text); margin: 0 0 4px; }
+  .panel .sub { font-size: 13px; color: var(--text-muted); margin: 0 0 18px; }
+
+  .cat-group { margin-bottom: 16px; }
+  .cat-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin-bottom: 8px; }
+  .obj-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+  .obj-btn {
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    font-family: inherit; font-size: 13px; font-weight: 600; padding: 8px 14px; border-radius: 20px;
+    cursor: pointer; transition: all 0.15s ease;
+  }
+  .obj-btn:hover { border-color: var(--accent); background: rgba(37, 99, 235, 0.12); }
+  .obj-btn.active { background: var(--navy); border-color: var(--text); color: #fff; }
+  #drop-zone:hover { border-color: var(--accent); background: rgba(37, 99, 235, 0.12); }
+  #drop-zone.dragover { border-color: var(--accent); background: rgba(37, 99, 235, 0.12); border-style: solid; }
+  .search-input { width: 100%; margin-bottom: 14px; padding: 9px 14px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 13px; background: var(--input-bg); color: var(--text); }
+  /* Depth slider - the browser's native track/thumb don't reliably pick up
+     the page's dark palette on their own (confirmed: it rendered as a
+     plain white bar in dark mode with nothing else styling it), so it's
+     styled explicitly here, same as every other input on this page. */
+  #depth-slider { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 4px; background: var(--surface-3); cursor: pointer; }
+  #depth-slider::-webkit-slider-thumb {
+    -webkit-appearance: none; appearance: none; width: 16px; height: 16px; border-radius: 50%;
+    background: var(--accent); border: 2px solid var(--panel-bg); cursor: pointer;
+  }
+  #depth-slider::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--accent); border: 2px solid var(--panel-bg); cursor: pointer; }
+  #depth-slider::-moz-range-track { height: 6px; border-radius: 4px; background: var(--surface-3); }
+  .obj-selector-scroll { max-height: 420px; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; padding: 12px; background: var(--surface); }
+  .cat-tab { border: 1px solid var(--border); background: var(--panel-bg); color: var(--text-muted); font-family: inherit; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 16px; cursor: pointer; transition: all 0.15s ease; }
+  .cat-tab:hover { border-color: var(--accent); color: var(--accent); }
+  .cat-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .obj-btn.hidden-by-search { display: none; }
+  .drawer-overlay { position: fixed; inset: 0; background: rgba(15,23,42,0.4); z-index: 999; display: none; }
+  .drawer-overlay.open { display: block; }
+  .detail-drawer { position: fixed; top: 0; right: -420px; width: 380px; max-width: 90vw; height: 100%; background: var(--panel-bg); box-shadow: -8px 0 30px rgba(15,23,42,0.2); z-index: 1000; transition: right 0.2s ease; padding: 28px 24px; overflow-y: auto; overflow-wrap: break-word; word-break: break-word; }
+  .detail-drawer h2 { padding-right: 28px; font-size: 20px; }
+  .detail-drawer.open { right: 0; }
+  .detail-drawer .close-btn { position: absolute; top: 20px; right: 20px; background: none; border: none; font-size: 20px; cursor: pointer; color: var(--text-muted); }
+  .metric-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 12px; margin-bottom: 20px; }
+  .metric-card { border-radius: 10px; padding: 14px 16px; }
+  .metric-card .metric-value { font-size: 26px; font-weight: 800; }
+  .metric-card .metric-label { font-size: 12px; font-weight: 600; margin-top: 2px; }
+  .view-tabs { display: flex; gap: 4px; background: var(--surface-2); border-radius: 8px; padding: 4px; }
+  .view-tab, .filter-tab { border: none; background: none; font-family: inherit; font-size: 12px; font-weight: 600; padding: 7px 12px; border-radius: 6px; cursor: pointer; color: var(--text-muted); transition: all 0.15s ease; }
+  .view-tab.active, .filter-tab.active { background: var(--panel-bg); color: var(--text); box-shadow: 0 1px 3px rgba(15,23,42,0.12); }
+  .tree-group { margin-bottom: 16px; }
+  .tree-group summary { cursor: pointer; font-size: 14px; font-weight: 700; padding: 10px 0; }
+  .tree-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-radius: 8px; margin: 6px 0; font-size: 13px; }
+  .tree-item .api-name { font-family: monospace; font-size: 11px; opacity: 0.8; }
+
+  .result-empty { text-align: center; padding: 40px 24px; color: var(--text-muted); font-size: 14px; }
+
+  .diagram-wrap { display: flex; justify-content: center; margin: 8px 0 20px; overflow-x: auto; }
+  .node-circle:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .diagram-wrap svg { max-width: 100%; height: auto; }
+
+  .legend { display: flex; gap: 20px; flex-wrap: wrap; font-size: 12px; color: var(--text-muted); justify-content: center; margin-bottom: 20px; }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+  .impact-list {
+    margin-bottom: 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 6px 12px;
+  }
+  .impact-list h3 { grid-column: 1 / -1; font-size: 14px; font-weight: 700; margin: 0 0 10px; }
+  .impact-item {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 8px; margin-bottom: 0; font-size: 13px;
+  }
+  .impact-item.cascade { background: var(--risk-bg); color:var(--risk); }
+  .impact-item.orphan { background: var(--amber-bg); color:var(--amber); }
+  .impact-item .via { font-size: 11px; opacity: 0.75; font-weight: 600; }
+  .impact-none { font-size: 13px; color: var(--text-muted); font-style: italic; }
+
+  footer { max-width: 1000px; }
+  footer .disclaimer { max-width: 680px; }
+
+  @media (max-width: 640px) { .panel { padding: 20px; } }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Schema Explorer — What Breaks If You Delete This?",
+  "description": "Pick a Salesforce standard object and see exactly what would cascade-delete or get orphaned if you deleted a record of it.",
+  "url": "https://lab.krismccabe.com/schema-explorer/",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Any (runs in browser)",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "author": {
+    "@type": "Person",
+    "name": "Kris McCabe",
+    "url": "https://krismccabe.com/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/assets/swiss.css?v=5">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to content</a>
+
+<div class="cookie-banner" id="cookie-banner" role="dialog" aria-label="Cookie consent">
+  <p>This site uses Google Analytics to understand how the tools are used. Nothing loads or is tracked until you accept.</p>
+  <div class="cookie-banner-actions">
+    <button type="button" id="cookie-decline" class="btn small">Decline</button>
+    <button type="button" id="cookie-accept" class="btn primary small">Accept</button>
+  </div>
+</div>
+<script>
+(function(){
+  var consent = localStorage.getItem('cookie-consent');
+  if (consent === 'granted') { loadGoogleAnalytics(); return; }
+  if (consent === 'denied') { return; }
+  var banner = document.getElementById('cookie-banner');
+  banner.style.display = 'flex';
+  document.getElementById('cookie-accept').addEventListener('click', function(){
+    localStorage.setItem('cookie-consent', 'granted');
+    banner.style.display = 'none';
+    loadGoogleAnalytics();
+  });
+  document.getElementById('cookie-decline').addEventListener('click', function(){
+    localStorage.setItem('cookie-consent', 'denied');
+    banner.style.display = 'none';
+  });
+})();
+</script>
+
+  <header class="lab-header">
+    <div class="lab-header-inner" style="display:flex; align-items:center; justify-content:space-between;">
+      <a class="lab-back" href="/">&#8592; Kris's Lab</a>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" aria-pressed="false">
+          <svg class="icon-sun" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.5"/>
+            <path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12h2.5M19 12h2.5M4.2 19.8l1.8-1.8M18 6l1.8-1.8"/>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 14.2A8.5 8.5 0 1 1 9.8 4a7 7 0 0 0 10.2 10.2Z"/>
+          </svg>
+        </button>
+        <span style="display:flex; align-items:center; gap:8px; color:#fff; font-weight:700; font-size:14px;">
+        <svg viewBox="0 0 40 40" width="22" height="22" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <line x1="20" y1="20" x2="10" y2="12" stroke="#93C5FD" stroke-width="1.8"/>
+          <line x1="20" y1="20" x2="30" y2="12" stroke="#93C5FD" stroke-width="1.8"/>
+          <line x1="20" y1="20" x2="12" y2="29" stroke="#DC2626" stroke-width="1.8"/>
+          <line x1="20" y1="20" x2="28" y2="29" stroke="#93C5FD" stroke-width="1.8"/>
+          <circle cx="20" cy="20" r="5" fill="#2563EB"/>
+          <circle cx="10" cy="12" r="3" fill="#93C5FD"/>
+          <circle cx="30" cy="12" r="3" fill="#93C5FD"/>
+          <circle cx="12" cy="29" r="3" fill="#DC2626"/>
+          <circle cx="28" cy="29" r="3" fill="#93C5FD"/>
+        </svg>
+        Schema Explorer
+      </span>
+      </div>
+    </div>
+  </header>
+
+  <div class="hero" id="main-content">
+    <svg viewBox="0 0 40 40" width="48" height="48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="margin-bottom:16px;">
+      <line x1="20" y1="20" x2="10" y2="12" stroke="#93C5FD" stroke-width="1.8"/>
+      <line x1="20" y1="20" x2="30" y2="12" stroke="#93C5FD" stroke-width="1.8"/>
+      <line x1="20" y1="20" x2="12" y2="29" stroke="#DC2626" stroke-width="1.8"/>
+      <line x1="20" y1="20" x2="28" y2="29" stroke="#93C5FD" stroke-width="1.8"/>
+      <circle cx="20" cy="20" r="5" fill="#2563EB"/>
+      <circle cx="10" cy="12" r="3" fill="#93C5FD"/>
+      <circle cx="30" cy="12" r="3" fill="#93C5FD"/>
+      <circle cx="12" cy="29" r="3" fill="#DC2626"/>
+      <circle cx="28" cy="29" r="3" fill="#93C5FD"/>
+    </svg>
+    <p class="eyebrow">Free tool &middot; Kris McCabe</p>
+    <h1>If you delete this record, what actually breaks?</h1>
+    <p>Pick a Salesforce standard object. See exactly what cascade-deletes with it, what just gets orphaned, and why — before you find out the hard way.</p>
+    <p id="api-version-display" style="font-size:12px; color:#94A3B8; margin-top:14px;">Checking latest Salesforce API version&hellip;</p>
+  </div>
+
+  <div class="wrap">
+
+    <div class="panel">
+      <h2>Pick a record type</h2>
+      <p class="sub">You're modelling: "If I delete one record of this type, what happens to everything connected to it?"</p>
+
+      <input type="text" id="object-search" class="search-input" placeholder="Search by name, API name, or category&hellip;">
+      <div id="category-tabs" style="display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 16px;"></div>
+      <div class="obj-selector-scroll"><div id="object-selector"></div></div>
+      <div style="margin-top:18px; padding-top:16px; border-top:1px solid var(--border);">
+        <label for="depth-slider" style="display:block; font-size:13px; font-weight:700; color: var(--text); margin-bottom:6px;">How many relationships deep should we check? <span id="depth-value" style="color:var(--accent);">2</span></label>
+        <input type="range" id="depth-slider" min="1" max="10" value="2" style="width:100%;">
+        <p style="font-size:12px; color:var(--text-muted); margin-top:6px;">1 = only direct relationships. Higher values follow cascade chains further (e.g. Account &rarr; Opportunity &rarr; Quote &rarr; Quote Line Item is 3 deep). Most real cascades are shallow, so this mainly matters for long chains.</p>
+      </div>
+    </div>
+
+    <div class="panel" style="background:var(--surface-2);">
+      <h2>Before you rely on this: things this tool can't know</h2>
+      <p class="sub">This models well-documented <em>default</em> platform behaviour. Real orgs add their own rules on top — always check these yourself before deleting for real:</p>
+      <ul style="font-size:13px; color:var(--text); margin:0 0 12px; padding-left:20px;">
+        <li><strong>Custom automation</strong> — Apex triggers, Flows, and Validation Rules on delete/before-delete are entirely org-specific. Check Setup &rarr; Object Manager &rarr; [Object] &rarr; Triggers, and Setup &rarr; Flows (filter by object).</li>
+        <li><strong>Restore behaviour</strong> — undeleting a record from the Recycle Bin does not reliably restore everything that cascade-deleted with it. Always verify child records after any restore.</li>
+        <li><strong>API version drift</strong> — the relationships modelled here reflect long-stable, current platform behaviour. Very old orgs on deprecated API versions should double-check anything unusual against Salesforce's release notes for their version.</li>
+        <li><strong>Industry Cloud objects (Health Cloud, Financial Services Cloud, Order Management, etc.)</strong> — these only exist if that specific cloud is licensed in your org, and several have <em>both</em> a legacy managed-package version (custom objects, e.g. <code>FinServ__FinancialAccount__c</code>) and a newer standard-object version (e.g. <code>FinancialAccount</code>) depending on your org's edition and migration history. Object names below are verified against Salesforce's own official documentation, but relationship behaviour is deliberately <strong>not modelled</strong> for these — confidence here is genuinely lower than for core Sales/Service objects, and importing your own org's describe() data is the right way to get a real answer.</li>
+        <li><strong>Objects added from Salesforce's full 6,342-page official object reference</strong> (a large batch spanning Sales, Service, Product Catalogue, Order Management, Workforce Engagement, and Partner &amp; Channel) — object names and relationship <em>existence</em> are directly sourced from that document, but it turns out to consistently label every reference field's "Relationship Type" as "Lookup," even for fields I independently know cascade-delete in practice (e.g. CaseComment, OpportunityLineItem). So relationships in this batch default to Lookup rather than an unverifiable guess at cascade behaviour — treat these as "this relates to that," not a confirmed deletion outcome, and import your own org's data for anything that actually matters for a real decision.</li>
+      </ul>
+      <details id="import-details">
+        <summary style="cursor:pointer; font-size:13px; font-weight:700; color:var(--accent);">Advanced: import your own org's real schema (no login form, no credentials, no third party)</summary>
+        <div style="margin-top:12px; font-size:13px;">
+          <p>Salesforce's own <code>describe()</code> data for any object already includes exactly the flags this tool needs (<code>cascadeDelete</code>, <code>restrictedDelete</code>). The safest way to get it: use your <strong>own already-logged-in sandbox session</strong> — nothing is typed anywhere, no separate login, no third-party tool involved.</p>
+          <p><strong>Simplest, one object at a time</strong> — while logged into your sandbox, open a new tab and go directly to:<br>
+          <code style="display:block; background:var(--surface-2); padding:8px 10px; border-radius:6px; margin:6px 0; word-break:break-all;">https://YOUR-INSTANCE.my.salesforce.com/services/data/v61.0/sobjects/Account/describe/</code>
+          (swap in your instance and the object you want). Your browser's existing session shows you the JSON directly — select all, copy, paste below.</p>
+          <p><strong>For several objects at once, or your whole org</strong> — use Salesforce's own <strong>Developer Console</strong> (Setup gear icon &rarr; Developer Console), not your browser's. Open <strong>Debug &rarr; Open Execute Anonymous Window</strong>, paste the Apex below, and click Execute:</p>
+          <p style="color:var(--risk); font-weight:600;">Worth knowing before you run this: a real org can have thousands of standard objects, and Apex debug logs have a size limit. This script outputs a simple line-per-relationship format rather than JSON specifically because of that — if the log does get cut off, you only lose the last incomplete line, not the whole payload (JSON needs to be structurally complete to parse at all, so any truncation breaks everything). It still defaults to <strong>custom objects only</strong> — the part your org's schema this tool genuinely can't know about otherwise, since standard objects are already covered by the built-in model. Flip <code>includeStandardObjects</code> to <code>true</code> only if you're confident the total will fit in one log.</p>
+          <pre style="background:#0F172A; color:#93C5FD; padding:10px 12px; border-radius:8px; font-size:11px; overflow-x:auto;">Boolean includeStandardObjects = false; // true = fetch everything (risk: debug log size limit on large orgs)
+Integer objCount = 0;
+
+for (Schema.SObjectType targetType : Schema.getGlobalDescribe().values()) {
+    Schema.DescribeSObjectResult d = targetType.getDescribe();
+    if (!includeStandardObjects &amp;&amp; !d.isCustom()) continue;
+    if (!d.isAccessible()) continue;
+
+    System.debug('SCHEMA|OBJ|' + d.getName() + '|' + d.getLabel());
+    objCount++;
+
+    for (Schema.ChildRelationship cr : d.getChildRelationships()) {
+        if (cr.getChildSObject() == null) continue;
+        String relType = cr.isCascadeDelete() ? 'CASCADE' : (cr.isRestrictedDelete() ? 'RESTRICTED' : 'LOOKUP');
+        System.debug('SCHEMA|REL|' + cr.getChildSObject().getDescribe().getName() + '|' + d.getName() + '|' + relType);
+    }
+}
+
+System.debug('SCHEMA|DONE|' + objCount + ' objects fetched');</pre>
+          <p style="color:var(--text-muted);">If you do need standard objects included too and hit truncation, the practical workaround is running this in batches — e.g. add a name filter like <code>if (!d.getName().startsWith('A')) continue;</code> temporarily, one letter range at a time, rather than everything in one log.</p>
+          <p style="color:var(--text-muted);">Then in the log panel at the bottom, tick "Debug Only" to cut the noise, and copy every line starting with <code>SCHEMA|</code> (the trailing <code>DONE</code> line confirms how many objects came through, and whether it matches what you expected). Paste those lines below exactly as they appear — one relationship per line means a truncated log just loses its last line, not the whole thing.</p>
+          <p style="color:var(--risk); font-weight:600;">Only ever run this against a sandbox, never production.</p>
+          <p style="color:var(--text-muted);">Exported the whole log as a file instead (Developer Console &rarr; <strong>File &rarr; Download Log</strong>)? Drop the raw <code>.log</code> file below directly — no need to copy/paste anything.</p>
+          <div id="drop-zone" style="border:2px dashed var(--border); border-radius:10px; padding:24px; text-align:center; cursor:pointer; transition:border-color 0.15s ease, background 0.15s ease;">
+            <p style="margin:0; font-size:13px; color:var(--text-muted);">&#128193; Drag a <code>.log</code>, <code>.txt</code>, or <code>.json</code> file here, or click to browse</p>
+            <input type="file" id="file-input" accept=".log,.txt,.json" style="display:none;">
+          </div>
+          <p id="drop-filename" style="font-size:12px; color:var(--text-muted); margin-top:6px;"></p>
+          <details style="margin-top:12px;">
+            <summary style="cursor:pointer; font-size:12px; font-weight:700; color:var(--text-muted);">Or paste text directly instead</summary>
+            <textarea id="import-textarea" placeholder="Paste either: a describe() JSON response (single object or array), or the SCHEMA| lines copied straight from the Apex debug log&hellip;" style="width:100%; min-height:100px; margin-top:8px; font-family:monospace; font-size:12px; border:1px solid var(--border); border-radius:8px; padding:10px; background:var(--input-bg); color:var(--text);"></textarea>
+          </details>
+          <label style="display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text-muted); margin-top:10px; cursor:pointer;">
+            <input type="checkbox" id="save-locally-toggle"> Save imported schema in browser local storage (so it's still here next time you load this page)
+          </label>
+          <button class="btn" id="import-btn" style="margin-top:8px; padding:8px 14px; font-size:13px; border:1px solid var(--border); border-radius:8px; background: var(--panel-bg); cursor:pointer;">Parse &amp; merge into the model</button>
+          <div id="saved-schema-badge" style="display:none; margin-top:10px; padding:10px 14px; border-radius:8px; font-size:12px; background:var(--surface-2); align-items:center; justify-content:space-between; gap:10px;">
+            <span id="saved-schema-text"></span>
+            <button id="clear-saved-schema-btn" style="border:1px solid var(--border); background: var(--panel-bg); border-radius:6px; padding:5px 10px; font-size:11px; cursor:pointer;">Clear Saved Schema</button>
+          </div>
+          <div id="import-toast" style="display:none; margin-top:10px; padding:10px 14px; border-radius:8px; font-size:13px;"></div>
+          <p id="import-status" style="margin-top:8px; font-size:12px;"></p>
+        </div>
+      </details>
+    </div>
+
+    <div class="panel" id="result-panel" aria-live="polite">
+      <div class="result-empty"><p>Pick an object above to see its impact map.</p></div>
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="links">
+      <a href="/recoverly/" target="_blank" rel="noopener">Recoverly — data recovery maturity assessment &rarr;</a>
+      <a href="/redline/" target="_blank" rel="noopener">Redline — the True Cost of Downtime calculator &rarr;</a>
+      <a href="/tabletop/" target="_blank" rel="noopener">Tabletop — Incident Command practice exercise &rarr;</a>
+      <a href="/agent-impact/" target="_blank" rel="noopener">Agent-Impact — AI agent Blast Radius &amp; guardrail simulator &rarr;</a>
+      <a href="https://krismccabe.com" target="_blank" rel="noopener">krismccabe.com</a>
+    </div>
+    <p class="disclaimer">An independent tool by Kris McCabe. The built-in model reflects the <strong>default, out-of-the-box</strong> behaviour of common Salesforce standard objects, based on general, publicly documented platform knowledge — it is not a live connection to any org by default, and does not know your org's custom objects, custom relationships, Apex triggers, Flows, or configuration changes unless you explicitly import your own describe() data using the Advanced panel above. Even with imported data, this cannot know custom automation that runs on delete/undelete — always check Setup directly before making a real deletion decision. Not affiliated with or endorsed by Salesforce.</p>
+  </footer>
+
+  <div class="drawer-overlay" id="drawer-overlay"></div>
+  <div class="detail-drawer" id="detail-drawer" role="dialog" aria-modal="true" aria-label="Object details" tabindex="-1">
+    <button class="close-btn" id="drawer-close" aria-label="Close details">&times;</button>
+    <div id="drawer-content" aria-live="polite"></div>
+  </div>
+
+<script>
+  // ---------------------------------------------------------------
+  // DATA — Salesforce standard objects and their well-documented
+  // default relationship behaviour. See footer disclaimer: this is a
+  // general reference model, not a guarantee for any specific org.
+  // ---------------------------------------------------------------
+
+  const OBJECTS = [
+    { id: 'account', label: 'Account', category: 'Sales' },
+    { id: 'contact', label: 'Contact', category: 'Sales' },
+    { id: 'lead', label: 'Lead', category: 'Sales' },
+    { id: 'accountcontactrelation', label: 'AccountContactRelation', category: 'Sales' },
+    { id: 'accountteammember', label: 'AccountTeamMember', category: 'Sales' },
+    { id: 'contractlineitem', label: 'ContractLineItem', category: 'Sales' },
+    { id: 'contractcontactrole', label: 'ContractContactRole', category: 'Sales' },
+    { id: 'opportunity', label: 'Opportunity', category: 'Sales' },
+    { id: 'opportunitylineitem', label: 'OpportunityLineItem', category: 'Sales' },
+    { id: 'opportunitycontactrole', label: 'OpportunityContactRole', category: 'Sales' },
+    { id: 'quote', label: 'Quote', category: 'Sales' },
+    { id: 'quotelineitem', label: 'QuoteLineItem', category: 'Sales' },
+    { id: 'contract', label: 'Contract', category: 'Sales' },
+    { id: 'order', label: 'Order', category: 'Sales' },
+    { id: 'orderitem', label: 'OrderItem', category: 'Sales' },
+    { id: 'orderitemtype', label: 'OrderItemType', category: 'Sales' },
+    { id: 'orderitemrelationship', label: 'OrderItemRelationship', category: 'Sales' },
+    { id: 'orderitemadjustmentlineitem', label: 'OrderItemAdjustmentLineItem', category: 'Sales' },
+    { id: 'orderitemtaxlineitem', label: 'OrderItemTaxLineItem', category: 'Sales' },
+    { id: 'orderitemgroup', label: 'OrderItemGroup', category: 'Sales' },
+    { id: 'approvalworkitemcondition', label: 'ApprovalWorkItemCondition', category: 'Activities' },
+    { id: 'approvalworkitemcriteria', label: 'ApprovalWorkItemCriteria', category: 'Activities' },
+    { id: 'eventbussubscriber', label: 'EventBusSubscriber', category: 'Activities' },
+    { id: 'eventrelayconfig', label: 'EventRelayConfig', category: 'Activities' },
+    { id: 'eventrelayfeedback', label: 'EventRelayFeedback', category: 'Activities' },
+    { id: 'eventstagedinviteeemail', label: 'EventStagedInviteeEmail', category: 'Activities' },
+    { id: 'floworchestrationworkitem', label: 'FlowOrchestrationWorkItem', category: 'Activities' },
+    { id: 'maintenanceworkrule', label: 'MaintenanceWorkRule', category: 'Activities' },
+    { id: 'processinstanceworkitem', label: 'ProcessInstanceWorkitem', category: 'Activities' },
+    { id: 'selfserviceuser', label: 'SelfServiceUser', category: 'Activities' },
+    { id: 'taskpriority', label: 'TaskPriority', category: 'Activities' },
+    { id: 'tenantusageentitlement', label: 'TenantUsageEntitlement', category: 'Activities' },
+    { id: 'contentasset', label: 'ContentAsset', category: 'Files & Content' },
+    { id: 'contentworkspace', label: 'ContentWorkspace', category: 'Files & Content' },
+    { id: 'contentworkspacedoc', label: 'ContentWorkspaceDoc', category: 'Files & Content' },
+    { id: 'contentworkspacemember', label: 'ContentWorkspaceMember', category: 'Files & Content' },
+    { id: 'contentworkspacepermission', label: 'ContentWorkspacePermission', category: 'Files & Content' },
+    { id: 'contentworkspacesubscription', label: 'ContentWorkspaceSubscription', category: 'Files & Content' },
+    { id: 'campaigninfluence', label: 'CampaignInfluence', category: 'Marketing' },
+    { id: 'campaigninfluencemodel', label: 'CampaignInfluenceModel', category: 'Marketing' },
+    { id: 'fulfillmentorderitemadjustment', label: 'FulfillmentOrderItemAdjustment', category: 'Order Management' },
+    { id: 'fulfillmentorderitemtax', label: 'FulfillmentOrderItemTax', category: 'Order Management' },
+    { id: 'orderaction', label: 'OrderAction', category: 'Order Management' },
+    { id: 'orderadjustmentgroup', label: 'OrderAdjustmentGroup', category: 'Order Management' },
+    { id: 'orderadjustmentgroupsummary', label: 'OrderAdjustmentGroupSummary', category: 'Order Management' },
+    { id: 'orderchangelog', label: 'OrderChangeLog', category: 'Order Management' },
+    { id: 'orderchgreasoncategmap', label: 'OrderChgReasonCategMap', category: 'Order Management' },
+    { id: 'orderdeliverygroup', label: 'OrderDeliveryGroup', category: 'Order Management' },
+    { id: 'orderdeliverygroupsummary', label: 'OrderDeliveryGroupSummary', category: 'Order Management' },
+    { id: 'orderdeliverymethod', label: 'OrderDeliveryMethod', category: 'Order Management' },
+    { id: 'orderitemadjustmentlinesummary', label: 'OrderItemAdjustmentLineSummary', category: 'Order Management' },
+    { id: 'orderitemrecipient', label: 'OrderItemRecipient', category: 'Order Management' },
+    { id: 'orderitemsummarychange', label: 'OrderItemSummaryChange', category: 'Order Management' },
+    { id: 'orderitemsummaryrelationship', label: 'OrderItemSummaryRelationship', category: 'Order Management' },
+    { id: 'orderitemtaxlineitemsummary', label: 'OrderItemTaxLineItemSummary', category: 'Order Management' },
+    { id: 'orderpaymentsummary', label: 'OrderPaymentSummary', category: 'Order Management' },
+    { id: 'orderpaymentsummaryreference', label: 'OrderPaymentSummaryReference', category: 'Order Management' },
+    { id: 'ordersummaryadditionalinfo', label: 'OrderSummaryAdditionalInfo', category: 'Order Management' },
+    { id: 'ordersummaryrelationship', label: 'OrderSummaryRelationship', category: 'Order Management' },
+    { id: 'ordersummaryroutingschedule', label: 'OrderSummaryRoutingSchedule', category: 'Order Management' },
+    { id: 'pendingordersummary', label: 'PendingOrderSummary', category: 'Order Management' },
+    { id: 'pickticketproduct', label: 'PickTicketProduct', category: 'Order Management' },
+    { id: 'returnorderitemadjustment', label: 'ReturnOrderItemAdjustment', category: 'Order Management' },
+    { id: 'returnorderitemtax', label: 'ReturnOrderItemTax', category: 'Order Management' },
+    { id: 'buyeraccount', label: 'BuyerAccount', category: 'Partner & Channel' },
+    { id: 'buyergrouppricebook', label: 'BuyerGroupPricebook', category: 'Partner & Channel' },
+    { id: 'extlrecshrlead', label: 'ExtlRecShrLead', category: 'Partner & Channel' },
+    { id: 'extlrecshropportunity', label: 'ExtlRecShrOpportunity', category: 'Partner & Channel' },
+    { id: 'sfdcpartnerorder', label: 'SfdcPartnerOrder', category: 'Partner & Channel' },
+    { id: 'sfdcpartnerorderbillingtrxn', label: 'SfdcPartnerOrderBillingTrxn', category: 'Partner & Channel' },
+    { id: 'sfdcpartnerorderitem', label: 'SfdcPartnerOrderItem', category: 'Partner & Channel' },
+    { id: 'sfdcpartnerproductlicense', label: 'SfdcPartnerProductLicense', category: 'Partner & Channel' },
+    { id: 'sfdcpartnerprovisionproduct', label: 'SfdcPartnerProvisionProduct', category: 'Partner & Channel' },
+    { id: 'sfdcpartnertermsetproduct', label: 'SfdcPartnerTermSetProduct', category: 'Partner & Channel' },
+    { id: 'pricebookentryadjustment', label: 'PricebookEntryAdjustment', category: 'Product Catalogue' },
+    { id: 'productattribute', label: 'ProductAttribute', category: 'Product Catalogue' },
+    { id: 'productattributeset', label: 'ProductAttributeSet', category: 'Product Catalogue' },
+    { id: 'productattributesetitem', label: 'ProductAttributeSetItem', category: 'Product Catalogue' },
+    { id: 'productattributesetproduct', label: 'ProductAttributeSetProduct', category: 'Product Catalogue' },
+    { id: 'productcatalog', label: 'ProductCatalog', category: 'Product Catalogue' },
+    { id: 'productcategory', label: 'ProductCategory', category: 'Product Catalogue' },
+    { id: 'productcategoryproduct', label: 'ProductCategoryProduct', category: 'Product Catalogue' },
+    { id: 'productcomponentgroup', label: 'ProductComponentGroup', category: 'Product Catalogue' },
+    { id: 'productconsumed', label: 'ProductConsumed', category: 'Product Catalogue' },
+    { id: 'productdetectedpricechange', label: 'ProductDetectedPriceChange', category: 'Product Catalogue' },
+    { id: 'productentitlementtemplate', label: 'ProductEntitlementTemplate', category: 'Product Catalogue' },
+    { id: 'productfeaturedproduct', label: 'ProductFeaturedProduct', category: 'Product Catalogue' },
+    { id: 'productitem', label: 'ProductItem', category: 'Product Catalogue' },
+    { id: 'productitemtransaction', label: 'ProductItemTransaction', category: 'Product Catalogue' },
+    { id: 'productmedia', label: 'ProductMedia', category: 'Product Catalogue' },
+    { id: 'productquantityrule', label: 'ProductQuantityRule', category: 'Product Catalogue' },
+    { id: 'productrelatedcomponent', label: 'ProductRelatedComponent', category: 'Product Catalogue' },
+    { id: 'productrelationshiptype', label: 'ProductRelationshipType', category: 'Product Catalogue' },
+    { id: 'productrequest', label: 'ProductRequest', category: 'Product Catalogue' },
+    { id: 'productrequestlineitem', label: 'ProductRequestLineItem', category: 'Product Catalogue' },
+    { id: 'productrequired', label: 'ProductRequired', category: 'Product Catalogue' },
+    { id: 'productsellingmodel', label: 'ProductSellingModel', category: 'Product Catalogue' },
+    { id: 'productsellingmodeloption', label: 'ProductSellingModelOption', category: 'Product Catalogue' },
+    { id: 'productservicecampaign', label: 'ProductServiceCampaign', category: 'Product Catalogue' },
+    { id: 'productservicecampaignitem', label: 'ProductServiceCampaignItem', category: 'Product Catalogue' },
+    { id: 'producttransfer', label: 'ProductTransfer', category: 'Product Catalogue' },
+    { id: 'productwarrantyterm', label: 'ProductWarrantyTerm', category: 'Product Catalogue' },
+    { id: 'programproduct', label: 'ProgramProduct', category: 'Product Catalogue' },
+    { id: 'shippingconfigsetproduct', label: 'ShippingConfigSetProduct', category: 'Product Catalogue' },
+    { id: 'webstorepricebook', label: 'WebStorePricebook', category: 'Product Catalogue' },
+    { id: 'accountbrand', label: 'AccountBrand', category: 'Sales' },
+    { id: 'accountcontactrole', label: 'AccountContactRole', category: 'Sales' },
+    { id: 'accountplan', label: 'AccountPlan', category: 'Sales' },
+    { id: 'accountplanobjmeascalccond', label: 'AccountPlanObjMeasCalcCond', category: 'Sales' },
+    { id: 'accountplanobjmeascalcdef', label: 'AccountPlanObjMeasCalcDef', category: 'Sales' },
+    { id: 'accountplanobjmeasrela', label: 'AccountPlanObjMeasRela', category: 'Sales' },
+    { id: 'accountplanobjective', label: 'AccountPlanObjective', category: 'Sales' },
+    { id: 'accountplanobjectivemeasure', label: 'AccountPlanObjectiveMeasure', category: 'Sales' },
+    { id: 'accountrelationship', label: 'AccountRelationship', category: 'Sales' },
+    { id: 'accountuserterritory2view', label: 'AccountUserTerritory2View', category: 'Sales' },
+    { id: 'contactcenterchannel', label: 'ContactCenterChannel', category: 'Sales' },
+    { id: 'contactpointaddress', label: 'ContactPointAddress', category: 'Sales' },
+    { id: 'contactpointconsent', label: 'ContactPointConsent', category: 'Sales' },
+    { id: 'contactpointemail', label: 'ContactPointEmail', category: 'Sales' },
+    { id: 'contactpointphone', label: 'ContactPointPhone', category: 'Sales' },
+    { id: 'contactpointtypeconsent', label: 'ContactPointTypeConsent', category: 'Sales' },
+    { id: 'contactrequest', label: 'ContactRequest', category: 'Sales' },
+    { id: 'contractlineoutcome', label: 'ContractLineOutcome', category: 'Sales' },
+    { id: 'contractlineoutcomedata', label: 'ContractLineOutcomeData', category: 'Sales' },
+    { id: 'custombrandasset', label: 'CustomBrandAsset', category: 'Sales' },
+    { id: 'datacloudcontact', label: 'DatacloudContact', category: 'Sales' },
+    { id: 'delegatedaccount', label: 'DelegatedAccount', category: 'Sales' },
+    { id: 'enblpgmtaskmeasureprogress', label: 'EnblPgmTaskMeasureProgress', category: 'Sales' },
+    { id: 'enblprogramtaskdefinition', label: 'EnblProgramTaskDefinition', category: 'Sales' },
+    { id: 'enblprogramtaskmeasure', label: 'EnblProgramTaskMeasure', category: 'Sales' },
+    { id: 'enblprogramtaskprogress', label: 'EnblProgramTaskProgress', category: 'Sales' },
+    { id: 'enblprogramtasksubcategory', label: 'EnblProgramTaskSubCategory', category: 'Sales' },
+    { id: 'externalaccounthierarchy', label: 'ExternalAccountHierarchy', category: 'Sales' },
+    { id: 'externaleventmapping', label: 'ExternalEventMapping', category: 'Sales' },
+    { id: 'externalsocialaccount', label: 'ExternalSocialAccount', category: 'Sales' },
+    { id: 'fieldservicemobilesettings', label: 'FieldServiceMobileSettings', category: 'Sales' },
+    { id: 'fieldserviceorgsettings', label: 'FieldServiceOrgSettings', category: 'Sales' },
+    { id: 'opportunitycompetitor', label: 'OpportunityCompetitor', category: 'Sales' },
+    { id: 'opportunitylineitemschedule', label: 'OpportunityLineItemSchedule', category: 'Sales' },
+    { id: 'opportunitylineitemsplit', label: 'OpportunityLineItemSplit', category: 'Sales' },
+    { id: 'opportunityrelateddeletelog', label: 'OpportunityRelatedDeleteLog', category: 'Sales' },
+    { id: 'opportunitysplit', label: 'OpportunitySplit', category: 'Sales' },
+    { id: 'opportunitysplittype', label: 'OpportunitySplitType', category: 'Sales' },
+    { id: 'opportunitystage', label: 'OpportunityStage', category: 'Sales' },
+    { id: 'opportunityteammember', label: 'OpportunityTeamMember', category: 'Sales' },
+    { id: 'pendingservicerouting', label: 'PendingServiceRouting', category: 'Sales' },
+    { id: 'pendingserviceroutinginteractioninfo', label: 'PendingServiceRoutingInteractionInfo', category: 'Sales' },
+    { id: 'personaccountownerpoweruser', label: 'PersonAccountOwnerPowerUser', category: 'Sales' },
+    { id: 'quoteaction', label: 'QuoteAction', category: 'Sales' },
+    { id: 'quoteadjustmentgroup', label: 'QuoteAdjustmentGroup', category: 'Sales' },
+    { id: 'quotedocument', label: 'QuoteDocument', category: 'Sales' },
+    { id: 'quoteitemtaxitem', label: 'QuoteItemTaxItem', category: 'Sales' },
+    { id: 'quotelinegroup', label: 'QuoteLineGroup', category: 'Sales' },
+    { id: 'quotelineitemrecipient', label: 'QuoteLineItemRecipient', category: 'Sales' },
+    { id: 'quotelinepriceadjustment', label: 'QuoteLinePriceAdjustment', category: 'Sales' },
+    { id: 'quotelinerelationship', label: 'QuoteLineRelationship', category: 'Sales' },
+    { id: 'quotelineworksource', label: 'QuoteLineWorkSource', category: 'Sales' },
+    { id: 'quoterecipientgroup', label: 'QuoteRecipientGroup', category: 'Sales' },
+    { id: 'quoterecipientgroupmember', label: 'QuoteRecipientGroupMember', category: 'Sales' },
+    { id: 'registeredexternalservice', label: 'RegisteredExternalService', category: 'Sales' },
+    { id: 'salesworkqueuesettings', label: 'SalesWorkQueueSettings', category: 'Sales' },
+    { id: 'salesforcecontract', label: 'SalesforceContract', category: 'Sales' },
+    { id: 'salesforcequote', label: 'SalesforceQuote', category: 'Sales' },
+    { id: 'storeintegratedservice', label: 'StoreIntegratedService', category: 'Sales' },
+    { id: 'thirdpartyaccountlink', label: 'ThirdPartyAccountLink', category: 'Sales' },
+    { id: 'useraccountteammember', label: 'UserAccountTeamMember', category: 'Sales' },
+    { id: 'userprovaccount', label: 'UserProvAccount', category: 'Sales' },
+    { id: 'userservicepresence', label: 'UserServicePresence', category: 'Sales' },
+    { id: 'userworklist', label: 'UserWorkList', category: 'Sales' },
+    { id: 'userworklistitem', label: 'UserWorkListItem', category: 'Sales' },
+    { id: 'assetaction', label: 'AssetAction', category: 'Service' },
+    { id: 'assetactionsource', label: 'AssetActionSource', category: 'Service' },
+    { id: 'assetattribute', label: 'AssetAttribute', category: 'Service' },
+    { id: 'assetcontractrelationship', label: 'AssetContractRelationship', category: 'Service' },
+    { id: 'assetdowntimeperiod', label: 'AssetDowntimePeriod', category: 'Service' },
+    { id: 'assetrateadjustment', label: 'AssetRateAdjustment', category: 'Service' },
+    { id: 'assetratecardentry', label: 'AssetRateCardEntry', category: 'Service' },
+    { id: 'assetrelationship', label: 'AssetRelationship', category: 'Service' },
+    { id: 'assetstateperiod', label: 'AssetStatePeriod', category: 'Service' },
+    { id: 'assetstateperiodattribute', label: 'AssetStatePeriodAttribute', category: 'Service' },
+    { id: 'assetwarranty', label: 'AssetWarranty', category: 'Service' },
+    { id: 'casearticle', label: 'CaseArticle', category: 'Service' },
+    { id: 'casemilestone', label: 'CaseMilestone', category: 'Service' },
+    { id: 'caseparticipant', label: 'CaseParticipant', category: 'Service' },
+    { id: 'caserelatedissue', label: 'CaseRelatedIssue', category: 'Service' },
+    { id: 'casesubjectparticle', label: 'CaseSubjectParticle', category: 'Service' },
+    { id: 'caseteammember', label: 'CaseTeamMember', category: 'Service' },
+    { id: 'caseteamrole', label: 'CaseTeamRole', category: 'Service' },
+    { id: 'caseteamtemplate', label: 'CaseTeamTemplate', category: 'Service' },
+    { id: 'caseteamtemplatemember', label: 'CaseTeamTemplateMember', category: 'Service' },
+    { id: 'commerceentitlementbuyergroup', label: 'CommerceEntitlementBuyerGroup', category: 'Service' },
+    { id: 'commerceentitlementpolicy', label: 'CommerceEntitlementPolicy', category: 'Service' },
+    { id: 'commerceentitlementproduct', label: 'CommerceEntitlementProduct', category: 'Service' },
+    { id: 'embeddedservicedetail', label: 'EmbeddedServiceDetail', category: 'Service' },
+    { id: 'embeddedservicelabel', label: 'EmbeddedServiceLabel', category: 'Service' },
+    { id: 'entitlementcontact', label: 'EntitlementContact', category: 'Service' },
+    { id: 'entitlementtemplate', label: 'EntitlementTemplate', category: 'Service' },
+    { id: 'servicechannel', label: 'ServiceChannel', category: 'Service' },
+    { id: 'servicechannelfieldpriority', label: 'ServiceChannelFieldPriority', category: 'Service' },
+    { id: 'servicereport', label: 'ServiceReport', category: 'Service' },
+    { id: 'servicereportlayout', label: 'ServiceReportLayout', category: 'Service' },
+    { id: 'servicerequest', label: 'ServiceRequest', category: 'Service' },
+    { id: 'serviceresourcecapacity', label: 'ServiceResourceCapacity', category: 'Service' },
+    { id: 'serviceresourcepreference', label: 'ServiceResourcePreference', category: 'Service' },
+    { id: 'serviceresourceskill', label: 'ServiceResourceSkill', category: 'Service' },
+    { id: 'servicesetupprovisioning', label: 'ServiceSetupProvisioning', category: 'Service' },
+    { id: 'serviceterritorylocation', label: 'ServiceTerritoryLocation', category: 'Service' },
+    { id: 'serviceterritorymember', label: 'ServiceTerritoryMember', category: 'Service' },
+    { id: 'serviceterritoryworktype', label: 'ServiceTerritoryWorkType', category: 'Service' },
+    { id: 'agentwork', label: 'AgentWork', category: 'Workforce Engagement' },
+    { id: 'agentworkconversationaldata', label: 'AgentWorkConversationalData', category: 'Workforce Engagement' },
+    { id: 'agentworkskill', label: 'AgentWorkSkill', category: 'Workforce Engagement' },
+    { id: 'servicecrew', label: 'ServiceCrew', category: 'Workforce Engagement' },
+    { id: 'servicecrewmember', label: 'ServiceCrewMember', category: 'Workforce Engagement' },
+    { id: 'unifiedtask', label: 'UnifiedTask', category: 'Workforce Engagement' },
+    { id: 'unifiedtaskparticipant', label: 'UnifiedTaskParticipant', category: 'Workforce Engagement' },
+    { id: 'workbadge', label: 'WorkBadge', category: 'Workforce Engagement' },
+    { id: 'workbadgedefinition', label: 'WorkBadgeDefinition', category: 'Workforce Engagement' },
+    { id: 'workcapacityavailability', label: 'WorkCapacityAvailability', category: 'Workforce Engagement' },
+    { id: 'workcapacitylimit', label: 'WorkCapacityLimit', category: 'Workforce Engagement' },
+    { id: 'workcapacityusage', label: 'WorkCapacityUsage', category: 'Workforce Engagement' },
+    { id: 'workcoaching', label: 'WorkCoaching', category: 'Workforce Engagement' },
+    { id: 'workdemographic', label: 'WorkDemographic', category: 'Workforce Engagement' },
+    { id: 'workfeedback', label: 'WorkFeedback', category: 'Workforce Engagement' },
+    { id: 'workfeedbackquestion', label: 'WorkFeedbackQuestion', category: 'Workforce Engagement' },
+    { id: 'workfeedbackquestionset', label: 'WorkFeedbackQuestionSet', category: 'Workforce Engagement' },
+    { id: 'workfeedbackrequest', label: 'WorkFeedbackRequest', category: 'Workforce Engagement' },
+    { id: 'workgoal', label: 'WorkGoal', category: 'Workforce Engagement' },
+    { id: 'workgoalcollaborator', label: 'WorkGoalCollaborator', category: 'Workforce Engagement' },
+    { id: 'workgoallink', label: 'WorkGoalLink', category: 'Workforce Engagement' },
+    { id: 'workitem', label: 'WorkItem', category: 'Workforce Engagement' },
+    { id: 'workitemcomponent', label: 'WorkItemComponent', category: 'Workforce Engagement' },
+    { id: 'workperformancecycle', label: 'WorkPerformanceCycle', category: 'Workforce Engagement' },
+    { id: 'workplan', label: 'WorkPlan', category: 'Workforce Engagement' },
+    { id: 'workplanselectionrule', label: 'WorkPlanSelectionRule', category: 'Workforce Engagement' },
+    { id: 'workplantemplate', label: 'WorkPlanTemplate', category: 'Workforce Engagement' },
+    { id: 'workplantemplateentry', label: 'WorkPlanTemplateEntry', category: 'Workforce Engagement' },
+    { id: 'workrewardfund', label: 'WorkRewardFund', category: 'Workforce Engagement' },
+    { id: 'workrewardfundtype', label: 'WorkRewardFundType', category: 'Workforce Engagement' },
+    { id: 'workstep', label: 'WorkStep', category: 'Workforce Engagement' },
+    { id: 'worksteptemplate', label: 'WorkStepTemplate', category: 'Workforce Engagement' },
+    { id: 'workthanks', label: 'WorkThanks', category: 'Workforce Engagement' },
+    { id: 'worktype', label: 'WorkType', category: 'Workforce Engagement' },
+    { id: 'worktypegroup', label: 'WorkTypeGroup', category: 'Workforce Engagement' },
+    { id: 'worktypegroupmember', label: 'WorkTypeGroupMember', category: 'Workforce Engagement' },
+    { id: 'workforcecapacity', label: 'WorkforceCapacity', category: 'Workforce Engagement' },
+    { id: 'workforcecapacityunit', label: 'WorkforceCapacityUnit', category: 'Workforce Engagement' },
+    { id: 'workload', label: 'Workload', category: 'Workforce Engagement' },
+    { id: 'workloadunit', label: 'WorkloadUnit', category: 'Workforce Engagement' },
+    { id: 'forecastingitem', label: 'ForecastingItem', category: 'Sales' },
+    { id: 'case', label: 'Case', category: 'Service' },
+    { id: 'casecomment', label: 'CaseComment', category: 'Service' },
+    { id: 'casecontactrole', label: 'CaseContactRole', category: 'Service' },
+    { id: 'casesolution', label: 'CaseSolution', category: 'Service' },
+    { id: 'asset', label: 'Asset', category: 'Service' },
+    { id: 'entitlement', label: 'Entitlement', category: 'Service' },
+    { id: 'solution', label: 'Solution', category: 'Service' },
+    { id: 'livechattranscript', label: 'LiveChatTranscript', category: 'Service' },
+    { id: 'campaign', label: 'Campaign', category: 'Marketing' },
+    { id: 'campaignmember', label: 'CampaignMember', category: 'Marketing' },
+    { id: 'product2', label: 'Product2', category: 'Product Catalogue' },
+    { id: 'pricebook2', label: 'Pricebook2', category: 'Product Catalogue' },
+    { id: 'pricebookentry', label: 'PricebookEntry', category: 'Product Catalogue' },
+    { id: 'task', label: 'Task', category: 'Activities' },
+    { id: 'event', label: 'Event', category: 'Activities' },
+    { id: 'contentdocument', label: 'ContentDocument', category: 'Files & Content' },
+    { id: 'contentversion', label: 'ContentVersion', category: 'Files & Content' },
+    { id: 'contentdocumentlink', label: 'ContentDocumentLink', category: 'Files & Content' },
+    { id: 'attachment', label: 'Attachment', category: 'Files & Content' },
+    { id: 'note', label: 'Note', category: 'Files & Content' },
+    { id: 'feeditem', label: 'FeedItem', category: 'Chatter' },
+    { id: 'feedcomment', label: 'FeedComment', category: 'Chatter' },
+    { id: 'group', label: 'Group', category: 'Platform' },
+    { id: 'groupmember', label: 'GroupMember', category: 'Platform' },
+    { id: 'fulfillmentorder', label: 'FulfillmentOrder', category: 'Order Management' },
+    { id: 'fulfillmentorderlineitem', label: 'FulfillmentOrderLineItem', category: 'Order Management' },
+    { id: 'ordersummary', label: 'OrderSummary', category: 'Order Management' },
+    { id: 'orderitemsummary', label: 'OrderItemSummary', category: 'Order Management' },
+    { id: 'careplan', label: 'CarePlan', category: 'Industry Clouds (verify against your org)' },
+    { id: 'carebarrier', label: 'CareBarrier', category: 'Industry Clouds (verify against your org)' },
+    { id: 'careplanactivity', label: 'CarePlanActivity', category: 'Industry Clouds (verify against your org)' },
+    { id: 'financialaccount', label: 'FinancialAccount', category: 'Industry Clouds (verify against your org)' },
+    { id: 'financialaccountrole', label: 'FinancialAccountRole', category: 'Industry Clouds (verify against your org)' },
+    { id: 'financialaccountparty', label: 'FinancialAccountParty', category: 'Industry Clouds (verify against your org)' },
+    { id: 'workorder', label: 'WorkOrder', category: 'Field Service' },
+    { id: 'workorderlineitem', label: 'WorkOrderLineItem', category: 'Field Service' },
+    { id: 'serviceappointment', label: 'ServiceAppointment', category: 'Field Service' },
+    { id: 'assignedresource', label: 'AssignedResource', category: 'Field Service' },
+    { id: 'serviceresource', label: 'ServiceResource', category: 'Field Service' },
+    { id: 'serviceterritory', label: 'ServiceTerritory', category: 'Field Service' },
+    { id: 'servicecontract', label: 'ServiceContract', category: 'Field Service' },
+    { id: 'maintenanceasset', label: 'MaintenanceAsset', category: 'Field Service' },
+    { id: 'maintenanceplan', label: 'MaintenancePlan', category: 'Field Service' },
+    { id: 'returnorder', label: 'ReturnOrder', category: 'Order Management' },
+    { id: 'returnorderlineitem', label: 'ReturnOrderLineItem', category: 'Order Management' },
+    { id: 'shipment', label: 'Shipment', category: 'Order Management' },
+    { id: 'shipmentitem', label: 'ShipmentItem', category: 'Order Management' },
+    { id: 'individual', label: 'Individual', category: 'Sales' },
+    { id: 'approvalworkitem', label: 'ApprovalWorkItem', category: 'Platform' },
+    { id: 'processinstance', label: 'ProcessInstance', category: 'Platform' }
+  ];
+  // Objects added above but not yet in RELATIONSHIPS below have no confidently-
+  // known relationships modelled — that's an honest "not yet covered" gap, not
+  // a claim that they have none in a real org. Import your org's own describe()
+  // data (see the Advanced panel) to fill these in accurately.
+
+  // child -> parent. type: 'master-detail' (true Master-Detail, always
+  // cascades and the child cannot exist without the parent), 'account-cascade'
+  // (a lookup field that Salesforce specifically hard-codes to cascade-delete
+  // when the Account is removed — a well-documented platform quirk that
+  // catches people out, distinct from the general lookup rule below), or
+  // 'lookup' (standard: deleting the parent just clears the reference field
+  // on the child — the child record itself survives).
+  const RELATIONSHIPS = [
+    { child: 'contact', parent: 'account', type: 'account-cascade' },
+    { child: 'opportunity', parent: 'account', type: 'account-cascade' },
+    { child: 'case', parent: 'account', type: 'account-cascade' },
+    { child: 'contract', parent: 'account', type: 'account-cascade' },
+    { child: 'asset', parent: 'account', type: 'account-cascade' },
+    { child: 'order', parent: 'account', type: 'lookup' },
+    { child: 'case', parent: 'contact', type: 'lookup' },
+    { child: 'asset', parent: 'contact', type: 'lookup' },
+    { child: 'opportunitylineitem', parent: 'opportunity', type: 'master-detail' },
+    { child: 'quote', parent: 'opportunity', type: 'master-detail' },
+    { child: 'quotelineitem', parent: 'quote', type: 'master-detail' },
+    { child: 'casecomment', parent: 'case', type: 'master-detail' },
+    { child: 'order', parent: 'contract', type: 'lookup' },
+    { child: 'orderitem', parent: 'order', type: 'master-detail' },
+    { child: 'campaignmember', parent: 'campaign', type: 'master-detail' },
+    { child: 'campaignmember', parent: 'contact', type: 'lookup' },
+    { child: 'campaignmember', parent: 'lead', type: 'lookup' },
+    { child: 'pricebookentry', parent: 'pricebook2', type: 'master-detail' },
+    { child: 'pricebookentry', parent: 'product2', type: 'lookup' },
+    { child: 'opportunitylineitem', parent: 'pricebookentry', type: 'lookup' },
+    { child: 'task', parent: 'contact', type: 'lookup' },
+    { child: 'task', parent: 'opportunity', type: 'lookup' },
+    { child: 'event', parent: 'contact', type: 'lookup' },
+    { child: 'event', parent: 'opportunity', type: 'lookup' },
+    { child: 'opportunitycontactrole', parent: 'opportunity', type: 'master-detail' },
+    { child: 'opportunitycontactrole', parent: 'contact', type: 'lookup' },
+    { child: 'entitlement', parent: 'account', type: 'lookup' },
+    { child: 'case', parent: 'entitlement', type: 'lookup' },
+    { child: 'contentversion', parent: 'contentdocument', type: 'master-detail' },
+    { child: 'contentdocumentlink', parent: 'contentdocument', type: 'master-detail' },
+    { child: 'feedcomment', parent: 'feeditem', type: 'master-detail' },
+    { child: 'groupmember', parent: 'group', type: 'master-detail' },
+    { child: 'accountcontactrelation', parent: 'account', type: 'account-cascade' },
+    { child: 'accountcontactrelation', parent: 'contact', type: 'account-cascade' },
+    { child: 'accountteammember', parent: 'account', type: 'account-cascade' },
+    { child: 'contractlineitem', parent: 'contract', type: 'master-detail' },
+    { child: 'contractcontactrole', parent: 'contract', type: 'master-detail' },
+    { child: 'contractcontactrole', parent: 'contact', type: 'lookup' },
+    { child: 'casecontactrole', parent: 'case', type: 'master-detail' },
+    { child: 'casecontactrole', parent: 'contact', type: 'lookup' },
+    { child: 'casesolution', parent: 'case', type: 'master-detail' },
+    { child: 'casesolution', parent: 'solution', type: 'lookup' },
+    { child: 'fulfillmentorderlineitem', parent: 'fulfillmentorder', type: 'master-detail' },
+    { child: 'orderitemsummary', parent: 'ordersummary', type: 'master-detail' },
+    { child: 'orderitemadjustmentlineitem', parent: 'orderitem', type: 'master-detail' },
+    { child: 'orderitemtaxlineitem', parent: 'orderitem', type: 'master-detail' },
+    { child: 'orderitemgroup', parent: 'order', type: 'master-detail' },
+    { child: 'accountcontactrole', parent: 'account', type: 'lookup' },
+    { child: 'accountcontactrole', parent: 'contact', type: 'lookup' },
+    { child: 'accountplan', parent: 'account', type: 'lookup' },
+    { child: 'accountplanobjective', parent: 'accountplan', type: 'lookup' },
+    { child: 'accountplanobjective', parent: 'contact', type: 'lookup' },
+    { child: 'accountplanobjectivemeasure', parent: 'accountplanobjmeascalcdef', type: 'lookup' },
+    { child: 'accountplanobjectivemeasure', parent: 'accountplanobjective', type: 'lookup' },
+    { child: 'accountplanobjmeascalccond', parent: 'accountplanobjmeascalcdef', type: 'lookup' },
+    { child: 'agentwork', parent: 'group', type: 'lookup' },
+    { child: 'agentwork', parent: 'pendingservicerouting', type: 'lookup' },
+    { child: 'agentwork', parent: 'servicechannel', type: 'lookup' },
+    { child: 'agentworkconversationaldata', parent: 'agentwork', type: 'lookup' },
+    { child: 'assetaction', parent: 'asset', type: 'lookup' },
+    { child: 'assetactionsource', parent: 'assetaction', type: 'lookup' },
+    { child: 'assetattribute', parent: 'asset', type: 'lookup' },
+    { child: 'assetcontractrelationship', parent: 'asset', type: 'lookup' },
+    { child: 'assetcontractrelationship', parent: 'contract', type: 'lookup' },
+    { child: 'assetratecardentry', parent: 'asset', type: 'lookup' },
+    { child: 'assetrelationship', parent: 'asset', type: 'lookup' },
+    { child: 'assetrelationship', parent: 'productrelationshiptype', type: 'lookup' },
+    { child: 'assetrelationship', parent: 'productrelatedcomponent', type: 'lookup' },
+    { child: 'assetstateperiod', parent: 'asset', type: 'lookup' },
+    { child: 'buyeraccount', parent: 'account', type: 'lookup' },
+    { child: 'campaigninfluencemodel', parent: 'account', type: 'lookup' },
+    { child: 'campaigninfluencemodel', parent: 'campaign', type: 'lookup' },
+    { child: 'campaigninfluencemodel', parent: 'contact', type: 'lookup' },
+    { child: 'campaigninfluencemodel', parent: 'lead', type: 'lookup' },
+    { child: 'caseparticipant', parent: 'case', type: 'lookup' },
+    { child: 'caserelatedissue', parent: 'case', type: 'lookup' },
+    { child: 'caseteammember', parent: 'case', type: 'lookup' },
+    { child: 'caseteammember', parent: 'caseteamrole', type: 'lookup' },
+    { child: 'caseteammember', parent: 'caseteamtemplate', type: 'lookup' },
+    { child: 'caseteammember', parent: 'caseteamtemplatemember', type: 'lookup' },
+    { child: 'caseteamtemplatemember', parent: 'case', type: 'lookup' },
+    { child: 'caseteamtemplatemember', parent: 'caseteamtemplate', type: 'lookup' },
+    { child: 'contactcenterchannel', parent: 'group', type: 'lookup' },
+    { child: 'contactpointaddress', parent: 'contactpointphone', type: 'lookup' },
+    { child: 'contactpointconsent', parent: 'individual', type: 'lookup' },
+    { child: 'contactpointtypeconsent', parent: 'individual', type: 'lookup' },
+    { child: 'contentasset', parent: 'contentdocument', type: 'lookup' },
+    { child: 'contentworkspace', parent: 'contentasset', type: 'lookup' },
+    { child: 'contentworkspacedoc', parent: 'contentdocument', type: 'lookup' },
+    { child: 'contentworkspacedoc', parent: 'contentworkspace', type: 'lookup' },
+    { child: 'contentworkspacemember', parent: 'contentworkspace', type: 'lookup' },
+    { child: 'contentworkspacemember', parent: 'contentworkspacepermission', type: 'lookup' },
+    { child: 'contentworkspacesubscription', parent: 'contentworkspace', type: 'lookup' },
+    { child: 'contractlineoutcome', parent: 'contractlineitem', type: 'lookup' },
+    { child: 'contractlineoutcome', parent: 'servicecontract', type: 'lookup' },
+    { child: 'contractlineoutcomedata', parent: 'contractlineoutcome', type: 'lookup' },
+    { child: 'delegatedaccount', parent: 'account', type: 'lookup' },
+    { child: 'enblpgmtaskmeasureprogress', parent: 'enblprogramtaskmeasure', type: 'lookup' },
+    { child: 'enblprogramtaskdefinition', parent: 'enblprogramtasksubcategory', type: 'lookup' },
+    { child: 'enblprogramtaskprogress', parent: 'enblprogramtaskdefinition', type: 'lookup' },
+    { child: 'eventrelayfeedback', parent: 'eventrelayconfig', type: 'lookup' },
+    { child: 'eventstagedinviteeemail', parent: 'event', type: 'lookup' },
+    { child: 'externaleventmapping', parent: 'event', type: 'lookup' },
+    { child: 'opportunitycompetitor', parent: 'opportunity', type: 'lookup' },
+    { child: 'opportunitylineitemsplit', parent: 'opportunitylineitem', type: 'lookup' },
+    { child: 'opportunityrelateddeletelog', parent: 'opportunity', type: 'lookup' },
+    { child: 'opportunitysplit', parent: 'opportunity', type: 'lookup' },
+    { child: 'opportunitysplit', parent: 'opportunitysplittype', type: 'lookup' },
+    { child: 'orderaction', parent: 'orderitem', type: 'lookup' },
+    { child: 'orderaction', parent: 'order', type: 'lookup' },
+    { child: 'orderaction', parent: 'asset', type: 'lookup' },
+    { child: 'orderadjustmentgroup', parent: 'order', type: 'lookup' },
+    { child: 'orderchangelog', parent: 'order', type: 'lookup' },
+    { child: 'orderitemsummaryrelationship', parent: 'orderitemsummary', type: 'lookup' },
+    { child: 'orderitemsummaryrelationship', parent: 'ordersummary', type: 'lookup' },
+    { child: 'orderitemsummaryrelationship', parent: 'orderitemrelationship', type: 'lookup' },
+    { child: 'orderitemsummaryrelationship', parent: 'productrelatedcomponent', type: 'lookup' },
+    { child: 'orderitemsummaryrelationship', parent: 'productrelationshiptype', type: 'lookup' },
+    { child: 'orderpaymentsummaryreference', parent: 'orderpaymentsummary', type: 'lookup' },
+    { child: 'orderpaymentsummaryreference', parent: 'ordersummary', type: 'lookup' },
+    { child: 'ordersummaryadditionalinfo', parent: 'order', type: 'lookup' },
+    { child: 'ordersummaryadditionalinfo', parent: 'ordersummary', type: 'lookup' },
+    { child: 'ordersummaryrelationship', parent: 'ordersummary', type: 'lookup' },
+    { child: 'pendingordersummary', parent: 'account', type: 'lookup' },
+    { child: 'pendingordersummary', parent: 'contact', type: 'lookup' },
+    { child: 'pendingserviceroutinginteractioninfo', parent: 'pendingservicerouting', type: 'lookup' },
+    { child: 'pickticketproduct', parent: 'product2', type: 'lookup' },
+    { child: 'processinstanceworkitem', parent: 'processinstance', type: 'lookup' },
+    { child: 'productcomponentgroup', parent: 'product2', type: 'lookup' },
+    { child: 'productdetectedpricechange', parent: 'account', type: 'lookup' },
+    { child: 'productdetectedpricechange', parent: 'product2', type: 'lookup' },
+    { child: 'productfeaturedproduct', parent: 'product2', type: 'lookup' },
+    { child: 'productitem', parent: 'product2', type: 'lookup' },
+    { child: 'productitemtransaction', parent: 'productitem', type: 'lookup' },
+    { child: 'productmedia', parent: 'product2', type: 'lookup' },
+    { child: 'programproduct', parent: 'product2', type: 'lookup' },
+    { child: 'productquantityrule', parent: 'product2', type: 'lookup' },
+    { child: 'productrelatedcomponent', parent: 'product2', type: 'lookup' },
+    { child: 'productrelatedcomponent', parent: 'productsellingmodel', type: 'lookup' },
+    { child: 'productrelatedcomponent', parent: 'productcomponentgroup', type: 'lookup' },
+    { child: 'productrelatedcomponent', parent: 'productrelationshiptype', type: 'lookup' },
+    { child: 'productrequest', parent: 'account', type: 'lookup' },
+    { child: 'productrequest', parent: 'case', type: 'lookup' },
+    { child: 'productrequest', parent: 'workorder', type: 'lookup' },
+    { child: 'productrequest', parent: 'workorderlineitem', type: 'lookup' },
+    { child: 'productrequestlineitem', parent: 'account', type: 'lookup' },
+    { child: 'productrequestlineitem', parent: 'case', type: 'lookup' },
+    { child: 'productrequestlineitem', parent: 'productrequest', type: 'lookup' },
+    { child: 'productrequestlineitem', parent: 'product2', type: 'lookup' },
+    { child: 'productrequestlineitem', parent: 'workorder', type: 'lookup' },
+    { child: 'productrequestlineitem', parent: 'workorderlineitem', type: 'lookup' },
+    { child: 'productrequired', parent: 'product2', type: 'lookup' },
+    { child: 'productsellingmodeloption', parent: 'product2', type: 'lookup' },
+    { child: 'productsellingmodeloption', parent: 'productsellingmodel', type: 'lookup' },
+    { child: 'producttransfer', parent: 'product2', type: 'lookup' },
+    { child: 'producttransfer', parent: 'productrequest', type: 'lookup' },
+    { child: 'producttransfer', parent: 'productrequestlineitem', type: 'lookup' },
+    { child: 'producttransfer', parent: 'returnorder', type: 'lookup' },
+    { child: 'producttransfer', parent: 'returnorderlineitem', type: 'lookup' },
+    { child: 'producttransfer', parent: 'shipment', type: 'lookup' },
+    { child: 'producttransfer', parent: 'productitem', type: 'lookup' },
+    { child: 'quoteaction', parent: 'quote', type: 'lookup' },
+    { child: 'quoteaction', parent: 'asset', type: 'lookup' },
+    { child: 'quoteadjustmentgroup', parent: 'quote', type: 'lookup' },
+    { child: 'quotelinepriceadjustment', parent: 'quoteadjustmentgroup', type: 'lookup' },
+    { child: 'quotelinepriceadjustment', parent: 'quotelineitem', type: 'lookup' },
+    { child: 'quotelinerelationship', parent: 'quotelineitem', type: 'lookup' },
+    { child: 'quotelinerelationship', parent: 'productrelatedcomponent', type: 'lookup' },
+    { child: 'quotelinerelationship', parent: 'productrelationshiptype', type: 'lookup' },
+    { child: 'quotelinerelationship', parent: 'quote', type: 'lookup' },
+    { child: 'quoteitemtaxitem', parent: 'quotelineitem', type: 'lookup' },
+    { child: 'quotelineworksource', parent: 'asset', type: 'lookup' },
+    { child: 'quotelineworksource', parent: 'orderitem', type: 'lookup' },
+    { child: 'quotelineworksource', parent: 'quotelineitem', type: 'lookup' },
+    { child: 'quotelineworksource', parent: 'worktypegroup', type: 'lookup' },
+    { child: 'quoterecipientgroupmember', parent: 'quotelineitemrecipient', type: 'lookup' },
+    { child: 'quoterecipientgroupmember', parent: 'quoterecipientgroup', type: 'lookup' },
+    { child: 'returnorderitemadjustment', parent: 'returnorder', type: 'lookup' },
+    { child: 'returnorderitemadjustment', parent: 'returnorderlineitem', type: 'lookup' },
+    { child: 'returnorderitemtax', parent: 'returnorder', type: 'lookup' },
+    { child: 'returnorderitemtax', parent: 'returnorderitemadjustment', type: 'lookup' },
+    { child: 'returnorderitemtax', parent: 'returnorderlineitem', type: 'lookup' },
+    { child: 'salesforcequote', parent: 'salesforcecontract', type: 'lookup' },
+    { child: 'servicerequest', parent: 'group', type: 'lookup' },
+    { child: 'serviceresourcepreference', parent: 'serviceresource', type: 'lookup' },
+    { child: 'serviceresourceskill', parent: 'serviceresource', type: 'lookup' },
+    { child: 'serviceterritorymember', parent: 'serviceresource', type: 'lookup' },
+    { child: 'serviceterritorymember', parent: 'serviceterritory', type: 'lookup' },
+    { child: 'serviceterritoryworktype', parent: 'serviceterritory', type: 'lookup' },
+    { child: 'serviceterritoryworktype', parent: 'worktype', type: 'lookup' },
+    { child: 'sfdcpartnerorderitem', parent: 'sfdcpartnerprovisionproduct', type: 'lookup' },
+    { child: 'sfdcpartnerproductlicense', parent: 'sfdcpartnerprovisionproduct', type: 'lookup' },
+    { child: 'sfdcpartnerprovisionproduct', parent: 'sfdcpartnertermsetproduct', type: 'lookup' },
+    { child: 'shippingconfigsetproduct', parent: 'product2', type: 'lookup' },
+    { child: 'unifiedtask', parent: 'task', type: 'lookup' },
+    { child: 'unifiedtaskparticipant', parent: 'unifiedtask', type: 'lookup' },
+    { child: 'workbadge', parent: 'workbadgedefinition', type: 'lookup' },
+    { child: 'workbadge', parent: 'workthanks', type: 'lookup' },
+    { child: 'workcapacityavailability', parent: 'serviceterritory', type: 'lookup' },
+    { child: 'workcapacitylimit', parent: 'serviceterritory', type: 'lookup' },
+    { child: 'workcapacityusage', parent: 'serviceterritory', type: 'lookup' },
+    { child: 'workdemographic', parent: 'servicechannel', type: 'lookup' },
+    { child: 'workdemographic', parent: 'serviceterritory', type: 'lookup' },
+    { child: 'workforcecapacity', parent: 'workload', type: 'lookup' },
+    { child: 'workforcecapacityunit', parent: 'workdemographic', type: 'lookup' },
+    { child: 'workforcecapacityunit', parent: 'workforcecapacity', type: 'lookup' },
+    { child: 'workloadunit', parent: 'workdemographic', type: 'lookup' },
+    { child: 'workloadunit', parent: 'workload', type: 'lookup' },
+    { child: 'workplan', parent: 'workorder', type: 'lookup' },
+    { child: 'workplan', parent: 'workorderlineitem', type: 'lookup' },
+    { child: 'workplan', parent: 'workplantemplate', type: 'lookup' },
+    { child: 'workthanks', parent: 'feeditem', type: 'lookup' },
+    { child: 'worktypegroupmember', parent: 'worktypegroup', type: 'lookup' },
+    { child: 'worktypegroupmember', parent: 'worktype', type: 'lookup' },
+    { child: 'workorderlineitem', parent: 'workorder', type: 'master-detail' },
+    { child: 'workorder', parent: 'account', type: 'lookup' },
+    { child: 'workorder', parent: 'asset', type: 'lookup' },
+    { child: 'workorder', parent: 'case', type: 'lookup' },
+    { child: 'assignedresource', parent: 'serviceappointment', type: 'master-detail' },
+    { child: 'serviceappointment', parent: 'workorder', type: 'lookup' },
+    { child: 'returnorderlineitem', parent: 'returnorder', type: 'master-detail' },
+    { child: 'shipmentitem', parent: 'shipment', type: 'master-detail' },
+    { child: 'contact', parent: 'individual', type: 'lookup' }
+  ];
+
+  const CASCADE_TYPES = ['master-detail', 'account-cascade', 'org-cascade'];
+  const TYPE_LABEL = { 'master-detail': 'Master-Detail', 'account-cascade': 'Account cascade-delete', 'lookup': 'Lookup', 'restricted': 'Restricted delete', 'org-cascade': 'Cascade delete (from your org)' };
+
+  function objLabel(id) { return (OBJECTS.find(o => o.id === id) || {}).label || id; }
+  function articleFor(label) { return /^[aeiou]/i.test(label) ? 'an' : 'a'; }
+
+  // Best-effort documentation links, built from Salesforce's consistent URL
+  // pattern for object reference pages. Verified correct for the objects
+  // checked directly during this build; the rest follow the same pattern
+  // but individual pages weren't all opened, so an occasional 404 is possible.
+  const CORE_DOC_BASE = 'https://developer.salesforce.com/docs/atlas.en-us.object_reference.meta/object_reference/sforce_api_objects_';
+  const HEALTH_DOC_BASE = 'https://developer.salesforce.com/docs/atlas.en-us.health_cloud_object_reference.meta/health_cloud_object_reference/sforce_api_objects_';
+  const FSC_DOC_BASE = 'https://developer.salesforce.com/docs/atlas.en-us.financial_services_cloud_object_reference.meta/financial_services_cloud_object_reference/sforce_api_objects_';
+  const HEALTH_IDS = ['careplan', 'carebarrier', 'careplanactivity'];
+  const FSC_IDS = ['financialaccount', 'financialaccountrole', 'financialaccountparty'];
+  function docUrlFor(id) {
+    if (HEALTH_IDS.includes(id)) return HEALTH_DOC_BASE + id + '.htm';
+    if (FSC_IDS.includes(id)) return FSC_DOC_BASE + id + '.htm';
+    return CORE_DOC_BASE + id + '.htm';
+  }
+
+  // ---------------------------------------------------------------
+  // IMPACT ALGORITHM (validated separately — see reasoning: deletion
+  // via any cascade path always wins over merely-orphaned status)
+  // ---------------------------------------------------------------
+  function findImpact(objectId, maxDepth) {
+    maxDepth = maxDepth || 10;
+    const cascadeDeleted = new Set();
+    const orphanedRaw = new Map();   // id -> relationship that orphaned it
+    const restrictedRaw = new Map(); // id -> relationship that blocks deletion
+    const cascadeVia = new Map();
+    const cascadeDepth = new Map();  // id -> depth level it was found at
+    const orphanedDepth = new Map();
+    const restrictedDepth = new Map();
+    const visited = new Set([objectId]);
+
+    function recurse(currentId, depth) {
+      if (depth > maxDepth) return;
+      RELATIONSHIPS.filter(r => r.parent === currentId).forEach(rel => {
+        if (visited.has(rel.child)) return;
+        if (CASCADE_TYPES.includes(rel.type)) {
+          cascadeDeleted.add(rel.child);
+          cascadeVia.set(rel.child, rel);
+          cascadeDepth.set(rel.child, depth);
+          visited.add(rel.child);
+          if (depth < maxDepth) recurse(rel.child, depth + 1);
+        } else if (rel.type === 'restricted') {
+          if (!restrictedRaw.has(rel.child)) { restrictedRaw.set(rel.child, rel); restrictedDepth.set(rel.child, depth); }
+        } else {
+          if (!orphanedRaw.has(rel.child)) { orphanedRaw.set(rel.child, rel); orphanedDepth.set(rel.child, depth); }
+        }
+      });
+    }
+    recurse(objectId, 1);
+    const orphaned = [...orphanedRaw.keys()].filter(id => !cascadeDeleted.has(id));
+    const restricted = [...restrictedRaw.keys()].filter(id => !cascadeDeleted.has(id));
+    return {
+      cascadeDeleted: [...cascadeDeleted].map(id => ({ id, rel: cascadeVia.get(id), depth: cascadeDepth.get(id) })),
+      orphaned: orphaned.map(id => ({ id, rel: orphanedRaw.get(id), depth: orphanedDepth.get(id) })),
+      restricted: restricted.map(id => ({ id, rel: restrictedRaw.get(id), depth: restrictedDepth.get(id) }))
+    };
+  }
+
+  // ---------------------------------------------------------------
+  // RENDER: object selector, grouped by category
+  // ---------------------------------------------------------------
+  let CATEGORIES = ['Sales', 'Service', 'Marketing', 'Product Catalogue', 'Activities', 'Files & Content', 'Chatter', 'Platform', 'Order Management', 'Field Service', 'Workforce Engagement', 'Partner & Channel', 'Industry Clouds (verify against your org)'];
+  const selectorEl = document.getElementById('object-selector');
+  let selectedId = null;
+  let currentMaxDepth = 2;
+  let viewMode = 'diagram';
+  let diagramFilter = 'all';
+  let drawerTriggerEl = null;
+
+  document.getElementById('depth-slider').addEventListener('input', e => {
+    currentMaxDepth = parseInt(e.target.value, 10);
+    document.getElementById('depth-value').textContent = currentMaxDepth;
+    if (selectedId) renderResult(selectedId);
+  });
+
+  let activeCategory = 'All';
+
+  function renderSelector() {
+    let html = '';
+    CATEGORIES.forEach(cat => {
+      const objsInCat = OBJECTS.filter(o => o.category === cat);
+      if (objsInCat.length === 0) return;
+      html += '<div class="cat-group" data-category="' + cat + '"><div class="cat-label">' + cat + '</div><div class="obj-grid">';
+      objsInCat.forEach(o => {
+        const searchBlob = (o.label + ' ' + o.id + ' ' + cat).toLowerCase();
+        html += '<button class="obj-btn' + (o.id === selectedId ? ' active' : '') + '" data-obj="' + o.id + '" data-search="' + searchBlob + '">' + o.label + '</button>';
+      });
+      html += '</div></div>';
+    });
+    selectorEl.innerHTML = html;
+    selectorEl.querySelectorAll('.obj-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectAndShow(btn.dataset.obj);
+      });
+    });
+    renderCategoryTabs();
+    applyObjectSearch();
+  }
+
+  function selectAndShow(id) {
+    selectedId = id;
+    selectorEl.querySelectorAll('.obj-btn').forEach(b => b.classList.toggle('active', b.dataset.obj === id));
+    renderResult(id);
+  }
+
+  // Category tabs: with 300 objects, showing every category's full pill
+  // wall at once is overwhelming - tabs let you narrow to one domain
+  // (with a live count) instead of scrolling past hundreds of unrelated
+  // objects to find the one you want.
+  function renderCategoryTabs() {
+    const el = document.getElementById('category-tabs');
+    const counts = {};
+    OBJECTS.forEach(o => { counts[o.category] = (counts[o.category] || 0) + 1; });
+    const tabs = ['All'].concat(CATEGORIES.filter(c => counts[c] > 0));
+    el.innerHTML = tabs.map(cat => {
+      const count = cat === 'All' ? OBJECTS.length : counts[cat];
+      const short = cat.replace(' (verify against your org)', '');
+      return '<button class="cat-tab' + (cat === activeCategory ? ' active' : '') + '" data-cat="' + cat + '">' + short + ' (' + count + ')</button>';
+    }).join('');
+    el.querySelectorAll('.cat-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeCategory = btn.dataset.cat;
+        el.querySelectorAll('.cat-tab').forEach(b => b.classList.toggle('active', b === btn));
+        applyObjectSearch();
+      });
+    });
+  }
+
+  function applyObjectSearch() {
+    const searchInput = document.getElementById('object-search');
+    if (!searchInput) return;
+    const query = searchInput.value.trim().toLowerCase();
+    selectorEl.querySelectorAll('.cat-group').forEach(group => {
+      const groupCategory = group.dataset.category;
+      const categoryMatches = activeCategory === 'All' || groupCategory === activeCategory;
+      let anyVisible = false;
+      group.querySelectorAll('.obj-btn').forEach(btn => {
+        const searchMatches = !query || btn.dataset.search.includes(query);
+        const visible = categoryMatches && searchMatches;
+        btn.classList.toggle('hidden-by-search', !visible);
+        if (visible) anyVisible = true;
+      });
+      group.style.display = anyVisible ? '' : 'none';
+    });
+  }
+  loadSchemaFromLocalStorage();
+  renderSelector();
+  document.getElementById('object-search').addEventListener('input', applyObjectSearch);
+  document.getElementById('clear-saved-schema-btn').addEventListener('click', () => {
+    localStorage.removeItem(SAVED_SCHEMA_KEY);
+    location.reload();
+  });
+
+  // Attempt a live check of the current Salesforce API version, via the
+  // sandbox login domain only — test.salesforce.com, never production.
+  // This may simply fail — it may not send CORS headers permitting a
+  // browser at this domain to call it — so this degrades honestly to a
+  // last-known value rather than pretending to be live when it isn't.
+  (async function checkApiVersion() {
+    const el = document.getElementById('api-version-display');
+    const FALLBACK = { version: '67.0', label: "Summer '26" };
+    try {
+      const res = await fetch('https://test.salesforce.com/services/data/');
+      if (!res.ok) throw new Error('bad response: ' + res.status);
+      const versions = await res.json();
+      const latest = versions[versions.length - 1];
+      el.textContent = 'Latest Salesforce API version: v' + latest.version + ' (' + latest.label + ') \u2014 checked live just now via test.salesforce.com';
+      el.title = 'Fetched live from Salesforce\u2019s public version-list endpoint on the sandbox domain';
+    } catch (e) {
+      el.textContent = 'Latest known Salesforce API version: v' + FALLBACK.version + ' (' + FALLBACK.label + ') \u2014 live check unavailable, showing last verified value';
+      el.title = 'Could not reach test.salesforce.com directly from the browser (likely blocked by CORS) \u2014 this is a manually verified fallback, not a live result';
+    }
+  })();
+
+  function normalizeApiName(name) {
+    return name.toLowerCase();
+  }
+
+  function importSchemaText(raw, sourceLabel) {
+    const statusEl = document.getElementById('import-status');
+    const toastEl = document.getElementById('import-toast');
+    raw = (raw || '').trim();
+    if (!raw) { statusEl.textContent = 'Nothing to import \u2014 paste text or drop a file first.'; statusEl.style.color = 'var(--risk)'; toastEl.style.display = 'none'; return; }
+
+    // Salesforce's exported/downloaded debug logs HTML-encode the literal
+    // pipe character as &#124; (confirmed against a real 18MB exported log -
+    // this silently broke every SCHEMA| marker, since none of them existed
+    // as literal pipes in the file at all). Decode that and the other common
+    // entities before anything else touches the text.
+    raw = raw.replace(/&#124;/g, '|').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'");
+
+    let objectsAdded = 0, relationshipsAdded = 0, relationshipsUpdated = 0;
+
+    function addObjectIfNew(apiName, label) {
+      const id = normalizeApiName(apiName);
+      if (!OBJECTS.find(o => o.id === id)) {
+        OBJECTS.push({ id, label: label || apiName, category: 'From your org' });
+        objectsAdded++;
+      }
+      return id;
+    }
+    function addOrUpdateRelationship(childApiName, parentApiName, type) {
+      const childId = addObjectIfNew(childApiName);
+      const parentId = normalizeApiName(parentApiName);
+      const existingIdx = RELATIONSHIPS.findIndex(r => r.child === childId && r.parent === parentId);
+      if (existingIdx > -1) {
+        RELATIONSHIPS[existingIdx] = { child: childId, parent: parentId, type, imported: true };
+        relationshipsUpdated++;
+      } else {
+        RELATIONSHIPS.push({ child: childId, parent: parentId, type, imported: true });
+        relationshipsAdded++;
+      }
+    }
+
+    // Real debug log lines (and full raw .log file exports) carry a
+    // timestamp/context prefix before the actual message (e.g.
+    // "16:20:15.1 (123456)|USER_DEBUG|[12]|DEBUG|SCHEMA|OBJ|..."), so look
+    // for the marker within each line rather than assuming it starts one -
+    // this also means it doesn't matter how large the exported log file is,
+    // since every other line is simply ignored.
+    const looksLikeSchemaLines = raw.split('\n').some(line => line.includes('SCHEMA|'));
+
+    if (looksLikeSchemaLines) {
+      // Note: real Salesforce data only ever exposes three outcomes here -
+      // cascadeDelete / restrictedDelete / neither. There is no platform
+      // signal distinguishing "cascades because it's an Account" from
+      // "cascades because it's true Master-Detail" - that distinction only
+      // exists in this tool's own hand-built reference model, so imported
+      // cascades are all mapped to the same 'org-cascade' type uniformly.
+      const typeMap = { CASCADE: 'org-cascade', RESTRICTED: 'restricted', LOOKUP: 'lookup' };
+      let parsedLines = 0;
+      raw.split('\n').forEach(line => {
+        const idx = line.indexOf('SCHEMA|');
+        if (idx === -1) return;
+        const parts = line.slice(idx).trim().split('|');
+        if (parts[1] === 'OBJ' && parts.length >= 3) {
+          addObjectIfNew(parts[2], parts[3]);
+          parsedLines++;
+        } else if (parts[1] === 'REL' && parts.length >= 5) {
+          addOrUpdateRelationship(parts[2], parts[3], typeMap[parts[4]] || 'lookup');
+          parsedLines++;
+        }
+      });
+      if (parsedLines === 0) {
+        statusEl.textContent = "Found SCHEMA| lines but couldn't parse any of them \u2014 check you copied/exported complete lines.";
+        statusEl.style.color = 'var(--risk)';
+        toastEl.style.display = 'none';
+        return;
+      }
+    } else {
+      let data;
+      try { data = JSON.parse(raw); }
+      catch (e) {
+        // A real Apex debug log has recognisable markers even when it has
+        // no SCHEMA| lines in it - if we see those but no SCHEMA| anywhere,
+        // the far more likely cause is the debug level filtering out
+        // System.debug() output entirely, not "wrong file pasted".
+        const looksLikeADebugLog = /EXECUTION_STARTED|CODE_UNIT_STARTED|USER_DEBUG|LIMIT_USAGE/.test(raw);
+        if (looksLikeADebugLog) {
+          statusEl.textContent = "This looks like a real Apex debug log, but it has no SCHEMA| lines in it at all \u2014 the most common cause is the debug level not capturing System.debug() output. In Developer Console: Debug \u2192 Change Log Levels\u2026, set \"Apex Code\" to DEBUG or higher, then re-run the script and re-export the log.";
+        } else {
+          statusEl.textContent = "That doesn't look like valid JSON or SCHEMA| lines from the Apex script.";
+        }
+        statusEl.style.color = 'var(--risk)';
+        toastEl.style.display = 'none';
+        return;
+      }
+
+      const describes = Array.isArray(data) ? data : [data];
+      describes.forEach(desc => {
+        if (!desc || !desc.name || !Array.isArray(desc.childRelationships)) return;
+        addObjectIfNew(desc.name, desc.label);
+        desc.childRelationships.forEach(cr => {
+          if (!cr.childSObject) return;
+          let type = 'lookup';
+          if (cr.cascadeDelete) type = 'org-cascade';
+          else if (cr.restrictedDelete) type = 'restricted';
+          addOrUpdateRelationship(cr.childSObject, desc.name, type);
+        });
+      });
+    }
+
+    if (!CATEGORIES.includes('From your org')) CATEGORIES = ['From your org'].concat(CATEGORIES);
+    renderSelector();
+    if (selectedId) renderResult(selectedId);
+
+    statusEl.style.color = 'var(--safe)';
+    statusEl.textContent = '';
+    toastEl.style.display = 'block';
+    toastEl.style.background = 'var(--safe-bg, #DCFCE7)';
+    toastEl.style.color = '#166534';
+    const custObjCount = objectsAdded;
+    toastEl.textContent = 'Imported ' + custObjCount + ' new object(s) and ' + (relationshipsAdded + relationshipsUpdated) + ' relationship(s)' + (sourceLabel ? ' from ' + sourceLabel : '') + '.';
+    document.getElementById('import-textarea').value = '';
+
+    const saveToggle = document.getElementById('save-locally-toggle');
+    if (saveToggle && saveToggle.checked) {
+      saveSchemaToLocalStorage();
+    }
+  }
+
+  const SAVED_SCHEMA_KEY = 'schemaExplorer_savedCustomSchema_v1';
+
+  function saveSchemaToLocalStorage() {
+    try {
+      const savedObjects = OBJECTS.filter(o => o.category === 'From your org');
+      const savedRelationships = RELATIONSHIPS.filter(r => r.imported);
+      localStorage.setItem(SAVED_SCHEMA_KEY, JSON.stringify({ objects: savedObjects, relationships: savedRelationships }));
+      updateSavedSchemaBadge();
+    } catch (e) {
+      // localStorage can throw (private browsing, quota exceeded) - fail
+      // quietly rather than breaking the import that already succeeded.
+      console.warn('Could not save schema to local storage:', e);
+    }
+  }
+
+  function loadSchemaFromLocalStorage() {
+    let saved;
+    try { saved = JSON.parse(localStorage.getItem(SAVED_SCHEMA_KEY)); }
+    catch (e) { return; }
+    if (!saved || !Array.isArray(saved.objects)) return;
+
+    saved.objects.forEach(o => {
+      if (!OBJECTS.find(existing => existing.id === o.id)) OBJECTS.push(o);
+    });
+    saved.relationships.forEach(r => {
+      if (!RELATIONSHIPS.find(existing => existing.child === r.child && existing.parent === r.parent)) RELATIONSHIPS.push(r);
+    });
+    if (!CATEGORIES.includes('From your org')) CATEGORIES = ['From your org'].concat(CATEGORIES);
+    updateSavedSchemaBadge();
+  }
+
+  function updateSavedSchemaBadge() {
+    const badge = document.getElementById('saved-schema-badge');
+    const text = document.getElementById('saved-schema-text');
+    let saved;
+    try { saved = JSON.parse(localStorage.getItem(SAVED_SCHEMA_KEY)); } catch (e) { saved = null; }
+    if (saved && Array.isArray(saved.objects) && saved.objects.length > 0) {
+      badge.style.display = 'flex';
+      text.textContent = 'Using Saved Custom Schema (' + saved.objects.length + ' objects)';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  document.getElementById('import-btn').addEventListener('click', () => {
+    importSchemaText(document.getElementById('import-textarea').value, null);
+  });
+
+  // Drag-and-drop + click-to-browse file import, using FileReader - still
+  // entirely client-side, no upload anywhere.
+  const dropZone = document.getElementById('drop-zone');
+  const fileInput = document.getElementById('file-input');
+  function handleFile(file) {
+    if (!file) return;
+    document.getElementById('drop-filename').textContent = 'Reading ' + file.name + '\u2026';
+    const reader = new FileReader();
+    reader.onload = evt => {
+      document.getElementById('drop-filename').textContent = 'Last file: ' + file.name;
+      importSchemaText(evt.target.result, file.name);
+    };
+    reader.onerror = () => {
+      document.getElementById('import-status').textContent = 'Could not read that file.';
+      document.getElementById('import-status').style.color = 'var(--risk)';
+    };
+    reader.readAsText(file);
+  }
+  dropZone.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+  ['dragenter', 'dragover'].forEach(evt => {
+    dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  });
+  ['dragleave', 'drop'].forEach(evt => {
+    dropZone.addEventListener(evt, e => { e.preventDefault(); dropZone.classList.remove('dragover'); });
+  });
+  dropZone.addEventListener('drop', e => {
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+
+  // ---------------------------------------------------------------
+  // RENDER: radial impact diagram (SVG, no dependencies)
+  // ---------------------------------------------------------------
+  function polar(cx, cy, angleDeg, radius) {
+    const rad = (angleDeg - 90) * Math.PI / 180;
+    return { x: cx + radius * Math.cos(rad), y: cy + radius * Math.sin(rad) };
+  }
+
+  // Real text-width measurement via an offscreen canvas - matches whatever
+  // font the page actually loaded (Inter), rather than guessing from
+  // character count, which badly under/overestimates for capital-heavy
+  // strings like "OpportunityContactRole" vs short ones like "Task".
+  let _measureCtx = null;
+  function measureTextWidth(text, fontSize) {
+    if (!_measureCtx) _measureCtx = document.createElement('canvas').getContext('2d');
+    _measureCtx.font = '700 ' + fontSize + 'px Inter, -apple-system, sans-serif';
+    return _measureCtx.measureText(text).width;
+  }
+  function textBBox(label, fontSize, pos, anchor) {
+    const w = measureTextWidth(label, fontSize);
+    const h = fontSize * 1.35;
+    let xMin, xMax;
+    if (anchor === 'start') { xMin = pos.x; xMax = pos.x + w; }
+    else if (anchor === 'end') { xMin = pos.x - w; xMax = pos.x; }
+    else { xMin = pos.x - w / 2; xMax = pos.x + w / 2; }
+    return { xMin, xMax, yMin: pos.y - h / 2, yMax: pos.y + h / 2 };
+  }
+  function boxesOverlap(a, b) {
+    return a.xMin < b.xMax && a.xMax > b.xMin && a.yMin < b.yMax && a.yMax > b.yMin;
+  }
+
+  function buildTreeView(impact) {
+    function group(items, colorHex, label, emptyMsg) {
+      let html = '<details class="tree-group" open><summary style="color:' + colorHex + ';">' + label + ' (' + items.length + ')</summary>';
+      if (items.length === 0) {
+        html += '<p class="impact-none">' + emptyMsg + '</p>';
+      } else {
+        items.forEach(item => {
+          const fieldName = item.rel.field || (objLabel(item.rel.parent) + ' reference');
+          html += '<div class="tree-item" style="background:' + colorHex + '1A;">' +
+            '<span><strong>' + objLabel(item.id) + '</strong> <span class="api-name">' + item.id + '</span></span>' +
+            '<span class="api-name">via ' + objLabel(item.rel.parent) + '</span>' +
+            '</div>';
+        });
+      }
+      html += '</details>';
+      return html;
+    }
+    let html = '<div id="tree-view">';
+    html += group(impact.cascadeDeleted, '#DC2626', '\uD83D\uDD34 Cascade Deletions', 'Nothing cascades from this object by default.');
+    html += group(impact.orphaned, '#D97706', '\uD83D\uDFE1 Orphaned Lookups', 'Nothing gets orphaned from this object by default.');
+    html += group(impact.restricted, '#475569', '\u26AA Deletion Blockers', 'Nothing blocks deletion of this object by default.');
+    html += '</div>';
+    return html;
+  }
+
+  function buildDiagram(objectId, maxDepth, filter) {
+    filter = filter || 'all';
+    const cx0 = 380, cy0 = 390;
+    const baseRingR = 150, ringStep = 130;
+
+    let lines = '', nodes = '', maxRadiusUsed = baseRingR;
+    let anyNodeDrawn = false;
+
+    // Labels live outside the node, never inside — API names are long single
+    // words (e.g. "AccountContactRelation") with no spaces to wrap on, so
+    // cramming them inside a small circle just overflows and gets clipped.
+    function drawNode(pos, label, color, isCenter, labelRadius, angleDeg, fontSize, yNudge, objId, parentId) {
+      const r = isCenter ? 14 : 9;
+      nodes += '<circle class="node-circle" data-object-id="' + (objId || objectId) + '" data-parent-id="' + (parentId || '') + '" cx="' + pos.x + '" cy="' + pos.y + '" r="' + r + '" fill="' + color + '" ' + (isCenter ? 'stroke="#fff" stroke-width="2.5"' : 'style="cursor:pointer;" tabindex="0" role="button" aria-label="View details for ' + label + '"') + '/>';
+
+      let labelPos, anchor;
+      if (isCenter) {
+        labelPos = { x: pos.x, y: pos.y + r + 18 };
+        anchor = 'middle';
+      } else {
+        labelPos = polar(cx0, cy0, angleDeg, labelRadius);
+        // A radial stagger alone doesn't separate two labels sitting near a
+        // horizontal angle from centre, since moving radius there mostly
+        // moves them further along the same line their text already extends
+        // on. A direct vertical nudge works regardless of angle.
+        if (yNudge) labelPos.y += yNudge;
+        anchor = Math.abs(labelPos.x - cx0) < 10 ? 'middle' : (labelPos.x > cx0 ? 'start' : 'end');
+      }
+      // var(--text), not a fixed hex - this label sits directly on the
+      // diagram's own (theme-following) background, not inside a solid-
+      // fill badge, so unlike colorFor()'s fixed status colors below it
+      // genuinely needs to flip with light/dark mode. Confirmed broken:
+      // the previous hardcoded #0F172A/#334155 (light-mode dark text) made
+      // every label on this diagram unreadable against a dark background.
+      nodes += '<text class="node-label" data-object-id="' + (objId || objectId) + '" data-parent-id="' + (parentId || '') + '" x="' + labelPos.x + '" y="' + labelPos.y + '" font-size="' + (fontSize || 12) + '" font-weight="700" fill="var(--text)" text-anchor="' + anchor + '" dominant-baseline="middle" ' + (isCenter ? '' : 'style="cursor:pointer;"') + '>' + label + '</text>';
+    }
+    // Cascade (red) and orphaned (amber) stay fixed hex - saturated status
+    // colors meant to read the same in both themes, same reasoning as
+    // every other badge in the lab. "Restricted" is genuinely muted/
+    // de-emphasized text-level content, not a status color, so it follows
+    // var(--text-muted) instead - a fixed gray here had the same
+    // background-relative invisibility risk as the label fix above.
+    function colorFor(relType) {
+      if (relType === 'restricted') return 'var(--text-muted)';
+      return CASCADE_TYPES.includes(relType) ? '#DC2626' : '#D97706';
+    }
+
+    const centerPos = { x: cx0, y: cy0 };
+    drawNode(centerPos, objLabel(objectId), '#0F172A', true);
+
+    const visited = new Set([objectId]);
+    let currentLevel = [{ pos: centerPos, angle: 0, id: objectId }];
+    const MAX_PER_SHELL = 18;
+
+    for (let depth = 1; depth <= maxDepth && currentLevel.length > 0; depth++) {
+      const baseRingRForDepth = baseRingR + (depth - 1) * ringStep;
+      const collected = [];
+      const nextLevel = [];
+
+      // Two passes, matching findImpact's already-correct priority: cascade
+      // relationships claim a child before lookup/restricted ones are even
+      // considered, regardless of which parent happens to be processed
+      // first. Without this, a child with both a Lookup (to one parent) and
+      // a Master-Detail (to a different parent) could have its cascade
+      // relationship silently hidden just because the other parent was
+      // iterated first - exactly what caused OpportunityContactRole to draw
+      // connected to Contact via Lookup instead of Opportunity via
+      // Master-Detail, even though the text list correctly reported cascade.
+      // Only relevant from depth 2 onward, where a child can genuinely be
+      // reached via more than one distinct parent in currentLevel - depth 1
+      // has only the root as parent, and splitting it into two passes would
+      // break the even 360-degree distribution across the full relationship
+      // count (each pass would separately spread its own subset across the
+      // whole circle, colliding with the other pass's items).
+      const passes = depth === 1 ? ['all'] : ['cascade', 'other'];
+      passes.forEach(pass => {
+        currentLevel.forEach(node => {
+          const rels = RELATIONSHIPS.filter(r => r.parent === node.id && !visited.has(r.child)
+            && (pass === 'all' || (pass === 'cascade' ? CASCADE_TYPES.includes(r.type) : !CASCADE_TYPES.includes(r.type)))
+            && (filter === 'all' || (filter === 'cascade' ? CASCADE_TYPES.includes(r.type) : r.type === 'restricted')));
+          const n = rels.length;
+          if (n === 0) return;
+          // The spread for this parent's children must never exceed the actual
+          // angular gap available to it - otherwise neighbouring parents whose
+          // own children spread toward each other end up with their territories
+          // overlapping, and their connector lines visibly cross. A fixed
+          // spread formula that ignores how many siblings a parent has (and
+          // therefore how little room it actually has) is exactly what causes
+          // that.
+          const maxSpreadForSlot = node.slotWidth ? node.slotWidth * 0.8 : 55;
+          const spreadHere = Math.min(maxSpreadForSlot, 20 * n);
+          rels.forEach((rel, j) => {
+            const angle = depth === 1
+              ? (360 / n) * j
+              : (n > 1 ? (node.angle - spreadHere / 2 + (spreadHere / (n - 1)) * j) : node.angle);
+            const normAngle = ((angle % 360) + 360) % 360;
+            visited.add(rel.child);
+            collected.push({ angle, normAngle, rel, parentPos: node.pos, parentId: node.id, slotWidth: depth === 1 ? 360 / n : spreadHere });
+          });
+        });
+      });
+
+      if (collected.length === 0) { currentLevel = []; continue; }
+
+      // Molecule/atom layout: one fixed-radius ring only has so much
+      // circumference, and a large imported org schema can easily put 100+
+      // objects on a single object's direct relationships - no amount of
+      // label-collision cleverness fixes a ring that's physically too small
+      // to hold that many labels. Split into concentric shells instead, and
+      // assign shells by round-robin on angle-sorted order (not by parent or
+      // insertion order) so angular neighbours land on *different* shells,
+      // maximising the separation between whichever labels would otherwise
+      // be closest together.
+      const numShells = Math.max(1, Math.ceil(collected.length / MAX_PER_SHELL));
+      const sortedForShells = [...collected].sort((a, b) => a.normAngle - b.normAngle);
+      sortedForShells.forEach((item, idx) => {
+        item.shell = idx % numShells;
+      });
+
+      const ringEntries = [];
+      collected.forEach(item => {
+        const ringR = baseRingRForDepth + item.shell * (ringStep * 0.85);
+        const pos = polar(cx0, cy0, item.angle, ringR);
+        const color = colorFor(item.rel.type);
+        lines += '<line class="node-line" data-line-for="' + item.rel.child + '" x1="' + item.parentPos.x + '" y1="' + item.parentPos.y + '" x2="' + pos.x + '" y2="' + pos.y + '" stroke="' + color + '" stroke-width="' + (depth === 1 ? 2 : 1.5) + '" opacity="' + (depth === 1 ? 0.5 : 0.4) + '"/>';
+        ringEntries.push({ pos, ringR, label: objLabel(item.rel.child), color, angle: item.normAngle, id: item.rel.child, parentId: item.parentId });
+        if (CASCADE_TYPES.includes(item.rel.type)) nextLevel.push({ pos, angle: item.angle, id: item.rel.child, slotWidth: item.slotWidth });
+      });
+
+      // Real text-width measurement via canvas, not a character-count guess -
+      // capital-heavy strings like "OpportunityContactRole" render far wider
+      // per character than something like "Task", and a length-based proxy
+      // can't capture that. Resolve genuine bounding-box overlaps directly.
+      ringEntries.sort((a, b) => a.angle - b.angle);
+      const placedBoxes = [];
+      ringEntries.forEach(entry => {
+        const fontSize = depth === 1 ? 12 : 10.5;
+        let labelR = entry.ringR + 16;
+        let yNudge = 0;
+        let attempt = 0;
+        let box, anchor, labelPos;
+        while (attempt < 10) {
+          labelPos = polar(cx0, cy0, entry.angle, labelR);
+          labelPos.y += yNudge;
+          anchor = Math.abs(labelPos.x - cx0) < 10 ? 'middle' : (labelPos.x > cx0 ? 'start' : 'end');
+          box = textBBox(entry.label, fontSize, labelPos, anchor);
+          const collides = placedBoxes.some(b => boxesOverlap(box, b));
+          if (!collides) break;
+          attempt++;
+          if (attempt % 2 === 1) labelR += 22;
+          else yNudge = (yNudge <= 0 ? -1 : 1) * (Math.abs(yNudge) + 18);
+        }
+        placedBoxes.push(box);
+        anyNodeDrawn = true;
+        maxRadiusUsed = Math.max(maxRadiusUsed, Math.max(Math.abs(box.xMax - cx0), Math.abs(box.xMin - cx0)));
+        drawNode(entry.pos, entry.label, entry.color, false, labelR, entry.angle, fontSize, yNudge, entry.id, entry.parentId);
+      });
+
+      currentLevel = nextLevel;
+    }
+
+    if (!anyNodeDrawn && filter !== 'all') {
+      const filterLabel = filter === 'cascade' ? 'Cascade' : 'Restricted Delete';
+      nodes += '<text x="' + cx0 + '" y="' + (cy0 + 55) + '" font-size="13" fill="var(--text-muted)" text-anchor="middle">No ' + filterLabel + ' relationships registered at this depth.</text>';
+    }
+
+    const size = Math.round((maxRadiusUsed + 60) * 2);
+    return '<svg viewBox="' + (cx0 - size / 2) + ' ' + (cy0 - size / 2) + ' ' + size + ' ' + size + '" width="' + Math.min(size, 1160) + '" style="overflow:visible;" role="img" aria-label="Impact diagram for deleting ' + articleFor(objLabel(objectId)) + ' ' + objLabel(objectId) + ' record">' + lines + nodes + '</svg>';
+  }
+
+  // ---------------------------------------------------------------
+  // RENDER: result panel (diagram + list breakdown)
+  // ---------------------------------------------------------------
+  // ---------------------------------------------------------------
+  // DIAGRAM INTERACTIVITY: zoom, pan, hover highlighting, click-to-drawer
+  // ---------------------------------------------------------------
+  function wireDiagramInteractivity(currentObjectId) {
+    const wrap = document.querySelector('.diagram-wrap');
+    const svg = wrap && wrap.querySelector('svg');
+    if (!svg) return;
+
+    let zoom = 1, panX = 0, panY = 0;
+    let isDragging = false, dragStartX = 0, dragStartY = 0, panStartX = 0, panStartY = 0;
+
+    function applyTransform() {
+      svg.style.transform = 'translate(' + panX + 'px, ' + panY + 'px) scale(' + zoom + ')';
+      svg.style.transformOrigin = 'center center';
+    }
+
+    svg.style.cursor = 'grab';
+    svg.addEventListener('wheel', e => {
+      e.preventDefault();
+      zoom = Math.min(3, Math.max(0.5, zoom + (e.deltaY > 0 ? -0.1 : 0.1)));
+      applyTransform();
+    }, { passive: false });
+
+    svg.addEventListener('mousedown', e => {
+      if (e.target.classList.contains('node-circle') || e.target.classList.contains('node-label')) return;
+      isDragging = true;
+      dragStartX = e.clientX; dragStartY = e.clientY;
+      panStartX = panX; panStartY = panY;
+      svg.style.cursor = 'grabbing';
+    });
+    window.addEventListener('mousemove', e => {
+      if (!isDragging) return;
+      panX = panStartX + (e.clientX - dragStartX);
+      panY = panStartY + (e.clientY - dragStartY);
+      applyTransform();
+    });
+    window.addEventListener('mouseup', () => { isDragging = false; if (svg) svg.style.cursor = 'grab'; });
+
+    const nodeEls = svg.querySelectorAll('.node-circle, .node-label');
+    nodeEls.forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        const id = el.dataset.objectId;
+        svg.querySelectorAll('.node-circle, .node-label, .node-line').forEach(other => {
+          const matches = other.dataset.objectId === id || other.dataset.lineFor === id || other.dataset.objectId === currentObjectId;
+          other.style.opacity = matches ? '1' : '0.15';
+        });
+      });
+      el.addEventListener('mouseleave', () => {
+        svg.querySelectorAll('.node-circle, .node-label, .node-line').forEach(other => { other.style.opacity = ''; });
+      });
+      el.addEventListener('click', () => {
+        const id = el.dataset.objectId;
+        if (id && id !== currentObjectId) openDetailDrawer(id, el.dataset.parentId);
+      });
+      if (el.classList.contains('node-circle')) {
+        el.addEventListener('keydown', e => {
+          if (e.key !== 'Enter' && e.key !== ' ') return;
+          e.preventDefault();
+          const id = el.dataset.objectId;
+          if (id && id !== currentObjectId) openDetailDrawer(id, el.dataset.parentId);
+        });
+      }
+    });
+  }
+
+  function describeRelationship(r) {
+    const parentLabel = objLabel(r.parent);
+    if (r.type === 'master-detail') return 'Master-Detail: deleting ' + parentLabel + ' permanently deletes this record too.';
+    if (r.type === 'account-cascade' || r.type === 'org-cascade') return 'Cascade delete: deleting ' + parentLabel + ' permanently deletes this record too' + (r.type === 'account-cascade' ? ' (a lookup Salesforce hard-codes to cascade specifically for Account).' : '.');
+    if (r.type === 'restricted') return 'Restricted delete: Salesforce blocks deleting ' + parentLabel + ' at all while this record exists.';
+    return 'Lookup: deleting ' + parentLabel + ' clears the reference on this record, which otherwise survives.';
+  }
+
+  function openDetailDrawer(objectId, contextParentId) {
+    const meta = OBJECTS.find(o => o.id === objectId) || {};
+    const overlay = document.getElementById('drawer-overlay');
+    const drawer = document.getElementById('detail-drawer');
+    const content = document.getElementById('drawer-content');
+
+    let html = '<h2 style="margin-top:0;">' + objLabel(objectId) + '</h2>';
+    html += '<p style="font-family:monospace; font-size:13px; color:var(--text-muted); margin-top:-8px;">' + objLabel(objectId) + '</p>';
+    html += '<p style="font-size:12px; color:var(--accent); font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">' + (meta.category || 'Unknown category') + '</p>';
+    html += '<div style="margin:16px 0;">';
+
+    // The relationship that actually placed this node in the diagram you're
+    // looking at - this is the one that matters right now. A generic object
+    // (Content Document Link, a Change Data Capture event, etc.) can easily
+    // have dozens of unrelated relationships across a large imported org
+    // schema, and showing all of them without distinguishing "why is this
+    // here" from "everything else it's ever connected to" is actively
+    // misleading, not just cluttered.
+    const allRels = RELATIONSHIPS.filter(r => r.child === objectId);
+    const contextualRel = contextParentId ? allRels.find(r => r.parent === contextParentId) : null;
+
+    if (contextualRel) {
+      html += '<p style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-muted); margin-bottom:6px;">Why this is in this diagram</p>';
+      html += '<p style="font-size:13px; background:var(--surface-2); padding:10px 12px; border-radius:8px; margin-bottom:14px; border-left:3px solid var(--accent);">' + describeRelationship(contextualRel) + '</p>';
+    }
+
+    const otherRels = allRels.filter(r => r !== contextualRel);
+    if (otherRels.length > 0) {
+      html += '<p style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.04em; color:var(--text-muted); margin-bottom:6px;">' + (contextualRel ? 'Also related elsewhere in your org (not shown in this diagram)' : 'Known relationships') + '</p>';
+      otherRels.forEach(r => {
+        html += '<p style="font-size:13px; background:var(--surface-2); padding:10px 12px; border-radius:8px; margin-bottom:8px;">' + describeRelationship(r) + '</p>';
+      });
+    } else if (!contextualRel) {
+      html += '<p style="font-size:13px; color:var(--text-muted);">No relationship back to a parent is modelled for this object.</p>';
+    }
+    html += '</div>';
+    html += '<a href="' + docUrlFor(objectId) + '" target="_blank" rel="noopener" style="font-size:12px; display:block; margin-bottom:16px;">View in Salesforce\'s official object reference \u2197</a>';
+    html += '<button class="btn" id="drawer-focus-btn" style="width:100%; padding:10px; font-size:14px; font-weight:700; border:none; border-radius:8px; background:var(--navy); color:#fff; cursor:pointer;">Focus on this Object</button>';
+    content.innerHTML = html;
+
+    drawerTriggerEl = document.activeElement;
+    overlay.classList.add('open');
+    drawer.classList.add('open');
+    document.getElementById('drawer-close').focus();
+
+    document.getElementById('drawer-focus-btn').addEventListener('click', () => {
+      selectedId = objectId;
+      const btn = selectorEl.querySelector('.obj-btn[data-obj="' + objectId + '"]');
+      if (btn) {
+        selectorEl.querySelectorAll('.obj-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+      renderResult(objectId);
+      closeDetailDrawer();
+    });
+  }
+
+  function closeDetailDrawer() {
+    document.getElementById('drawer-overlay').classList.remove('open');
+    document.getElementById('detail-drawer').classList.remove('open');
+    if (drawerTriggerEl && document.body.contains(drawerTriggerEl)) drawerTriggerEl.focus();
+    drawerTriggerEl = null;
+  }
+  document.getElementById('drawer-close').addEventListener('click', closeDetailDrawer);
+  document.getElementById('drawer-overlay').addEventListener('click', closeDetailDrawer);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && document.getElementById('detail-drawer').classList.contains('open')) closeDetailDrawer();
+  });
+
+  function downloadRiskBrief(objectId, impact) {
+    const lines = [];
+    lines.push('# Schema Explorer Risk Brief');
+    lines.push('');
+    lines.push('**Root object:** ' + objLabel(objectId));
+    lines.push('**Traversal depth:** ' + currentMaxDepth + ' relationship' + (currentMaxDepth === 1 ? '' : 's') + ' deep');
+    lines.push('**Generated:** ' + new Date().toISOString().slice(0, 10));
+    lines.push('');
+    lines.push('## Impact summary');
+    lines.push('');
+    lines.push('| Outcome | Count |');
+    lines.push('|---|---|');
+    lines.push('| Cascade-deleted | ' + impact.cascadeDeleted.length + ' |');
+    lines.push('| Orphaned (reference cleared) | ' + impact.orphaned.length + ' |');
+    lines.push('| Blocks deletion | ' + impact.restricted.length + ' |');
+    lines.push('');
+
+    function section(title, items) {
+      lines.push('## ' + title);
+      lines.push('');
+      if (items.length === 0) {
+        lines.push('_None._');
+      } else {
+        items.forEach(item => {
+          lines.push('- **' + objLabel(item.id) + '** (`' + item.id + '`) — via ' + objLabel(item.rel.parent) + ', depth ' + item.depth);
+        });
+      }
+      lines.push('');
+    }
+    section('Cascade-deleted objects', impact.cascadeDeleted);
+    section('Orphaned lookups', impact.orphaned);
+    section('Deletion blockers', impact.restricted);
+
+    lines.push('## Disclaimer');
+    lines.push('');
+    lines.push('This reflects default, out-of-the-box Salesforce relationship behaviour and does not account for custom Apex triggers, Flows, or Validation Rules specific to your org. Cascade-deleted records go to the Recycle Bin along with their parent, but Salesforce does not guarantee relationships reattach correctly if restored — for any relationship type, not just Master-Detail. Always verify against your own org before making a real deletion decision.');
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = objLabel(objectId).replace(/[^a-z0-9]/gi, '-') + '-risk-brief.md';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function renderResult(objectId) {
+    const panel = document.getElementById('result-panel');
+    const impact = findImpact(objectId, currentMaxDepth);
+    const objMeta = OBJECTS.find(o => o.id === objectId) || {};
+
+    let html = '<h2>If you delete ' + articleFor(objLabel(objectId)) + ' ' + objLabel(objectId) + ' record\u2026</h2>';
+    html += '<p style="margin:-4px 0 12px; font-size:12px;"><a href="' + docUrlFor(objectId) + '" target="_blank" rel="noopener">View ' + objLabel(objectId) + ' in Salesforce\'s official object reference \u2197</a></p>';
+    html += '<p class="sub">Based on default, out-of-the-box relationship behaviour \u2014 checking ' + currentMaxDepth + ' relationship' + (currentMaxDepth === 1 ? '' : 's') + ' deep \u2014 see the disclaimer below.</p>';
+
+    if (objMeta.category === 'Industry Clouds (verify against your org)') {
+      html += '<div style="border-left:4px solid #475569; background:var(--surface-3); color:var(--text); padding:12px 16px; border-radius:8px; font-size:13px; margin-bottom:16px;"><strong>Low confidence:</strong> this object\'s name is verified against Salesforce\'s official documentation, but its relationships are deliberately not modelled here (see the checklist above) \u2014 an empty result below means "not modelled yet," not "confirmed nothing happens." Import your org\'s real describe() data for an actual answer.</div>';
+    }
+
+    html += '<div class="metric-cards">' +
+      '<div class="metric-card" style="background:var(--risk-bg);"><div class="metric-value" style="color:var(--risk);">' + impact.cascadeDeleted.length + '</div><div class="metric-label" style="color:var(--risk);">Cascade-deleted</div></div>' +
+      '<div class="metric-card" style="background:var(--amber-bg);"><div class="metric-value" style="color:var(--amber);">' + impact.orphaned.length + '</div><div class="metric-label" style="color:var(--amber);">Orphaned lookups</div></div>' +
+      '<div class="metric-card" style="background:var(--surface-3);"><div class="metric-value" style="color:var(--text);">' + impact.restricted.length + '</div><div class="metric-label" style="color:var(--text);">Blocks deletion</div></div>' +
+      '<div class="metric-card" style="background:var(--surface-2); border:1px dashed var(--border);"><div class="metric-value" style="color: var(--text); font-size:16px; margin-top:4px;">&#9888;&#65039;</div><div class="metric-label" style="color:var(--text-muted);">Recycle Bin restore does <strong>not</strong> guarantee these relationships reattach</div></div>' +
+      '</div>';
+    html += '<button class="btn" id="csv-export-btn" style="margin-bottom:16px; padding:8px 14px; font-size:13px; border:1px solid var(--border); border-radius:8px; background: var(--panel-bg); cursor:pointer;">&#8681; Download Data Dictionary (.csv)</button>';
+    html += '<button class="btn" id="md-export-btn" style="margin-bottom:16px; margin-left:8px; padding:8px 14px; font-size:13px; border:1px solid var(--border); border-radius:8px; background: var(--panel-bg); cursor:pointer;">&#8681; Download Risk Brief (.md)</button>';
+
+    html += '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px;">';
+    html += '<div class="view-tabs">' +
+      '<button class="view-tab' + (viewMode === 'diagram' ? ' active' : '') + '" data-view="diagram">Radial Diagram</button>' +
+      '<button class="view-tab' + (viewMode === 'tree' ? ' active' : '') + '" data-view="tree">Tree List View</button>' +
+      '</div>';
+    html += '<div class="view-tabs">' +
+      '<button class="filter-tab' + (diagramFilter === 'all' ? ' active' : '') + '" data-filter="all">Show All</button>' +
+      '<button class="filter-tab' + (diagramFilter === 'cascade' ? ' active' : '') + '" data-filter="cascade">Cascade Only</button>' +
+      '<button class="filter-tab' + (diagramFilter === 'restricted' ? ' active' : '') + '" data-filter="restricted">Blockers Only</button>' +
+      '</div>';
+    html += '</div>';
+
+    if (viewMode === 'diagram') {
+      html += '<div class="diagram-wrap">' + buildDiagram(objectId, currentMaxDepth, diagramFilter) + '</div>';
+    } else {
+      html += buildTreeView(impact);
+    }
+
+    html += '<div class="legend">' +
+      '<span><i style="background:#0F172A;"></i> Record you\'re deleting</span>' +
+      '<span><i style="background:#DC2626;"></i> Cascade-deleted</span>' +
+      '<span><i style="background:#D97706;"></i> Orphaned (reference cleared)</span>' +
+      '<span><i style="background:#475569;"></i> Blocks deletion</span></div>';
+
+    html += '<div class="impact-list"><h3 style="color:var(--risk);">\uD83D\uDD34 These would be cascade-deleted too</h3>';
+    if (impact.cascadeDeleted.length === 0) {
+      html += '<p class="impact-none">Nothing cascades from this object by default.</p>';
+    } else {
+      impact.cascadeDeleted.forEach(item => {
+        html += '<div class="impact-item cascade"><span>' + objLabel(item.id) + '</span><span class="via">via ' + objLabel(item.rel.parent) + ' \u2014 ' + TYPE_LABEL[item.rel.type] + (item.rel.imported ? ' \u2713 your org' : '') + '</span></div>';
+      });
+      html += '<p style="font-size:12px; color:var(--text-muted); margin-top:8px;"><strong>Can this be restored?</strong> Cascade-deleted records go to the Recycle Bin along with the parent (typically a 15-day window) and can be found programmatically \u2014 <code>queryAll</code> in the REST API, or <code>ALL ROWS</code> in SOQL, surfaces deleted records; the Bulk API / Data Loader\'s <code>undelete()</code> operation can restore them. But restoring does <strong>not</strong> reliably re-establish the original relationships automatically, for any relationship type \u2014 Salesforce itself doesn\'t guarantee it. Always verify relationships manually after any restore, and restore parents before children where possible.</p>';
+    }
+    html += '</div>';
+
+    if (impact.restricted && impact.restricted.length > 0) {
+      html += '<div class="impact-list" style="margin-top:20px;"><h3 style="color:var(--text);">\u26D4 These would block the deletion entirely</h3>';
+      impact.restricted.forEach(item => {
+        html += '<div class="impact-item" style="background:var(--surface-3); color:var(--text);"><span>' + objLabel(item.id) + '</span><span class="via">via ' + objLabel(item.rel.parent) + ' \u2014 Restricted delete</span></div>';
+      });
+      html += '</div>';
+    }
+
+    html += '<div class="impact-list" style="margin-top:20px;"><h3 style="color:var(--amber);">\uD83D\uDFE1 These would be orphaned (record survives, reference cleared)</h3>';
+    if (impact.orphaned.length === 0) {
+      html += '<p class="impact-none">Nothing gets orphaned from this object by default.</p>';
+    } else {
+      impact.orphaned.forEach(item => {
+        html += '<div class="impact-item orphan"><span>' + objLabel(item.id) + '</span><span class="via">via ' + objLabel(item.rel.parent) + ' \u2014 Lookup' + (item.rel.imported ? ' \u2713 your org' : '') + '</span></div>';
+      });
+    }
+    html += '</div>';
+
+    panel.innerHTML = html;
+    wireDiagramInteractivity(objectId);
+
+    document.querySelectorAll('.view-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        viewMode = btn.dataset.view;
+        renderResult(objectId);
+      });
+    });
+    document.querySelectorAll('.filter-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        diagramFilter = btn.dataset.filter;
+        renderResult(objectId);
+      });
+    });
+    document.getElementById('md-export-btn').addEventListener('click', () => {
+      downloadRiskBrief(objectId, impact);
+    });
+
+    document.getElementById('csv-export-btn').addEventListener('click', () => {
+      const rows = [['Child API Name', 'Label', 'Relationship Type', 'Depth Level']];
+      impact.cascadeDeleted.forEach(item => rows.push([item.id, objLabel(item.id), 'CASCADE', item.depth]));
+      impact.restricted.forEach(item => rows.push([item.id, objLabel(item.id), 'RESTRICTED', item.depth]));
+      impact.orphaned.forEach(item => rows.push([item.id, objLabel(item.id), 'LOOKUP', item.depth]));
+      const csv = rows.map(r => r.map(cell => {
+        const s = String(cell);
+        return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+      }).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = objLabel(objectId).replace(/[^a-z0-9]/gi, '-') + '-blast-radius.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+  }
+</script>
+
+</body>
+</html>

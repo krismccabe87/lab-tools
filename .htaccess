@@ -1,0 +1,5 @@
+# AI-SHIELD was renamed and moved from /shield/ to /ai-shield/.
+Redirect 301 /shield/ /ai-shield/
+
+# Bellwether was renamed and moved from /bellwether/ to /flare/.
+Redirect 301 /bellwether/ /flare/

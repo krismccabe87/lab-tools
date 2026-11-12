@@ -1,0 +1,1667 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<!-- Apply a stored theme choice before first paint, so there's no flash
+     of the wrong theme while lab-theme.js is still loading. -->
+<script>
+(function(){try{var t=localStorage.getItem('lab-theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();
+</script>
+<!-- Google Analytics - only loads after cookie consent, see banner script below -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  function loadGoogleAnalytics(){
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-QE309XG3DJ';
+    document.head.appendChild(s);
+    gtag('js', new Date());
+    gtag('config', 'G-QE309XG3DJ');
+  }
+</script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Recoverly — Data Recovery Maturity Assessment | Kris McCabe</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon-16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="description" content="A free maturity assessment for data recovery readiness. Get a Risk Assessment and a tailored Data Recovery Response Plan in minutes." />
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Kris's Lab">
+<meta property="og:title" content="Recoverly — Data Recovery Maturity Assessment">
+<meta property="og:description" content="A free maturity assessment for data recovery readiness. Get a Risk Assessment and a tailored Data Recovery Response Plan in minutes.">
+<meta property="og:url" content="https://lab.krismccabe.com/recoverly/">
+<meta property="og:image" content="https://lab.krismccabe.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Recoverly — Data Recovery Maturity Assessment">
+<meta name="twitter:description" content="A free maturity assessment for data recovery readiness. Get a Risk Assessment and a tailored Data Recovery Response Plan in minutes.">
+<meta name="twitter:image" content="https://lab.krismccabe.com/og-image.png">
+<link rel="stylesheet" href="/assets/lab.css?v=6">
+<script src="/assets/lab-theme.js?v=1" defer></script>
+<style>
+  .lab-header-inner { max-width: 1000px; }
+
+  .hero { padding: 56px 24px 44px; }
+  .hero h1 { color: #fff; font-size: clamp(1.7rem, 4vw, 2.4rem); font-weight: 800; letter-spacing: -0.02em; margin: 0 0 14px; max-width: 640px; margin-left: auto; margin-right: auto; }
+  .hero p { color: #94A3B8; font-size: 16px; max-width: 560px; margin: 0 auto; }
+
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 24px 20px 64px; }
+
+  .toolbar {
+    background: var(--panel-bg); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: 0 12px 40px rgba(15,23,42,0.08); padding: 16px 20px; margin-bottom: 20px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
+  }
+  .toolbar .progress-text { font-size: 13px; font-weight: 600; color: var(--text); }
+  .toolbar .actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  @media (max-width: 640px) {
+    #btn-pdf, #btn-docx { display: none; }
+    .actions.exports-ready #btn-pdf, .actions.exports-ready #btn-docx { display: inline-flex; }
+  }
+  .btn {
+    border: 1px solid var(--border); background: var(--surface); color: var(--text);
+    font-family: inherit; font-size: 13px; font-weight: 600; padding: 9px 14px; border-radius: 8px;
+    cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn:hover:not(:disabled) { border-color: var(--accent); background: rgba(37, 99, 235, 0.12); }
+  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover:not(:disabled) { background: var(--accent-hv); border-color: var(--accent-hv); }
+
+  .tabs { display: flex; gap: 4px; background: var(--panel-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 6px; margin-bottom: 20px; box-shadow: 0 12px 40px rgba(15,23,42,0.08); }
+  .tab-btn {
+    flex: 1; border: none; background: transparent; font-family: inherit; font-size: 14px; font-weight: 700;
+    color: var(--text-muted); padding: 12px 8px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease;
+  }
+  .tab-btn.active { background: var(--navy); color: #fff; }
+  .tab-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .panel { padding: 32px; margin-bottom: 24px; }
+  .panel h2 { font-size: 19px; font-weight: 700; color: var(--text); margin: 0 0 4px; }
+  .panel .sub { font-size: 13px; color: var(--text-muted); margin: 0 0 20px; }
+
+  .field label { display: block; font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  select.select-input, input.text-input {
+    width: 100%; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
+    padding: 11px 14px; font-family: inherit; font-size: 14px; color: var(--text);
+  }
+  select.select-input:focus, input.text-input:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+  .category-header {
+    font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--accent);
+    margin: 0 0 16px;
+  }
+
+  .q-progress-track { height: 6px; background: var(--surface-2); border-radius: 3px; overflow: hidden; margin-bottom: 24px; }
+  .q-progress-fill { height: 100%; background: var(--accent); border-radius: 3px; transition: width 0.25s ease; }
+
+  .question-card { margin-bottom: 0; }
+  .question-card .q-num { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+  .question-card h3 { font-size: 17px; font-weight: 700; color: var(--text); margin: 4px 0 18px; }
+
+  .notes-field { margin-top: 18px; }
+  .notes-field label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; }
+  .notes-field textarea {
+    width: 100%; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
+    padding: 10px 14px; font-family: inherit; font-size: 13px; color: var(--text); resize: vertical; min-height: 60px;
+  }
+  .notes-field textarea:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .notes-field .notes-hint { font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+
+  .q-nav { display: flex; justify-content: space-between; align-items: center; margin-top: 28px; padding-top: 20px; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 10px; }
+  .q-nav .btn { min-width: 100px; justify-content: center; }
+  .q-nav .must-answer-note { font-size: 12px; color: var(--text-muted); order: 3; width: 100%; text-align: center; }
+  @media (max-width: 480px) {
+    .q-nav { flex-direction: column-reverse; }
+    .q-nav .must-answer-note { order: -1; margin-bottom: 4px; }
+    .q-nav .btn { width: 100%; }
+  }
+  .level-options { display: flex; flex-direction: column; gap: 8px; }
+  .level-option {
+    border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease; display: flex; gap: 12px; align-items: flex-start;
+  }
+  .level-option:hover { border-color: var(--accent); }
+  .level-option.selected { border-color: var(--accent); background: rgba(37, 99, 235, 0.12); box-shadow: 0 0 0 1px var(--accent) inset; }
+  .level-option .lvl-badge {
+    flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--surface-2); color: var(--text-muted);
+    font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  }
+  .level-option.selected .lvl-badge { background: var(--accent); color: #fff; }
+  .level-option .lvl-text { font-size: 13px; }
+  .level-option .lvl-name { font-weight: 700; color: var(--text); }
+  .level-option .lvl-desc { color: var(--text-muted); margin-top: 2px; }
+
+  .score-hero { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; padding: 24px 0; }
+  .score-circle {
+    width: 120px; height: 120px; border-radius: 50%; background: var(--navy); color: #fff;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .score-circle .num { font-size: 32px; font-weight: 800; letter-spacing: -0.02em; }
+  .score-circle .denom { font-size: 12px; color: #93C5FD; }
+  .score-meta h3 { font-size: 20px; font-weight: 800; color: var(--text); margin: 0 0 6px; }
+  .score-meta p { font-size: 14px; color: var(--text-muted); margin: 0; max-width: 480px; }
+
+  .radar-wrap { display: flex; justify-content: center; margin: 12px 0 24px; }
+  .radar-wrap svg { max-width: 100%; height: auto; }
+
+  .rag-legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
+  .rag-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .rag-legend i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .rag-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 28px; }
+  .rag-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 8px; background: var(--surface-2); }
+  .rag-dot { width: 11px; height: 11px; border-radius: 50%; flex-shrink: 0; }
+  .rag-item .rag-name { font-size: 13px; font-weight: 700; color: var(--text); display: block; }
+  .rag-item .rag-level { font-size: 12px; color: var(--text-muted); }
+
+  .gap-card {
+    border: 1px solid var(--border); border-left: 4px solid var(--risk); border-radius: 10px;
+    padding: 16px 18px; margin-bottom: 12px; background: var(--risk-bg);
+  }
+  .gap-card .gap-title { font-size: 14px; font-weight: 700; color:var(--risk); margin: 0 0 4px; }
+  .gap-card .gap-desc { font-size: 13px; color:var(--risk); margin: 0 0 8px; }
+  .gap-card .gap-action { font-size: 13px; color: var(--text); background: var(--panel-bg); border-radius: 8px; padding: 10px 12px; }
+  .gap-card .gap-action strong { color: var(--text); }
+
+  .plan-group-header {
+    font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #fff;
+    background: var(--navy); padding: 10px 16px; border-radius: 8px; margin: 28px 0 4px;
+  }
+  .plan-section:first-of-type { margin-top: 0; }
+  .plan-section { margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .plan-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .plan-section summary { cursor: pointer; list-style: none; padding: 8px 0; }
+  .plan-section summary::-webkit-details-marker { display: none; }
+  .plan-section summary::before { content: '\25B6'; display: inline-block; font-size: 11px; color: var(--accent); margin-right: 10px; transition: transform 0.15s ease; }
+  .plan-section[open] summary::before { transform: rotate(90deg); }
+  .plan-section summary h3 { display: inline; }
+  .plan-section-body { padding: 12px 0 4px 21px; }
+  .plan-section h3 { font-size: 16px; font-weight: 700; color: var(--text); margin: 0 0 4px; }
+  .plan-section .plan-sub { font-size: 12px; color: var(--text-muted); margin: 0 0 14px; }
+  .assessment-row {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;
+    padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface);
+  }
+  @media (max-width: 480px) {
+    .assessment-row { flex-direction: column; align-items: flex-start; }
+    .assessment-row .a-actions { width: 100%; justify-content: flex-end; }
+  }
+  .assessment-row.active { border-color: var(--accent); background: rgba(37, 99, 235, 0.12); }
+  .assessment-row .a-name { font-size: 13px; font-weight: 700; color: var(--text); }
+  .assessment-row .a-meta { font-size: 11px; color: var(--text-muted); }
+  .assessment-row .a-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .assessment-row .a-actions button {
+    border: none; background: transparent; color: var(--accent); font-size: 11px; font-weight: 700;
+    cursor: pointer; padding: 4px 6px;
+  }
+  .assessment-row .a-actions button:hover { text-decoration: underline; }
+  .role-card { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; background: var(--panel-bg); }
+  .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 560px) { .field-row { grid-template-columns: 1fr; } }
+  .role-card.senior { border-left: 4px solid var(--accent); background: rgba(37, 99, 235, 0.12); }
+  .role-card .role-name { font-size: 14px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .role-card .role-name .senior-tag { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin-left: 8px; }
+  .role-card .role-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+  .guidance-box { background: var(--surface-2); border-radius: 8px; padding: 12px 16px; margin-bottom: 18px; font-size: 13px; color: var(--text-muted); }
+  .guidance-box strong { color: var(--text); }
+  .guidance-box .guidance-line { margin-bottom: 6px; }
+  .guidance-box .guidance-line:last-child { margin-bottom: 0; }
+  .plan-field { margin-bottom: 16px; }
+  .plan-field label { display: block; font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+  .plan-field textarea, .plan-field input.text-input {
+    width: 100%; border: 1px solid var(--border); border-radius: 8px; background: var(--panel-bg);
+    padding: 11px 14px; font-family: inherit; font-size: 14px; color: var(--text);
+  }
+  .plan-field textarea { resize: vertical; min-height: 80px; }
+  .plan-field textarea:focus, .plan-field input.text-input:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .plan-item .plan-item-label { font-size: 12px; font-weight: 700; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+  .plan-item .plan-item-level { font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
+  .plan-item .plan-item-action { font-size: 14px; color: var(--text); background: var(--surface-2); border-radius: 8px; padding: 10px 14px; }
+  .plan-maintain { font-size: 14px; color: var(--safe); background: var(--safe-bg); border-radius: 8px; padding: 10px 14px; }
+
+  .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); }
+  .empty-state p { font-size: 14px; max-width: 380px; margin: 0 auto; }
+
+  footer { max-width: 1000px; }
+  footer .disclaimer { max-width: 640px; }
+
+  @media (max-width: 640px) {
+    .score-hero { flex-direction: column; text-align: center; }
+    .panel { padding: 22px; }
+  }
+
+  #print-root { display: none; }
+
+  @media print {
+    body > *:not(#print-root) { display: none !important; }
+    #print-root { display: block !important; }
+  }
+
+  #print-root {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--text);
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px;
+  }
+  #print-root h1 {
+    color: var(--text); font-size: 22px; font-weight: 800; margin: 0 0 12px;
+    break-after: avoid-page; page-break-after: avoid;
+  }
+  #print-root h2 {
+    color: var(--accent); font-size: 16px; font-weight: 700; margin: 28px 0 4px;
+    border-bottom: 1px solid var(--border); padding-bottom: 4px;
+    break-after: avoid-page; page-break-after: avoid;
+    break-before: auto; page-break-before: auto;
+  }
+  #print-root h3 {
+    color: var(--text); font-size: 13px; font-weight: 700; margin: 16px 0 4px;
+    break-after: avoid-page; page-break-after: avoid;
+  }
+  #print-root p, #print-root li {
+    font-size: 13px; line-height: 1.6; margin: 0 0 10px;
+    break-inside: avoid-page; page-break-inside: avoid;
+  }
+  /* Keep each heading glued to the paragraph immediately after it, so a
+     heading never lands alone at the bottom of a page with its content
+     pushed to the next one. */
+  #print-root h1 + p, #print-root h2 + p, #print-root h3 + p {
+    break-before: avoid-page; page-break-before: avoid;
+  }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Recoverly — Data Recovery Maturity Assessment",
+  "description": "A free maturity assessment for data recovery readiness. Get a Risk Assessment and a tailored Data Recovery Response Plan in minutes.",
+  "url": "https://lab.krismccabe.com/recoverly/",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Any (runs in browser)",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "author": {
+    "@type": "Person",
+    "name": "Kris McCabe",
+    "url": "https://krismccabe.com/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/assets/swiss.css?v=5">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to content</a>
+
+<div class="cookie-banner" id="cookie-banner" role="dialog" aria-label="Cookie consent">
+  <p>This site uses Google Analytics to understand how the tools are used. Nothing loads or is tracked until you accept.</p>
+  <div class="cookie-banner-actions">
+    <button type="button" id="cookie-decline" class="btn small">Decline</button>
+    <button type="button" id="cookie-accept" class="btn primary small">Accept</button>
+  </div>
+</div>
+<script>
+(function(){
+  var consent = localStorage.getItem('cookie-consent');
+  if (consent === 'granted') { loadGoogleAnalytics(); return; }
+  if (consent === 'denied') { return; }
+  var banner = document.getElementById('cookie-banner');
+  banner.style.display = 'flex';
+  document.getElementById('cookie-accept').addEventListener('click', function(){
+    localStorage.setItem('cookie-consent', 'granted');
+    banner.style.display = 'none';
+    loadGoogleAnalytics();
+  });
+  document.getElementById('cookie-decline').addEventListener('click', function(){
+    localStorage.setItem('cookie-consent', 'denied');
+    banner.style.display = 'none';
+  });
+})();
+</script>
+
+  <div id="print-root"></div>
+
+  <header class="lab-header">
+    <div class="lab-header-inner" style="display:flex; align-items:center; justify-content:space-between;">
+      <a class="lab-back" href="/">&#8592; Kris's Lab</a>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" aria-pressed="false">
+          <svg class="icon-sun" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.5"/>
+            <path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12h2.5M19 12h2.5M4.2 19.8l1.8-1.8M18 6l1.8-1.8"/>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 14.2A8.5 8.5 0 1 1 9.8 4a7 7 0 0 0 10.2 10.2Z"/>
+          </svg>
+        </button>
+        <span style="display:flex; align-items:center; gap:8px; color:#fff; font-weight:700; font-size:14px;">
+        <svg viewBox="0 0 40 40" width="22" height="22" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <path d="M20 7 C23 7,27 8.5,29 10 L29 18 C29 24,25 28.5,20 32 C15 28.5,11 24,11 18 L11 10 C13 8.5,17 7,20 7 Z" fill="none" stroke="#93C5FD" stroke-width="1.8"/>
+          <path d="M13.5 20 L18 24.5 L27 13.5" stroke="#2563EB" stroke-width="3.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Recoverly
+      </span>
+      </div>
+    </div>
+  </header>
+
+  <div class="hero" id="main-content">
+    <svg viewBox="0 0 40 40" width="48" height="48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="margin-bottom:16px;">
+      <path d="M20 7 C23 7,27 8.5,29 10 L29 18 C29 24,25 28.5,20 32 C15 28.5,11 24,11 18 L11 10 C13 8.5,17 7,20 7 Z" fill="none" stroke="#93C5FD" stroke-width="1.5"/>
+      <path d="M13.5 20 L18 24.5 L27 13.5" stroke="#2563EB" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <p class="eyebrow">Recoverly &middot; Free tool by Kris McCabe</p>
+    <h1>How ready are you, really, for a data recovery incident?</h1>
+    <p>A 12-question maturity assessment that turns into two things: a plain, simple Risk Assessment that avoids technical jargon, and a Data Recovery Response Plan tailored to exactly where your gaps are.</p>
+  </div>
+
+  <div class="wrap">
+
+    <div class="panel no-print" id="assessments-panel" style="padding:16px 20px; margin-bottom:12px;">
+      <label style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:600; color: var(--text); cursor:pointer;">
+        <input type="checkbox" id="remember-toggle"> Remember my assessments on this device (nothing leaves your browser)
+      </label>
+      <div id="assessments-list-wrap" style="display:none; margin-top:14px;">
+        <div id="assessments-list" style="display:flex; flex-direction:column; gap:6px;"></div>
+        <button class="btn" id="new-assessment-btn" style="margin-top:10px; font-size:12px; padding:7px 12px;">+ New assessment (e.g. a second system)</button>
+        <button class="btn" id="clear-all-btn" style="margin-top:10px; margin-left:8px; font-size:12px; padding:7px 12px; color:var(--risk); border-color:var(--risk);">Delete all saved data from this device</button>
+      </div>
+    </div>
+
+    <div class="toolbar no-print">
+      <span class="progress-text" id="progress-text">0 of 12 answered</span>
+      <div class="actions">
+        <button class="btn" id="btn-load">&#128193; Load saved answers</button>
+        <button class="btn" id="btn-save">&#128190; Save answers</button>
+        <button class="btn primary" id="btn-pdf" disabled>&#128196; Export PDF</button>
+        <button class="btn" id="btn-docx" disabled>&#128221; Export Word doc</button>
+      </div>
+      <input type="file" id="file-input" accept="application/json" style="display:none;" />
+    </div>
+
+    <div class="tabs no-print">
+      <button class="tab-btn active" data-tab="assessment">1. Assessment</button>
+      <button class="tab-btn" data-tab="risk" disabled id="tab-btn-risk">2. Risk Assessment</button>
+      <button class="tab-btn" data-tab="plan" disabled id="tab-btn-plan">3. Response Plan</button>
+    </div>
+
+    <!-- ASSESSMENT TAB -->
+    <div class="tab-panel active" id="tab-assessment">
+      <div class="panel">
+        <h2>Before you start</h2>
+        <p class="sub">Your organisation type sets how heavily each area counts toward your overall score — a communication plan matters differently to a hospital than it does to an online shop.</p>
+        <div class="field">
+          <label for="industry-select">What best describes your organisation?</label>
+          <select class="select-input" id="industry-select">
+            <option value="">— Select one —</option>
+          </select>
+          <p style="font-size:12px; color:var(--text-muted); margin:6px 0 0;">Not sure, or don't want to say? Pick "General / other" — every dimension counts equally, and you can change this any time before you finish.</p>
+        </div>
+        <details id="weights-details" style="margin-top:14px;">
+          <summary style="cursor:pointer; font-size:12px; font-weight:700; color:var(--accent);">Advanced: adjust how heavily each area is weighted</summary>
+          <p style="font-size:12px; color:var(--text-muted); margin:8px 0 12px;">These start from your industry's defaults (see REQUIREMENTS.md §8) — a first-pass hypothesis, not the final word. Edit any of them; the rest keep using the preset.</p>
+          <div id="weights-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px,1fr)); gap:8px;"></div>
+          <button class="btn" id="reset-weights-btn" style="margin-top:10px; font-size:12px; padding:6px 10px;">Reset to industry defaults</button>
+        </details>
+      </div>
+
+      <div class="panel">
+        <h2>The assessment</h2>
+        <p class="sub">Pick the description that's closest to true for your organisation today — not where you'd like to be.</p>
+        <div id="questions-container"></div>
+      </div>
+    </div>
+
+    <!-- RISK ASSESSMENT TAB -->
+    <div class="tab-panel" id="tab-risk">
+      <div class="panel" id="risk-panel-content" aria-live="polite">
+        <div class="empty-state"><p>Answer all 12 questions to see your Risk Assessment.</p></div>
+      </div>
+    </div>
+
+    <!-- RESPONSE PLAN TAB -->
+    <div class="tab-panel" id="tab-plan">
+      <div class="panel" id="plan-panel-content" aria-live="polite">
+        <div class="empty-state"><p>Answer all 12 questions to generate your Response Plan.</p></div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="links">
+      <a href="/redline/" target="_blank" rel="noopener">Redline — the True Cost of Downtime calculator &rarr;</a>
+      <a href="/schema-explorer/" target="_blank" rel="noopener">Schema Explorer — what breaks if you delete this? &rarr;</a>
+      <a href="/tabletop/" target="_blank" rel="noopener">Tabletop — Incident Command practice exercise &rarr;</a>
+      <a href="/agent-impact/" target="_blank" rel="noopener">Agent-Impact — AI agent Blast Radius &amp; guardrail simulator &rarr;</a>
+      <a href="https://krismccabe.com" target="_blank" rel="noopener">krismccabe.com</a>
+      <a href="https://therecoveryarchnotebook.substack.com" target="_blank" rel="noopener">The Recovery Architect's Notebook</a>
+    </div>
+    <p class="disclaimer">An independent, free tool by Kris McCabe, provided "as is" without warranty of any kind. This assessment and the plan it generates are indicative estimates to aid discussion — not a certified audit, a formal Business Impact Analysis, professional advice, or legal advice on your specific regulatory obligations. You are responsible for verifying accuracy and obtaining qualified advice before relying on this for a real data recovery or business continuity plan. To the fullest extent permitted by law, the author accepts no liability for any loss or damage arising from use of this tool. Nothing here is saved to a server — your answers stay in your browser unless you choose to save them yourself. Not affiliated with or endorsed by Salesforce or any named vendor.</p>
+  </footer>
+
+<script>
+  // ---------------------------------------------------------------
+  // DATA
+  // ---------------------------------------------------------------
+
+  const MATURITY_LEVELS = [
+    { level: 1, name: 'Ad hoc' },
+    { level: 2, name: 'Developing' },
+    { level: 3, name: 'Defined' },
+    { level: 4, name: 'Managed' },
+    { level: 5, name: 'Optimised' }
+  ];
+
+  const INDUSTRIES = [
+    { id: 'financial', name: 'Financial services' },
+    { id: 'healthcare', name: 'Healthcare' },
+    { id: 'retail', name: 'Retail / e-commerce' },
+    { id: 'saas', name: 'SaaS / technology' },
+    { id: 'public', name: 'Public sector / government' },
+    { id: 'general', name: 'General / other' }
+  ];
+
+  const MATURITY_DIMENSIONS = [
+    {
+      id: 'ownership', category: 'Govern', short: 'Ownership', radar: 'Ownership',
+      question: "If data recovery were needed right now, is it clear who's actually in charge of making it happen?",
+      levels: [
+        "No one is formally responsible; whoever's available handles it.",
+        'Someone is informally seen as "the person," but it\'s not documented or backed by authority.',
+        'A named owner and deputy are documented, with the authority to act during an incident.',
+        'Ownership is documented, tested during exercises, and reviewed when the org restructures.',
+        "Ownership is embedded in onboarding/offboarding and change management, so it never quietly goes stale."
+      ]
+    },
+    {
+      id: 'policy', category: 'Govern', short: 'Policy & compliance', radar: 'Policy',
+      question: 'Are your RTO/RPO targets based on actual business or regulatory requirements, or best guesses?',
+      levels: [
+        'No documented targets exist at all.',
+        'Targets exist somewhere but were set arbitrarily, without reference to real business impact.',
+        'Targets are documented and were derived from a real business impact assessment.',
+        'Targets are reviewed periodically against changing regulatory/business requirements.',
+        'Targets are a living input to strategic planning, not a static compliance artefact.'
+      ]
+    },
+    {
+      id: 'inventory', category: 'Identify', short: 'Data inventory', radar: 'Data',
+      question: 'Could you produce an accurate list of what data lives where, and how critical each piece is, today?',
+      levels: [
+        "No inventory exists; knowledge lives in people's heads.",
+        'A partial or outdated inventory exists somewhere.',
+        'A current, accurate inventory exists and is actively maintained.',
+        'The inventory is kept current with tooling assistance, not manual upkeep.',
+        'Criticality classifications feed directly into backup/protection decisions automatically.'
+      ]
+    },
+    {
+      id: 'dependencies', category: 'Identify', short: 'Dependencies', radar: 'Deps',
+      question: "If one system went down, do you know everything else that would be affected, and in what order to restore things?",
+      levels: [
+        "Dependencies are not documented; they're discovered during the incident itself.",
+        'Some dependencies are known informally but not written down.',
+        'A documented dependency map exists and informs recovery sequencing.',
+        'The map is validated periodically against the real environment, not just written once.',
+        'Dependency mapping is automated/continuously discovered, not manually maintained.'
+      ]
+    },
+    {
+      id: 'backup', category: 'Protect', short: 'Backup & isolation', radar: 'Backup',
+      question: 'Are your backups both comprehensive and genuinely separated from what they protect?',
+      levels: [
+        'Backup coverage is inconsistent or unknown; no isolation from production.',
+        'Backups exist broadly but share infrastructure/credentials with production.',
+        'Backups are comprehensive and properly isolated (logically or physically) from production.',
+        'Isolation is regularly verified, not just configured once and assumed.',
+        'Isolation is architected to withstand a compromised admin account, not just a system failure.'
+      ]
+    },
+    {
+      id: 'access', category: 'Protect', short: 'Access control', radar: 'Access',
+      question: 'Is access to backup and restore capability itself properly restricted and audited?',
+      levels: [
+        'Broad, unaudited access — anyone with general admin rights can restore or delete backups.',
+        "Some restriction exists but isn't consistently enforced or reviewed.",
+        'Access is role-based, documented, and reviewed periodically.',
+        'Access changes are logged and alerted on, not just reviewed after the fact.',
+        'Least-privilege is enforced automatically, with anomalous access flagged in real time.'
+      ]
+    },
+    {
+      id: 'monitoring', category: 'Detect', short: 'Monitoring', radar: 'Monitor',
+      question: 'Would data loss or corruption actually be noticed quickly, or only discovered by chance?',
+      levels: [
+        'No monitoring; issues are discovered when someone complains.',
+        "Some monitoring exists but doesn't specifically cover data integrity/loss.",
+        'Monitoring specifically covers data loss/corruption scenarios, with defined alert thresholds.',
+        'Alerts are tuned and tested to minimise both false positives and missed detections.',
+        'Detection is continuously improved based on near-miss and post-incident learnings.'
+      ]
+    },
+    {
+      id: 'command', category: 'Respond', short: 'Incident command', radar: 'Incident',
+      question: "During an incident, is it clear who does what, regardless of who happens to be online?",
+      levels: [
+        'No structure; response is improvised by whoever notices first.',
+        "Roles exist informally but aren't documented or rehearsed.",
+        'A documented incident command structure exists, with defined roles and escalation paths.',
+        'The structure is rehearsed through drills, not just written down.',
+        'The structure flexes appropriately to incident severity/scale, tested across multiple scenario types.'
+      ]
+    },
+    {
+      id: 'communication', category: 'Respond', short: 'Communication', radar: 'Comms',
+      question: 'Is there a plan for who gets told what, when, during an incident — including regulators if applicable?',
+      levels: [
+        'No communication plan; messaging is improvised during the incident.',
+        'Informal norms exist but nothing documented or pre-approved.',
+        'A documented plan exists covering internal and external stakeholders, including regulatory notification where applicable.',
+        'Templates and pre-approved messaging exist to speed up real execution.',
+        'The plan is rehearsed and adapted based on lessons from drills or real incidents.'
+      ]
+    },
+    {
+      id: 'procedures', category: 'Recover', short: 'Recovery docs', radar: 'Recovery',
+      question: 'Are the actual steps to recover each system/data type written down, or does recovery depend on specific people?',
+      levels: [
+        "No documented procedures; recovery depends entirely on specific individuals' knowledge.",
+        'Some documentation exists but is incomplete, outdated, or scattered.',
+        'Comprehensive, current, step-by-step procedures exist per system/data type.',
+        'Procedures are validated against the real environment periodically, not just written once.',
+        'Procedures are kept current automatically as systems change, linked to change management.'
+      ]
+    },
+    {
+      id: 'testing', category: 'Recover', short: 'Testing', radar: 'Testing',
+      question: 'Are recovery procedures actually tested, and how often?',
+      levels: [
+        'Never tested; confidence is based on assumption alone.',
+        'Tested rarely, or only after a real incident forces it.',
+        'Tested on a defined, regular cadence (e.g. annually or per major change).',
+        'Testing includes realistic, unannounced, or adversarial scenarios, not just planned walkthroughs.',
+        'Testing is continuous/automated — regular game days, chaos-engineering-style exercises.'
+      ]
+    },
+    {
+      id: 'review', category: 'Recover', short: 'Post-incident review', radar: 'Review',
+      question: 'After a real incident or test, is there a formal process to capture lessons and act on them?',
+      levels: [
+        'No review process; incidents are forgotten once resolved.',
+        'Informal debriefs happen sometimes but nothing is documented or tracked.',
+        'A formal post-incident review process exists and produces documented actions.',
+        'Actions from reviews are tracked to completion and verified.',
+        'Review findings feed systematically into training, tooling, and the plan itself — continuous improvement, not just documentation.'
+      ]
+    }
+  ];
+
+  const MATURITY_BRIDGES = {
+    ownership: [
+      "Identify who's actually handling recovery today, even informally, and name them as the interim owner.",
+      'Document ownership formally — a named primary and deputy, with explicit sign-off on their authority to act during an incident.',
+      "Include the owner role in incident-response drills so it's tested, not just written down; revisit after any org restructure.",
+      'Fold ownership assignment into onboarding/offboarding and change-management processes so it updates itself.'
+    ],
+    policy: [
+      "Write down whatever RTO/RPO figures are currently assumed, even if they're guesses — a documented guess beats an undocumented one.",
+      'Run a real business impact assessment, even a lightweight one, to replace guessed targets with ones tied to actual cost of downtime/data loss.',
+      "Set a review cadence (annually, or after major regulatory change) so targets don't quietly go stale.",
+      'Feed recovery targets into strategic/budget planning directly, rather than treating them as an isolated compliance checkbox.'
+    ],
+    inventory: [
+      'Start a basic inventory, even a spreadsheet — capture what exists before worrying about polish.',
+      'Assign ownership for keeping the inventory current, and reconcile it against reality at least once.',
+      'Introduce tooling (discovery scans, CMDB, etc.) to reduce reliance on manual updates.',
+      'Link criticality classifications directly into backup/protection policy so a classification change automatically adjusts protection level.'
+    ],
+    dependencies: [
+      'After any incident or major change, write down what you discover about dependencies — build the map opportunistically if not proactively.',
+      'Deliberately map dependencies for your most critical systems first, and use that map to define recovery order.',
+      'Periodically validate the map against the real environment — architectures drift faster than documentation.',
+      'Adopt automated dependency-discovery tooling so the map updates itself as the environment changes.'
+    ],
+    backup: [
+      'Get coverage consistent and comprehensive first — isolation can follow once coverage is solid.',
+      'Separate backup infrastructure and credentials from production — different accounts, different access paths.',
+      'Schedule regular verification that isolation actually holds, not just that it was configured once.',
+      'Architect isolation to withstand a compromised admin account specifically — assume the attacker already has legitimate-looking access.'
+    ],
+    access: [
+      "Restrict backup/restore access to a defined group, even if managing that group is still informal.",
+      'Move to role-based access with a documented review cadence.',
+      'Add logging and alerting on access changes, not just periodic manual review.',
+      'Automate least-privilege enforcement and real-time anomaly detection on recovery-tooling access.'
+    ],
+    monitoring: [
+      'Add basic monitoring covering the most critical systems, even without data-loss-specific tuning yet.',
+      'Define alert thresholds specifically for data integrity/loss scenarios, not just general uptime.',
+      'Tune alerts based on real incidents/near-misses to reduce false positives and missed detections.',
+      'Build a continuous feedback loop so detection capability improves every time something is learned.'
+    ],
+    command: [
+      'Write down the informal roles that already exist, even loosely.',
+      'Formalise a documented structure with clear escalation paths.',
+      'Rehearse the structure through drills, not just paper reviews.',
+      'Test the structure across multiple incident types/severities to confirm it flexes appropriately.'
+    ],
+    communication: [
+      'Capture the informal norms that already exist for who gets told what.',
+      'Document a plan covering internal and external stakeholders, including regulatory notification if applicable.',
+      'Pre-draft templates/messaging so real execution is faster and more consistent.',
+      'Rehearse the plan and adapt it based on lessons from drills or real incidents.'
+    ],
+    procedures: [
+      "Start writing down whatever recovery knowledge currently exists in people's heads, even informally.",
+      'Fill gaps until procedures are comprehensive and current for every system/data type.',
+      'Validate procedures against the real environment periodically, not just at the point they were written.',
+      'Link procedure updates into change management so they update automatically as systems change.'
+    ],
+    testing: [
+      'Run a first test, even a basic one — the goal is breaking the "never tested" state.',
+      'Establish a defined, regular testing cadence rather than reactive/one-off testing.',
+      'Introduce realistic or adversarial scenarios (unannounced tests) rather than only planned walkthroughs.',
+      'Move toward continuous/automated testing — regular game days or chaos-engineering-style exercises.'
+    ],
+    review: [
+      'Start holding informal debriefs after incidents or tests, even without formal documentation yet.',
+      'Formalise the review process so it reliably produces documented actions.',
+      'Track review actions to completion and verify they were actually implemented.',
+      'Feed review findings systematically into training, tooling, and the plan itself.'
+    ]
+  };
+
+  // weights keyed by dimension id, per industry. 'general' is implicitly all 1.0.
+  const INDUSTRY_WEIGHTS = {
+    financial:  { ownership:1.5, policy:2.0, inventory:1.0, dependencies:1.0, backup:1.5, access:1.5, monitoring:1.0, command:1.5, communication:2.0, procedures:1.0, testing:1.5, review:1.5 },
+    healthcare: { ownership:1.5, policy:1.5, inventory:2.0, dependencies:1.0, backup:2.0, access:2.0, monitoring:1.5, command:1.5, communication:2.0, procedures:1.5, testing:1.0, review:1.0 },
+    retail:     { ownership:1.0, policy:1.0, inventory:1.0, dependencies:1.5, backup:1.0, access:1.0, monitoring:2.0, command:1.5, communication:1.0, procedures:1.5, testing:2.0, review:1.0 },
+    saas:       { ownership:1.0, policy:1.0, inventory:1.0, dependencies:2.0, backup:1.5, access:1.5, monitoring:1.5, command:1.5, communication:1.0, procedures:1.5, testing:2.0, review:2.0 },
+    public:     { ownership:2.0, policy:2.0, inventory:1.5, dependencies:1.0, backup:1.5, access:1.5, monitoring:1.0, command:2.0, communication:1.5, procedures:1.5, testing:1.0, review:1.5 },
+    general:    { ownership:1.0, policy:1.0, inventory:1.0, dependencies:1.0, backup:1.0, access:1.0, monitoring:1.0, command:1.0, communication:1.0, procedures:1.0, testing:1.0, review:1.0 }
+  };
+
+  const REGIMES = {
+    gdpr:  { name: 'GDPR / UK GDPR', text: '72 hours to the supervisory authority' },
+    pdpa:  { name: 'Singapore PDPA', text: '72 hours to the PDPC' },
+    hipaa: { name: 'HIPAA (US)', text: '60 days to HHS and affected individuals' }
+  };
+
+  // Which Response Plan section each dimension feeds into.
+  // A suggested starting point, not a fixed structure — every field here is
+  // editable in state.roles, and users can add/remove roles freely.
+  function defaultRoles() {
+    return [
+      {
+        id: 'techLead', title: 'Technical Lead', senior: true, holder: '',
+        description: "The most senior role on the recovery team. Owns the technical direction of the recovery, makes the final call on approach, and coordinates the other roles. The primary point of escalation into the Incident Response Command Team, and responsible for confirming recovery is technically complete before handing back to the business."
+      },
+      {
+        id: 'sme', title: 'Subject Matter Expert (SME)', senior: false, holder: '',
+        description: 'Provides deep knowledge of the specific system, data, or application affected. Advises the Technical Lead on what "normal" looks like for this system, validates that restored data is correct and complete, and flags anything a non-specialist might miss.'
+      },
+      {
+        id: 'qa', title: 'QA / Tester', senior: false, holder: '',
+        description: "Independently verifies the recovery actually worked before the system is declared back in service \u2014 checking data integrity, functionality, and integration points. Nothing is signed off as recovered without this role's independent check."
+      },
+      {
+        id: 'comms', title: 'Comms', senior: false, holder: '',
+        description: "Owns all communication during the incident \u2014 internal updates to leadership and staff, and external or regulatory notifications where applicable. Keeps a single source of truth for status so the Technical Lead isn't pulled away from the technical work to answer status questions."
+      }
+    ];
+  }
+
+  const PLAN_SECTIONS = [
+    // --- Prepared in advance, not part of the live-incident sequence ---
+    { group: 'Before an incident (preparation)', title: 'Roles & ownership', dims: ['ownership'], isRoles: true, fields: [] },
+    { group: 'Before an incident (preparation)', title: 'Recovery targets', dims: ['policy'], isTargets: true, fields: [] },
+    { group: 'Before an incident (preparation)', title: 'Data & dependency summary', dims: ['inventory', 'dependencies'], fields: [
+      { id: 'incidentTypesCovered', label: 'What kinds of incidents does this plan cover?', type: 'textarea', placeholder: 'e.g. ransomware, accidental deletion, integration failure, region outage \u2014 see Redline\u2019s scenarios for common examples' },
+      { id: 'criticalData', label: 'Critical data & systems covered by this plan', type: 'textarea', placeholder: 'e.g. Customer records in Salesforce, order history in the billing database...' },
+      { id: 'dependencyOrder', label: 'Recovery order — what must come back first, and why', type: 'textarea', placeholder: 'e.g. Authentication service first, then the database, then the application layer...' }
+    ]},
+    { group: 'Before an incident (preparation)', title: 'Plan ownership & revision history', dims: [], fields: [
+      { id: 'planOwner', label: 'Who owns keeping this document itself up to date? (distinct from who runs a live recovery)', type: 'text', placeholder: 'e.g. IT Governance Lead' },
+      { id: 'revisionHistory', label: 'Revision history \u2014 log changes and approvals over time', type: 'textarea', placeholder: 'e.g. 16 July 2026 \u2014 Initial draft (your name)\n\u2014 add a new line each time this plan is reviewed or updated' }
+    ]},
+
+    // --- What actually happens during an incident, in the order it happens ---
+    { group: 'During an incident \u2014 in order', stage: 1, title: 'Detection', dims: ['monitoring'], fields: [
+      { id: 'detectionMethod', label: 'How would this incident actually be detected?', type: 'textarea', placeholder: 'Monitoring alerts, a user report, a failed job, a scheduled check...' },
+      { id: 'declareCriteria', label: 'What triggers officially declaring a data recovery incident?', type: 'textarea', placeholder: 'e.g. Confirmed data loss/corruption affecting production, above a defined threshold...' }
+    ]},
+    { group: 'During an incident \u2014 in order', stage: 2, title: 'Triage & escalation', dims: ['command'], relatedLink: { url: 'https://therecoveryarchnotebook.substack.com/p/when-the-system-fails-humans-must', text: 'Why your best technical minds fail without clear roles \u2014 read the full piece' }, fields: [
+      { id: 'escalationSteps', label: 'Escalation steps \u2014 who is notified, in what order, and how', type: 'textarea', placeholder: 'Who declares the incident, who they notify first, how the recovery team is activated...' },
+      { id: 'commandTeamNotes', label: 'Incident Response Command Team \u2014 composition and how the Technical Lead escalates to it', type: 'textarea', placeholder: 'Who sits on the Command Team, when the Technical Lead should escalate to it, and how...' }
+    ]},
+    { group: 'During an incident \u2014 in order', stage: 3, title: 'Regulatory notification', dims: ['communication'], isRegulatory: true, fields: [
+      { id: 'regulatoryOwner', label: 'Who is responsible for regulatory notification', type: 'text', placeholder: 'e.g. Data Protection Officer' }
+    ]},
+    { group: 'During an incident \u2014 in order', stage: 4, title: 'Recovery execution', dims: ['backup', 'access', 'procedures'], fields: [
+      { id: 'backupDetails', label: 'Backup locations & how to access them', type: 'textarea', placeholder: 'Where backups live, who can access them, and how...' },
+      { id: 'appAccessPermissions', label: 'Application access & permissions \u2014 who has (or needs) the right access within the application itself to perform the restore?', type: 'textarea', placeholder: 'Distinct from backup-tool access below \u2014 e.g. temporary elevated admin rights inside the application...' },
+      { id: 'automationToPause', label: 'Automation to deactivate or bypass during recovery, and how', type: 'textarea', placeholder: 'e.g. workflows, triggers, scheduled jobs, or other automation that could fire incorrectly against partially-restored data...' },
+      { id: 'integrationsToSuspend', label: 'Integrations that could be affected, and how to suspend or deactivate them', type: 'textarea', placeholder: 'e.g. pause the middleware sync or the outbound API connection, so neither side gets corrupted by out-of-sync data...' },
+      { id: 'notificationsToDisable', label: 'Notifications or emails to disable during recovery', type: 'textarea', placeholder: 'e.g. order confirmations, automated customer alerts \u2014 anything that could confuse people while the system is mid-restore...' },
+      { id: 'knownComplexities', label: 'Known complexities or obstacles in this application that could hamper recovery', type: 'textarea', placeholder: 'e.g. validation rules that reject bulk restores, quirky dependencies, known limits...' },
+      { id: 'recoverySteps', label: 'Step-by-step recovery procedure for this system', type: 'textarea', placeholder: '1. Confirm scope of data loss...\n2. Identify last clean backup...\n3. Restore to...\n4. Validate...' },
+      { id: 'unknownRecoveryApproach', label: 'When the right recovery approach isn\u2019t obvious, what\u2019s your process for working it out?', type: 'textarea', placeholder: 'e.g. isolate the affected system first so nothing gets worse, bring in the SME, check vendor documentation and support channels, test any approach in a sandbox before touching production, time-box the exploration and escalate if there\u2019s no progress...' },
+      { id: 'accessList', label: 'Who has access to backup/restore tooling', type: 'textarea', placeholder: 'Named individuals or roles with restore permissions...' },
+      { id: 'stallEscalation', label: 'Who does recovery escalate to if it stalls or runs past your Maximum Tolerable Downtime?', type: 'textarea', placeholder: 'e.g. Technical Lead escalates to the Incident Response Command Team after 4 hours with no progress...' }
+    ]},
+    { group: 'During an incident \u2014 in order', stage: 5, title: 'Validation', dims: [], fields: [
+      { id: 'validationSteps', label: 'How will you confirm recovery actually worked before declaring the incident over?', type: 'textarea', placeholder: "Data integrity checks, functional testing, sign-off from the QA/Tester role before systems go back into service..." }
+    ]},
+
+    // --- Maintaining the plan itself, not tied to any one incident ---
+    { group: 'Ongoing \u2014 keeping the plan alive', title: 'Testing plan', dims: ['testing'], fields: [
+      { id: 'testSchedule', label: 'Testing schedule', type: 'text', placeholder: 'e.g. Quarterly, or after every major system change' },
+      { id: 'lastTestDate', label: 'Date of last test', type: 'text', placeholder: 'e.g. March 2026' },
+      { id: 'testResults', label: 'Results / lessons from the last test', type: 'textarea', placeholder: "What worked, what didn't, what changed as a result..." }
+    ]},
+    { group: 'Ongoing \u2014 keeping the plan alive', title: 'Review & lessons learned', dims: ['review'], isReviewCadence: true, fields: [
+      { id: 'nextReviewDate', label: 'Next review date', type: 'text', placeholder: 'e.g. January 2027' },
+      { id: 'reviewOwner', label: 'Review owner', type: 'text', placeholder: 'Who is responsible for keeping this plan current' },
+      { id: 'lastIncidentDate', label: 'Date of last real incident, if any (separate from planned tests)', type: 'text', placeholder: 'e.g. None yet, or March 2026' },
+      { id: 'lastIncidentFindings', label: 'What did the post-incident review find? Actions and owners', type: 'textarea', placeholder: "What went well, what didn't, and who owns each follow-up action..." }
+    ]}
+  ];
+
+  // ---------------------------------------------------------------
+  // STATE
+  // ---------------------------------------------------------------
+
+  function freshState() {
+    return {
+      industry: '',
+      scores: {},       // dimensionId -> 1..5
+      notes: {},        // dimensionId -> free-text string, optional
+      currentQuestionIndex: 0,
+      orgName: '',
+      systemName: '',
+      plan: {},         // fieldId -> free-text value, the actual DR plan content
+      roles: defaultRoles(), // editable recovery-team roles — a suggestion, not a fixed structure
+      rtoPromised: '',
+      rpoPromised: '',
+      calculatorExposure: '', // handed off from Redline, if the user came from there
+      calculatorScenario: '',
+      calculatorRtoRealistic: '',
+      calculatorRtoGap: '',
+      calculatorRtoCost: '',
+      calculatorMtd: '',
+      calculatorMtdBreached: false,
+      calculatorRpoRealistic: '',
+      calculatorRpoGap: '',
+      calculatorRpoCost: '',
+      calculatorDataVolume: '',
+      regime: 'none',
+      customRegimeHours: '',
+      customWeights: null // null = use industry preset; once set, a full 12-entry override object
+    };
+  }
+  let state = freshState();
+
+  // ---------------------------------------------------------------
+  // MULTI-ASSESSMENT PERSISTENCE (opt-in, client-side only — nothing
+  // here is sent anywhere; it's plain localStorage on this device)
+  // ---------------------------------------------------------------
+  const REGISTRY_KEY = 'recoverly_assessments_v1';
+  const REMEMBER_KEY = 'recoverly_remember_enabled';
+  const ACTIVE_KEY = 'recoverly_active_id';
+  let rememberEnabled = false;
+  let activeAssessmentId = null;
+
+  function loadRegistry() {
+    try { const raw = localStorage.getItem(REGISTRY_KEY); return raw ? JSON.parse(raw) : []; }
+    catch (e) { return []; }
+  }
+  function saveRegistry(list) {
+    try { localStorage.setItem(REGISTRY_KEY, JSON.stringify(list)); }
+    catch (e) { /* storage unavailable or full — fail silently, JSON export still works as a backup */ }
+  }
+  function persistCurrentState() {
+    if (!rememberEnabled || !activeAssessmentId) return;
+    const registry = loadRegistry();
+    const idx = registry.findIndex(e => e.id === activeAssessmentId);
+    if (idx === -1) return;
+    registry[idx].state = JSON.parse(JSON.stringify(state));
+    registry[idx].savedAt = new Date().toISOString();
+    saveRegistry(registry);
+  }
+
+  function renderAssessmentsList() {
+    const wrap = document.getElementById('assessments-list-wrap');
+    const listEl = document.getElementById('assessments-list');
+    if (!rememberEnabled) { wrap.style.display = 'none'; return; }
+    wrap.style.display = 'block';
+    const registry = loadRegistry();
+    listEl.innerHTML = '';
+    if (registry.length === 0) {
+      listEl.innerHTML = '<p style="font-size:12px; color:var(--text-muted); margin:0;">No saved assessments yet.</p>';
+      return;
+    }
+    registry.forEach(entry => {
+      const row = document.createElement('div');
+      row.className = 'assessment-row' + (entry.id === activeAssessmentId ? ' active' : '');
+      const savedDate = new Date(entry.savedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+      row.innerHTML = '<div><div class="a-name">' + escapeHtml(entry.name) + '</div><div class="a-meta">' +
+        escapeHtml(entry.state.systemName || 'No system named') + ' &middot; saved ' + savedDate + '</div></div>' +
+        '<div class="a-actions"><button data-switch="' + entry.id + '">Switch</button><button data-rename="' + entry.id + '">Rename</button><button data-delete="' + entry.id + '">Delete</button></div>';
+      listEl.appendChild(row);
+    });
+    listEl.querySelectorAll('[data-switch]').forEach(btn => btn.addEventListener('click', () => switchAssessment(btn.dataset.switch)));
+    listEl.querySelectorAll('[data-rename]').forEach(btn => btn.addEventListener('click', () => renameAssessment(btn.dataset.rename)));
+    listEl.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', () => deleteAssessment(btn.dataset.delete)));
+  }
+
+  function switchAssessment(id) {
+    persistCurrentState();
+    const registry = loadRegistry();
+    const entry = registry.find(e => e.id === id);
+    if (!entry) return;
+    state = Object.assign(freshState(), entry.state);
+    activeAssessmentId = id;
+    try { localStorage.setItem(ACTIVE_KEY, id); } catch (e) {}
+    renderAssessmentsList();
+    renderWeightsGrid();
+    refreshAll();
+  }
+
+  function renameAssessment(id) {
+    const registry = loadRegistry();
+    const entry = registry.find(e => e.id === id);
+    if (!entry) return;
+    const name = prompt('Rename this assessment:', entry.name);
+    if (!name) return;
+    entry.name = name;
+    saveRegistry(registry);
+    renderAssessmentsList();
+  }
+
+  function deleteAssessment(id) {
+    if (!confirm('Delete this saved assessment? This cannot be undone.')) return;
+    let registry = loadRegistry().filter(e => e.id !== id);
+    saveRegistry(registry);
+    if (id === activeAssessmentId) {
+      if (registry.length > 0) { switchAssessment(registry[0].id); }
+      else { createNewAssessment(true); }
+    } else {
+      renderAssessmentsList();
+    }
+  }
+
+  function createNewAssessment(skipPrompt) {
+    persistCurrentState();
+    const name = skipPrompt ? 'My assessment' : (prompt('Name this assessment (e.g. the system it covers):', 'My assessment') || 'My assessment');
+    const id = 'a-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+    const registry = loadRegistry();
+    registry.push({ id, name, savedAt: new Date().toISOString(), state: freshState() });
+    saveRegistry(registry);
+    state = freshState();
+    activeAssessmentId = id;
+    try { localStorage.setItem(ACTIVE_KEY, id); } catch (e) {}
+    renderAssessmentsList();
+    renderWeightsGrid();
+    refreshAll();
+  }
+
+  // ---------------------------------------------------------------
+  // SCORING (per REQUIREMENTS.md §12)
+  // ---------------------------------------------------------------
+
+  function currentWeights() {
+    const preset = state.industry ? (INDUSTRY_WEIGHTS[state.industry] || INDUSTRY_WEIGHTS.general) : INDUSTRY_WEIGHTS.general;
+    if (!state.customWeights) return preset;
+    // Merge: any dimension not explicitly overridden falls back to the preset value.
+    const merged = {};
+    MATURITY_DIMENSIONS.forEach(d => { merged[d.id] = (state.customWeights[d.id] != null) ? state.customWeights[d.id] : preset[d.id]; });
+    return merged;
+  }
+
+  function computeMaturityScore() {
+    const weights = currentWeights();
+    let weightedSum = 0, weightSum = 0;
+    const gaps = [];
+    MATURITY_DIMENSIONS.forEach(d => {
+      const score = state.scores[d.id];
+      if (!score) return;
+      const w = weights[d.id] || 1.0;
+      weightedSum += score * w;
+      weightSum += w;
+      gaps.push({ id: d.id, gap: (5 - score) * w, score });
+    });
+    const weightedAverage = weightSum > 0 ? weightedSum / weightSum : 0;
+    const roundedLevel = Math.min(5, Math.max(1, Math.round(weightedAverage)));
+    gaps.sort((a, b) => b.gap - a.gap);
+    const topGapValue = gaps.length ? gaps[2] ? gaps[2].gap : gaps[gaps.length - 1].gap : 0;
+    const priorityGaps = gaps.filter((g, i) => i < 3 || g.gap === topGapValue).filter(g => g.gap > 0);
+    return { weightedAverage, roundedLevel, priorityGaps, weights };
+  }
+
+  function answeredCount() {
+    return MATURITY_DIMENSIONS.filter(d => state.scores[d.id]).length;
+  }
+
+  // ---------------------------------------------------------------
+  // RENDER: Assessment tab
+  // ---------------------------------------------------------------
+
+  const industrySelect = document.getElementById('industry-select');
+  INDUSTRIES.forEach(ind => {
+    const opt = document.createElement('option');
+    opt.value = ind.id; opt.textContent = ind.name;
+    industrySelect.appendChild(opt);
+  });
+  industrySelect.addEventListener('change', () => {
+    state.industry = industrySelect.value;
+    state.customWeights = null; // switching industry clears any manual overrides
+    renderWeightsGrid();
+    refreshAll();
+  });
+
+  function renderWeightsGrid() {
+    const grid = document.getElementById('weights-grid');
+    const weights = currentWeights();
+    grid.innerHTML = '';
+    MATURITY_DIMENSIONS.forEach(d => {
+      const wrap = document.createElement('div');
+      wrap.innerHTML = '<label style="display:block; font-size:11px; font-weight:600; color: var(--text); margin-bottom:4px;">' + d.short + '</label>' +
+        '<input type="number" class="text-input weight-input" data-dim="' + d.id + '" min="0.5" max="3" step="0.1" value="' + weights[d.id] + '" style="padding:8px 10px; font-size:13px;">';
+      grid.appendChild(wrap);
+    });
+    grid.querySelectorAll('.weight-input').forEach(el => {
+      el.addEventListener('input', () => {
+        if (!state.customWeights) state.customWeights = Object.assign({}, currentWeights());
+        state.customWeights[el.dataset.dim] = parseFloat(el.value) || 1.0;
+        if (answeredCount() === 12) { renderRiskAssessment(); renderResponsePlan(); }
+      });
+    });
+  }
+  document.getElementById('reset-weights-btn').addEventListener('click', () => {
+    state.customWeights = null;
+    renderWeightsGrid();
+    if (answeredCount() === 12) { renderRiskAssessment(); renderResponsePlan(); }
+  });
+  renderWeightsGrid();
+
+  const questionsContainer = document.getElementById('questions-container');
+
+  function renderCurrentQuestion() {
+    const idx = state.currentQuestionIndex;
+    const dim = MATURITY_DIMENSIONS[idx];
+    const selectedLevel = state.scores[dim.id];
+
+    let html = '<div class="q-progress-track"><div class="q-progress-fill" style="width:' + (((idx + 1) / 12) * 100) + '%;"></div></div>';
+    html += '<div class="category-header">' + dim.category + '</div>';
+    html += '<div class="question-card"><div class="q-num">Question ' + (idx + 1) + ' of 12</div><h3 tabindex="-1" id="current-q-heading">' + dim.question + '</h3>';
+    html += '<div class="level-options">';
+    dim.levels.forEach((desc, i) => {
+      const level = i + 1;
+      html += '<div class="level-option' + (selectedLevel === level ? ' selected' : '') + '" data-dim="' + dim.id + '" data-level="' + level + '">' +
+        '<span class="lvl-badge">' + level + '</span>' +
+        '<span class="lvl-text"><span class="lvl-name">' + MATURITY_LEVELS[i].name + '</span><div class="lvl-desc">' + desc + '</div></span></div>';
+    });
+    html += '</div>';
+
+    html += '<div class="notes-field"><label for="notes-input">Anything specific worth noting here? (optional)</label>' +
+      '<textarea id="notes-input" placeholder="e.g. we started fixing this last quarter, or this only applies to one of our three systems&hellip;">' + escapeHtml(state.notes[dim.id] || '') + '</textarea>' +
+      '<div class="notes-hint">This isn\'t scored — it just carries through to your Response Plan as context.</div></div>';
+
+    html += '<div class="q-nav">';
+    html += '<button class="btn" id="q-back" ' + (idx === 0 ? 'disabled' : '') + '>&#8592; Back</button>';
+    if (!selectedLevel) {
+      html += '<span class="must-answer-note">Pick the closest description above to continue</span>';
+    }
+    html += '<button class="btn primary" id="q-next" ' + (!selectedLevel ? 'disabled' : '') + '>' +
+      (idx === 11 ? 'View my Risk Assessment &rarr;' : 'Next &rarr;') + '</button>';
+    html += '</div></div>';
+
+    questionsContainer.innerHTML = html;
+
+    questionsContainer.querySelectorAll('.level-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        state.scores[dim.id] = parseInt(opt.dataset.level, 10);
+        refreshAll();
+      });
+    });
+    document.getElementById('notes-input').addEventListener('input', e => { state.notes[dim.id] = e.target.value; });
+    document.getElementById('q-back').addEventListener('click', () => {
+      state.currentQuestionIndex = Math.max(0, state.currentQuestionIndex - 1);
+      renderCurrentQuestion();
+      questionsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const heading = document.getElementById('current-q-heading');
+      if (heading) heading.focus();
+    });
+    document.getElementById('q-next').addEventListener('click', () => {
+      if (!state.scores[dim.id]) return;
+      if (idx === 11) {
+        document.querySelector('.tab-btn[data-tab="risk"]').click();
+      } else {
+        state.currentQuestionIndex = Math.min(11, state.currentQuestionIndex + 1);
+        renderCurrentQuestion();
+        questionsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const heading = document.getElementById('current-q-heading');
+        if (heading) heading.focus();
+      }
+    });
+  }
+
+  function syncSelectedOptionsUI() {
+    industrySelect.value = state.industry;
+  }
+
+  // ---------------------------------------------------------------
+  // RENDER: Radar chart (SVG, no dependencies)
+  // ---------------------------------------------------------------
+
+  function buildRadarSVG(scoresByDim) {
+    const size = 460, cx = size / 2, cy = size / 2, maxR = 145;
+    const n = MATURITY_DIMENSIONS.length;
+    function point(i, radius) {
+      const angle = (i * (360 / n) - 90) * Math.PI / 180;
+      return { x: cx + radius * Math.cos(angle), y: cy + radius * Math.sin(angle) };
+    }
+    let rings = '';
+    for (let lvl = 1; lvl <= 5; lvl++) {
+      const r = (lvl / 5) * maxR;
+      const pts = [];
+      for (let i = 0; i < n; i++) { const p = point(i, r); pts.push(p.x + ',' + p.y); }
+      rings += '<polygon points="' + pts.join(' ') + '" fill="none" stroke="#E2E8F0" stroke-width="1"/>';
+    }
+    let spokes = '';
+    let labels = '';
+    for (let i = 0; i < n; i++) {
+      const p = point(i, maxR);
+      spokes += '<line x1="' + cx + '" y1="' + cy + '" x2="' + p.x + '" y2="' + p.y + '" stroke="#E2E8F0" stroke-width="1"/>';
+      const lp = point(i, maxR + 26);
+      const anchor = Math.abs(lp.x - cx) < 8 ? 'middle' : (lp.x > cx ? 'start' : 'end');
+      labels += '<text x="' + lp.x + '" y="' + lp.y + '" font-size="11" font-weight="700" fill="#64748B" text-anchor="' + anchor + '" dominant-baseline="middle">' + MATURITY_DIMENSIONS[i].radar + '</text>';
+    }
+    const dataPts = MATURITY_DIMENSIONS.map((d, i) => {
+      const score = scoresByDim[d.id] || 0;
+      const p = point(i, (score / 5) * maxR);
+      return p.x + ',' + p.y;
+    });
+    const dataPolygon = '<polygon points="' + dataPts.join(' ') + '" fill="#2563EB" fill-opacity="0.18" stroke="#2563EB" stroke-width="2"/>';
+    const dots = MATURITY_DIMENSIONS.map((d, i) => {
+      const score = scoresByDim[d.id] || 0;
+      const p = point(i, (score / 5) * maxR);
+      return '<circle cx="' + p.x + '" cy="' + p.y + '" r="3.5" fill="#2563EB"/>';
+    }).join('');
+    return '<svg viewBox="0 0 ' + size + ' ' + size + '" width="460" style="overflow:visible;" role="img" aria-label="Radar chart showing your maturity score across all 12 assessed areas, on a scale of 1 to 5">' + rings + spokes + dataPolygon + dots + labels + '</svg>';
+  }
+
+  // ---------------------------------------------------------------
+  // RENDER: Risk Assessment tab
+  // ---------------------------------------------------------------
+
+  function ragStatus(score) {
+    if (score <= 2) return { label: 'Red', color: 'var(--risk)' };
+    if (score === 3) return { label: 'Amber', color: 'var(--amber)' };
+    return { label: 'Green', color: 'var(--safe)' };
+  }
+
+  function renderRiskAssessment() {
+    const container = document.getElementById('risk-panel-content');
+    if (answeredCount() < 12) {
+      container.innerHTML = '<div class="empty-state"><p>Answer all 12 questions to see your Risk Assessment.</p></div>';
+      return;
+    }
+    const { weightedAverage, roundedLevel, priorityGaps } = computeMaturityScore();
+    const levelName = MATURITY_LEVELS[roundedLevel - 1].name;
+
+    let html = '<h2>Your Risk Assessment</h2><p class="sub">Based on your answers across all 12 areas.</p>';
+    html += '<div class="score-hero"><div class="score-circle"><span class="num">' + weightedAverage.toFixed(1) + '</span><span class="denom">out of 5</span></div>';
+    html += '<div class="score-meta"><h3>' + levelName + '</h3><p>' + levelDescriptionFor(roundedLevel) + '</p></div></div>';
+
+    html += '<div class="radar-wrap">' + buildRadarSVG(state.scores) + '</div>';
+
+    html += '<h3 style="font-size:15px; font-weight:700; color: var(--text); margin-bottom:10px;">All 12 areas at a glance</h3>';
+    html += '<div class="rag-legend">' +
+      '<span><i style="background:var(--risk)"></i> Red — Ad hoc / Developing</span>' +
+      '<span><i style="background:var(--amber)"></i> Amber — Defined, not yet tested</span>' +
+      '<span><i style="background:var(--safe)"></i> Green — Managed / Optimised</span></div>';
+    html += '<div class="rag-grid">';
+    MATURITY_DIMENSIONS.slice().sort((a, b) => (state.scores[a.id] || 0) - (state.scores[b.id] || 0)).forEach(dim => {
+      const score = state.scores[dim.id];
+      const rag = ragStatus(score);
+      html += '<div class="rag-item"><span class="rag-dot" aria-hidden="true" style="background:' + rag.color + ';"></span>' +
+        '<span><span class="rag-name">' + dim.short + '</span><span class="rag-level">' + MATURITY_LEVELS[score - 1].name + '</span></span></div>';
+    });
+    html += '</div>';
+
+    html += '<h3 style="font-size:15px; font-weight:700; color: var(--text); margin-bottom:12px;">Priority gaps</h3>';
+    priorityGaps.forEach(g => {
+      const dim = MATURITY_DIMENSIONS.find(d => d.id === g.id);
+      const currentLevelName = MATURITY_LEVELS[g.score - 1].name;
+      html += '<div class="gap-card"><p class="gap-title">' + dim.short + ' — currently ' + currentLevelName + '</p>' +
+        '<p class="gap-desc">' + dim.question + '</p>' +
+        '<div class="gap-action"><strong>Next step:</strong> ' + (MATURITY_BRIDGES[dim.id][g.score - 1] || 'Already at the top level — focus on maintaining this.') + '</div>';
+      if (state.notes[dim.id]) {
+        html += '<div class="gap-action" style="margin-top:8px;"><strong>Your note:</strong> ' + escapeHtml(state.notes[dim.id]) + '</div>';
+      }
+      html += '</div>';
+    });
+
+    html += '<div class="q-nav no-print"><button class="btn" id="risk-back">&#8592; Back to assessment</button>' +
+      '<button class="btn primary" id="risk-next">View my Response Plan &rarr;</button></div>';
+
+    container.innerHTML = html;
+
+    document.getElementById('risk-back').addEventListener('click', () => {
+      state.currentQuestionIndex = 11;
+      renderCurrentQuestion();
+      document.querySelector('.tab-btn[data-tab="assessment"]').click();
+    });
+    document.getElementById('risk-next').addEventListener('click', () => {
+      document.querySelector('.tab-btn[data-tab="plan"]').click();
+    });
+  }
+
+  function levelDescriptionFor(level) {
+    const texts = {
+      1: 'Recovery today depends on individual knowledge and improvisation rather than a documented, repeatable process.',
+      2: "Some of the pieces exist, but they're inconsistent, undocumented, or not owned by anyone specific.",
+      3: "The fundamentals are documented and consistently applied — but largely untested under realistic conditions.",
+      4: 'Recovery capability is tested regularly, with real metrics tracked against targets.',
+      5: 'Recovery capability is continuously improved and resilient to organisational change.'
+    };
+    return texts[level];
+  }
+
+  // ---------------------------------------------------------------
+  // RENDER: Response Plan tab
+  // ---------------------------------------------------------------
+
+  function renderResponsePlan() {
+    const container = document.getElementById('plan-panel-content');
+    if (answeredCount() < 12) {
+      container.innerHTML = '<div class="empty-state"><p>Answer all 12 questions to generate your Response Plan.</p></div>';
+      return;
+    }
+    const { weightedAverage, roundedLevel } = computeMaturityScore();
+    const industryName = state.industry ? (INDUSTRIES.find(i => i.id === state.industry) || {}).name : 'Not specified';
+    const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    let html = '<h2>Data Recovery Response Plan</h2><p class="sub">Generated ' + today + ' &middot; ' + industryName + ' &middot; Overall maturity: ' + MATURITY_LEVELS[roundedLevel - 1].name + ' (' + weightedAverage.toFixed(1) + '/5) &mdash; fill in each section below to build a real, usable plan for this system.</p>';
+
+    html += '<div class="plan-section"><div class="plan-field"><label for="org-name-input">Organisation name</label>' +
+      '<input type="text" class="text-input" id="org-name-input" placeholder="e.g. Acme Ltd" value="' + escapeHtml(state.orgName) + '"></div>' +
+      '<div class="plan-field"><label for="system-name-input">System / application this plan covers</label>' +
+      '<input type="text" class="text-input" id="system-name-input" placeholder="e.g. Salesforce production org" value="' + escapeHtml(state.systemName) + '"></div></div>';
+
+    let lastGroup = null;
+    let sectionIndexInGroup = 0;
+    PLAN_SECTIONS.forEach(section => {
+      if (section.group !== lastGroup) {
+        html += '<div class="plan-group-header">' + section.group + '</div>';
+        lastGroup = section.group;
+        sectionIndexInGroup = 0;
+      }
+      const titleText = section.stage ? ('Stage ' + section.stage + ': ' + section.title) : section.title;
+      html += '<details class="plan-section"' + (sectionIndexInGroup === 0 ? ' open' : '') + '><summary><h3>' + titleText + '</h3></summary><div class="plan-section-body">';
+      sectionIndexInGroup++;
+
+      // Consolidated guidance from the assessment — a helper, not the main content
+      const guidanceLines = section.dims.map(dimId => {
+        const dim = MATURITY_DIMENSIONS.find(d => d.id === dimId);
+        const score = state.scores[dimId];
+        const levelName = MATURITY_LEVELS[score - 1].name;
+        const advice = score < 5 ? MATURITY_BRIDGES[dimId][score - 1] : 'already at Optimised — focus on maintaining this.';
+        let line = '<div class="guidance-line"><strong>' + dim.short + ' (' + levelName + '):</strong> ' + advice + '</div>';
+        if (state.notes[dimId]) {
+          line += '<div class="guidance-line" style="margin-left:12px;">&#8618; Your note: ' + escapeHtml(state.notes[dimId]) + '</div>';
+        }
+        return line;
+      }).join('');
+      if (section.dims.length > 0) {
+        html += '<div class="guidance-box"><span aria-hidden="true">💡</span> <strong>Based on your assessment:</strong>' + guidanceLines + '</div>';
+      }
+      if (section.relatedLink) {
+        html += '<p style="margin:-6px 0 16px; font-size:12px;"><a href="' + section.relatedLink.url + '" target="_blank" rel="noopener">' + section.relatedLink.text + ' \u2192</a></p>';
+      }
+
+      if (section.isRoles) {
+        html += '<p class="plan-sub" style="margin-top:-6px;">A suggested starting point for a solid recovery team \u2014 adjust the titles or responsibilities below, or add more roles, to match how your organisation actually works.</p>';
+        state.roles.forEach((role, i) => {
+          html += '<div class="role-card' + (role.senior ? ' senior' : '') + '">';
+          html += '<div class="field-row" style="margin-bottom:8px;">';
+          html += '<div class="plan-field" style="margin-bottom:0;"><label>Role title</label><input type="text" class="text-input role-title-input" data-idx="' + i + '" value="' + escapeHtml(role.title) + '"></div>';
+          html += '<div class="plan-field" style="margin-bottom:0;"><label>Who currently holds this role</label><input type="text" class="text-input role-holder-input" data-idx="' + i + '" placeholder="e.g. Head of IT Operations" value="' + escapeHtml(role.holder) + '"></div>';
+          html += '</div>';
+          html += '<div class="plan-field" style="margin-bottom:8px;"><label>Responsibilities</label><textarea class="role-desc-input" data-idx="' + i + '" style="min-height:60px;">' + escapeHtml(role.description) + '</textarea></div>';
+          html += '<div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">';
+          html += '<label style="font-size:12px; color:var(--text-muted); display:flex; align-items:center; gap:6px; cursor:pointer;"><input type="checkbox" class="role-senior-input" data-idx="' + i + '" ' + (role.senior ? 'checked' : '') + '> Most senior \u2014 escalates to Incident Response Command Team</label>';
+          html += '<button class="btn" style="padding:6px 10px; font-size:12px;" data-remove-role="' + i + '">Remove role</button>';
+          html += '</div></div>';
+        });
+        html += '<button class="btn" id="add-role-btn" type="button">+ Add another role</button>';
+      }
+
+      if (section.isTargets) {
+        html += '<div class="plan-field"><label for="rto-input">Promised RTO</label><input type="text" class="text-input" id="rto-input" placeholder="e.g. 4 hours" value="' + escapeHtml(state.rtoPromised) + '"></div>';
+        html += '<div class="plan-field"><label for="rpo-input">Promised RPO</label><input type="text" class="text-input" id="rpo-input" placeholder="e.g. 1 hour" value="' + escapeHtml(state.rpoPromised) + '"></div>';
+        html += '<p style="margin-top:-6px; margin-bottom:16px; font-size:12px;"><a href="/redline/" target="_blank" rel="noopener">Model this properly in Redline &rarr;</a> — Recoverly doesn\'t recalculate recovery time here.</p>';
+        if (state.calculatorExposure) {
+          html += '<div class="guidance-box" style="border-left:4px solid var(--risk); background:var(--risk-bg);">';
+          html += '<strong style="color:var(--risk);">From Redline' + (state.calculatorScenario ? ' \u2014 "' + escapeHtml(state.calculatorScenario) + '" scenario' : '') + ':</strong>';
+          html += '<table style="width:100%; margin-top:8px; font-size:12px; color:var(--risk); border-collapse:collapse;">';
+          if (state.calculatorRtoRealistic) html += '<tr><td style="padding:3px 8px 3px 0;">Realistic RTO</td><td style="padding:3px 0;">' + escapeHtml(state.calculatorRtoRealistic) + (state.calculatorRtoGap ? ' (' + escapeHtml(state.calculatorRtoGap) + ' over promise)' : '') + '</td></tr>';
+          if (state.calculatorRtoCost) html += '<tr><td style="padding:3px 8px 3px 0;">RTO exposure cost</td><td style="padding:3px 0;"><strong>' + escapeHtml(state.calculatorRtoCost) + '</strong></td></tr>';
+          if (state.calculatorMtd) html += '<tr><td style="padding:3px 8px 3px 0;">Maximum Tolerable Downtime</td><td style="padding:3px 0;">' + escapeHtml(state.calculatorMtd) + (state.calculatorMtdBreached ? ' \u2014 <strong>breached</strong>' : ' \u2014 within tolerance') + '</td></tr>';
+          if (state.calculatorRpoRealistic) html += '<tr><td style="padding:3px 8px 3px 0;">Realistic RPO</td><td style="padding:3px 0;">' + escapeHtml(state.calculatorRpoRealistic) + (state.calculatorRpoGap ? ' (' + escapeHtml(state.calculatorRpoGap) + ' over promise)' : '') + '</td></tr>';
+          if (state.calculatorDataVolume) html += '<tr><td style="padding:3px 8px 3px 0;">Data at risk</td><td style="padding:3px 0;">' + escapeHtml(state.calculatorDataVolume) + '</td></tr>';
+          if (state.calculatorRpoCost) html += '<tr><td style="padding:3px 8px 3px 0;">RPO exposure cost</td><td style="padding:3px 0;"><strong>' + escapeHtml(state.calculatorRpoCost) + '</strong></td></tr>';
+          html += '<tr><td style="padding:6px 8px 0 0; border-top:1px solid rgba(127,29,29,0.2);">Combined exposure</td><td style="padding:6px 0 0; border-top:1px solid rgba(127,29,29,0.2);"><strong>' + escapeHtml(state.calculatorExposure) + '</strong></td></tr>';
+          html += '</table></div>';
+        }
+      }
+
+      if (section.isRegulatory) {
+        html += '<div class="plan-field"><label for="regime-select">Which regulatory deadline applies, if any?</label>';
+        html += '<select class="select-input" id="regime-select"><option value="none">Not sure / no fixed statutory deadline applies</option>';
+        Object.keys(REGIMES).forEach(key => {
+          html += '<option value="' + key + '"' + (state.regime === key ? ' selected' : '') + '>' + REGIMES[key].name + ' — ' + REGIMES[key].text + '</option>';
+        });
+        html += '<option value="custom"' + (state.regime === 'custom' ? ' selected' : '') + '>Custom</option></select></div>';
+        if (state.regime && state.regime !== 'none' && REGIMES[state.regime]) {
+          html += '<p class="plan-item-action" style="margin-bottom:16px;"><strong>' + REGIMES[state.regime].name + ':</strong> ' + REGIMES[state.regime].text + '. Stated as fact, not a live countdown — use Redline for real-time tracking against an actual incident.</p>';
+        }
+      }
+
+      section.fields.forEach(f => {
+        html += '<div class="plan-field"><label for="pf-' + f.id + '">' + f.label + '</label>';
+        if (f.type === 'textarea') {
+          html += '<textarea id="pf-' + f.id + '" placeholder="' + escapeHtml(f.placeholder) + '">' + escapeHtml(state.plan[f.id] || '') + '</textarea>';
+        } else {
+          html += '<input type="text" class="text-input" id="pf-' + f.id + '" placeholder="' + escapeHtml(f.placeholder) + '" value="' + escapeHtml(state.plan[f.id] || '') + '">';
+        }
+        html += '</div>';
+      });
+
+      if (section.isReviewCadence) {
+        const cadence = roundedLevel <= 2 ? 'every 3 months, given the foundational gaps still open' : roundedLevel === 3 ? 'every 6 months' : 'annually, alongside your regular testing cycle';
+        html += '<p class="plan-item-action" style="margin-top:8px;">Recommended: revisit this plan <strong>' + cadence + '</strong>.</p>';
+      }
+
+      html += '</div></details>';
+    });
+
+    html += '<div class="q-nav no-print"><button class="btn" id="plan-back">&#8592; Back to Risk Assessment</button><span></span></div>';
+
+    container.innerHTML = html;
+
+    document.getElementById('org-name-input').addEventListener('input', e => { state.orgName = e.target.value; });
+    document.getElementById('system-name-input').addEventListener('input', e => { state.systemName = e.target.value; });
+    document.getElementById('rto-input').addEventListener('input', e => { state.rtoPromised = e.target.value; });
+    document.getElementById('rpo-input').addEventListener('input', e => { state.rpoPromised = e.target.value; });
+    const regimeSelect = document.getElementById('regime-select');
+    if (regimeSelect) regimeSelect.addEventListener('change', e => { state.regime = e.target.value; renderResponsePlan(); });
+    PLAN_SECTIONS.forEach(section => {
+      section.fields.forEach(f => {
+        const el = document.getElementById('pf-' + f.id);
+        if (el) el.addEventListener('input', e => { state.plan[f.id] = e.target.value; });
+      });
+    });
+
+    document.querySelectorAll('.role-title-input').forEach(el => {
+      el.addEventListener('input', e => { state.roles[+el.dataset.idx].title = e.target.value; });
+    });
+    document.querySelectorAll('.role-holder-input').forEach(el => {
+      el.addEventListener('input', e => { state.roles[+el.dataset.idx].holder = e.target.value; });
+    });
+    document.querySelectorAll('.role-desc-input').forEach(el => {
+      el.addEventListener('input', e => { state.roles[+el.dataset.idx].description = e.target.value; });
+    });
+    document.querySelectorAll('.role-senior-input').forEach(el => {
+      el.addEventListener('change', e => { state.roles[+el.dataset.idx].senior = e.target.checked; renderResponsePlan(); });
+    });
+    document.querySelectorAll('[data-remove-role]').forEach(el => {
+      el.addEventListener('click', () => {
+        if (state.roles.length <= 1) { alert('Keep at least one role \u2014 edit it instead of removing the last one.'); return; }
+        state.roles.splice(parseInt(el.dataset.removeRole, 10), 1);
+        renderResponsePlan();
+      });
+    });
+    const addRoleBtn = document.getElementById('add-role-btn');
+    if (addRoleBtn) addRoleBtn.addEventListener('click', () => {
+      state.roles.push({ id: 'role-' + Math.random().toString(36).slice(2, 8), title: 'New role', description: '', holder: '', senior: false });
+      renderResponsePlan();
+    });
+
+    document.getElementById('plan-back').addEventListener('click', () => {
+      document.querySelector('.tab-btn[data-tab="risk"]').click();
+    });
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+
+  // ---------------------------------------------------------------
+  // TABS
+  // ---------------------------------------------------------------
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.disabled) return;
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    });
+  });
+
+  // ---------------------------------------------------------------
+  // TOOLBAR: refresh, save/load JSON, PDF, email
+  // ---------------------------------------------------------------
+
+  function refreshAll() {
+    const count = answeredCount();
+    document.getElementById('progress-text').textContent = count + ' of 12 answered';
+    const complete = count === 12;
+    document.getElementById('tab-btn-risk').disabled = !complete;
+    document.getElementById('tab-btn-plan').disabled = !complete;
+    document.getElementById('btn-pdf').disabled = !complete;
+    document.getElementById('btn-docx').disabled = !complete;
+    document.querySelector('.actions').classList.toggle('exports-ready', complete);
+    syncSelectedOptionsUI();
+    renderCurrentQuestion();
+    if (complete) { renderRiskAssessment(); renderResponsePlan(); }
+    persistCurrentState();
+  }
+
+  document.getElementById('btn-save').addEventListener('click', () => {
+    const payload = JSON.stringify({ savedAt: new Date().toISOString(), state }, null, 2);
+    const blob = new Blob([payload], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'recoverly-assessment.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('btn-load').addEventListener('click', () => document.getElementById('file-input').click());
+  document.getElementById('file-input').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = evt => {
+      try {
+        const parsed = JSON.parse(evt.target.result);
+        const loaded = parsed.state || parsed;
+        if (rememberEnabled) {
+          // Loading a file while Remember is on must not silently overwrite
+          // whatever assessment is currently active — treat it as bringing
+          // in a new one instead.
+          persistCurrentState();
+          const name = prompt('Name this loaded assessment:', loaded.systemName || 'Loaded assessment') || 'Loaded assessment';
+          const id = 'a-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6);
+          const registry = loadRegistry();
+          registry.push({ id, name, savedAt: new Date().toISOString(), state: Object.assign(freshState(), loaded) });
+          saveRegistry(registry);
+          state = Object.assign(freshState(), loaded);
+          activeAssessmentId = id;
+          try { localStorage.setItem(ACTIVE_KEY, id); } catch (err) {}
+          renderAssessmentsList();
+        } else {
+          state = Object.assign(freshState(), loaded);
+        }
+        renderWeightsGrid();
+        refreshAll();
+      } catch (err) {
+        alert("That file doesn't look like a valid Recoverly save file.");
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  // Builds a record of all 12 answers — the old print flow relied on whatever
+  // question happened to be on screen, which meant the actual assessment
+  // answers were never reliably captured in the export.
+  function buildAssessmentAnswersHTML() {
+    let out = '<h2>Your 12 answers</h2>';
+    MATURITY_DIMENSIONS.forEach(dim => {
+      const score = state.scores[dim.id];
+      const levelName = score ? MATURITY_LEVELS[score - 1].name : 'Not answered';
+      out += '<p><strong>' + dim.short + ':</strong> ' + levelName + (score ? ' (' + score + '/5)' : '') + '<br>' +
+        '<span style="color:#64748B; font-size:12px;">' + dim.question + '</span>';
+      if (state.notes[dim.id]) {
+        out += '<br><em>Note: ' + escapeHtml(state.notes[dim.id]) + '</em>';
+      }
+      out += '</p>';
+    });
+    return out;
+  }
+
+  function buildRiskAssessmentPrintHTML() {
+    const { weightedAverage, roundedLevel, priorityGaps } = computeMaturityScore();
+    let out = '<h2>Risk Assessment</h2>';
+    out += '<p><strong>Overall score:</strong> ' + weightedAverage.toFixed(1) + ' / 5 \u2014 ' + MATURITY_LEVELS[roundedLevel - 1].name + '</p>';
+    out += '<div style="margin:16px 0;">' + buildRadarSVG(state.scores) + '</div>';
+    out += '<h3 style="font-size:14px;">Priority gaps</h3>';
+    priorityGaps.forEach(g => {
+      const dim = MATURITY_DIMENSIONS.find(d => d.id === g.id);
+      out += '<p><strong>' + dim.short + '</strong> \u2014 currently ' + MATURITY_LEVELS[g.score - 1].name + '<br>' +
+        'Next step: ' + MATURITY_BRIDGES[dim.id][g.score - 1] + '</p>';
+    });
+    return out;
+  }
+
+  function buildFullPrintHTML() {
+    const industryName = state.industry ? (INDUSTRIES.find(i => i.id === state.industry) || {}).name : 'Not specified';
+    const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    let out = '<div style="margin-bottom:8px;"><svg viewBox="0 0 40 40" width="36" height="36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+      '<rect width="40" height="40" rx="9" fill="#0F172A"/>' +
+      '<path d="M20 7 C23 7,27 8.5,29 10 L29 18 C29 24,25 28.5,20 32 C15 28.5,11 24,11 18 L11 10 C13 8.5,17 7,20 7 Z" fill="none" stroke="#93C5FD" stroke-width="1.5"/>' +
+      '<path d="M13.5 20 L18 24.5 L27 13.5" stroke="#2563EB" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '</svg></div>';
+    out += '<h1>Recoverly \u2014 Data Recovery Assessment</h1>';
+    out += '<p><strong>Organisation:</strong> ' + escapeHtml(state.orgName || '\u2014') + ' &middot; ' +
+      '<strong>System:</strong> ' + escapeHtml(state.systemName || '\u2014') + ' &middot; ' +
+      '<strong>Industry:</strong> ' + industryName + ' &middot; ' + today + '</p>';
+    out += buildAssessmentAnswersHTML();
+    out += buildRiskAssessmentPrintHTML();
+    out += buildPlanDocumentHTML();
+    return out;
+  }
+
+  // Paged.js was tried here to get a custom branded footer with real page
+  // numbers, but it produced a blank print in practice and isn't something
+  // that can be debugged without a real browser to inspect - reliability
+  // matters more than the nice-to-have footer, so this prints the full
+  // content plainly instead. For page numbers, tick "More settings ->
+  // Headers and footers" in the browser's own print dialog.
+  document.getElementById('btn-pdf').addEventListener('click', () => {
+    const printRoot = document.getElementById('print-root');
+    printRoot.innerHTML = buildFullPrintHTML();
+    window.print();
+  });
+
+  // Built from `state` directly (not the live DOM) so it's guaranteed to reflect
+  // actual typed values, not stale HTML attributes from when fields were first rendered.
+  function buildPlanDocumentHTML() {
+    const { weightedAverage, roundedLevel } = computeMaturityScore();
+    const industryName = state.industry ? (INDUSTRIES.find(i => i.id === state.industry) || {}).name : 'Not specified';
+    const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+    let out = '<h1>Data Recovery Response Plan</h1>';
+    out += '<p style="background: var(--amber-bg); border-left:4px solid #D97706; padding:10px 14px; font-size:12px;"><strong>Before you rely on this document:</strong> this is a planning aid generated from a self-assessment, not a certified plan, an audit, or professional advice. See the full disclaimer at the end of this document.</p>';
+    out += '<p><strong>Organisation:</strong> ' + escapeHtml(state.orgName || '\u2014') + '<br>' +
+      '<strong>System / application:</strong> ' + escapeHtml(state.systemName || '\u2014') + '<br>' +
+      '<strong>Generated:</strong> ' + today + '<br>' +
+      '<strong>Industry:</strong> ' + industryName + '<br>' +
+      '<strong>Overall maturity:</strong> ' + MATURITY_LEVELS[roundedLevel - 1].name + ' (' + weightedAverage.toFixed(1) + '/5)</p>';
+
+    let lastExportGroup = null;
+    PLAN_SECTIONS.forEach(section => {
+      if (section.group !== lastExportGroup) {
+        out += '<h1 style="font-size:15px; color:#64748B; text-transform:uppercase; margin-top:28px;">' + section.group + '</h1>';
+        lastExportGroup = section.group;
+      }
+      out += '<h2>' + (section.stage ? ('Stage ' + section.stage + ': ' + section.title) : section.title) + '</h2>';
+      section.dims.forEach(dimId => {
+        const dim = MATURITY_DIMENSIONS.find(d => d.id === dimId);
+        const score = state.scores[dimId];
+        const levelName = MATURITY_LEVELS[score - 1].name;
+        const advice = score < 5 ? MATURITY_BRIDGES[dimId][score - 1] : 'Already at Optimised \u2014 focus on maintaining this.';
+        out += '<p><em>' + dim.short + ' (' + levelName + '):</em> ' + advice + '</p>';
+        if (state.notes[dimId]) out += '<p><em>Note:</em> ' + escapeHtml(state.notes[dimId]) + '</p>';
+      });
+      if (section.isRoles) {
+        state.roles.forEach(role => {
+          out += '<p><strong>' + escapeHtml(role.title) + (role.senior ? ' (most senior \u2014 escalates to the Incident Response Command Team)' : '') + '</strong><br>' +
+            escapeHtml(role.description) + (role.holder ? '<br><em>Current holder:</em> ' + escapeHtml(role.holder) : '') + '</p>';
+        });
+      }
+      if (section.isTargets) {
+        out += '<p><strong>Promised RTO:</strong> ' + escapeHtml(state.rtoPromised || '\u2014') + '<br><strong>Promised RPO:</strong> ' + escapeHtml(state.rpoPromised || '\u2014') + '</p>';
+        if (state.calculatorExposure) {
+          out += '<p><strong>From Redline' + (state.calculatorScenario ? ' \u2014 "' + escapeHtml(state.calculatorScenario) + '" scenario' : '') + ':</strong></p>';
+          out += '<table style="width:100%; font-size:11px; border-collapse:collapse; margin-bottom:12px;">';
+          if (state.calculatorRtoRealistic) out += '<tr><td>Realistic RTO</td><td>' + escapeHtml(state.calculatorRtoRealistic) + (state.calculatorRtoGap ? ' (' + escapeHtml(state.calculatorRtoGap) + ' over promise)' : '') + '</td></tr>';
+          if (state.calculatorRtoCost) out += '<tr><td>RTO exposure cost</td><td><strong>' + escapeHtml(state.calculatorRtoCost) + '</strong></td></tr>';
+          if (state.calculatorMtd) out += '<tr><td>Maximum Tolerable Downtime</td><td>' + escapeHtml(state.calculatorMtd) + (state.calculatorMtdBreached ? ' \u2014 breached' : ' \u2014 within tolerance') + '</td></tr>';
+          if (state.calculatorRpoRealistic) out += '<tr><td>Realistic RPO</td><td>' + escapeHtml(state.calculatorRpoRealistic) + (state.calculatorRpoGap ? ' (' + escapeHtml(state.calculatorRpoGap) + ' over promise)' : '') + '</td></tr>';
+          if (state.calculatorDataVolume) out += '<tr><td>Data at risk</td><td>' + escapeHtml(state.calculatorDataVolume) + '</td></tr>';
+          if (state.calculatorRpoCost) out += '<tr><td>RPO exposure cost</td><td><strong>' + escapeHtml(state.calculatorRpoCost) + '</strong></td></tr>';
+          out += '<tr><td><strong>Combined exposure</strong></td><td><strong>' + escapeHtml(state.calculatorExposure) + '</strong></td></tr>';
+          out += '</table>';
+        }
+      }
+      if (section.isRegulatory && state.regime && state.regime !== 'none' && REGIMES[state.regime]) {
+        out += '<p><strong>' + REGIMES[state.regime].name + ':</strong> ' + REGIMES[state.regime].text + '</p>';
+      }
+      section.fields.forEach(f => {
+        const val = state.plan[f.id] ? escapeHtml(state.plan[f.id]).replace(/\n/g, '<br>') : '\u2014';
+        out += '<p><strong>' + f.label + ':</strong><br>' + val + '</p>';
+      });
+      if (section.isReviewCadence) {
+        const cadence = roundedLevel <= 2 ? 'every 3 months' : roundedLevel === 3 ? 'every 6 months' : 'annually';
+        out += '<p><strong>Recommended review cadence:</strong> ' + cadence + '</p>';
+      }
+    });
+
+    out += '<hr><h2 style="font-size:13px; color:#64748B; border-bottom:none; margin-top:32px;">Disclaimer</h2>' +
+      '<p style="font-size:11px; color:#666; line-height:1.6;">' +
+      'This document was generated by Recoverly, an independent, free tool created by Kris McCabe. It is provided "as is," without warranty of any kind, express or implied, including but not limited to warranties of accuracy, completeness, or fitness for a particular purpose. ' +
+      'The maturity scores, industry weightings, recovery targets, and plan content in this document are indicative estimates intended to aid discussion and planning. They are not a certified audit, a formal Business Impact Analysis, professional consulting advice, or legal advice on your regulatory obligations. ' +
+      'You are solely responsible for verifying the accuracy of this content, adapting it to your organisation\'s actual circumstances, and obtaining qualified professional or legal advice before relying on it as part of a real data recovery or business continuity plan. ' +
+      'To the fullest extent permitted by applicable law, the author accepts no liability for any loss, damage, cost, or harm of any kind arising from the use of, or reliance on, this document or the Recoverly tool, including in connection with an actual data-loss incident. ' +
+      'Recoverly is not affiliated with, endorsed by, or sponsored by Salesforce or any other named vendor.</p>';
+    return out;
+  }
+
+  const RECOVERLY_LOGO_PNG_BASE64 = 'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAABmJLR0QA/wD/AP+gvaeTAAAJnklEQVR4nOWbe3BU1R3HP+dmk+zm7oMsSTaEjSIJAUIgykMI4wMHCqiMth2qFR9VfP/RqVStjg8GxdZxxBat0grWjrbSKipWCr5wfAGhhAAhCRISEk2WJLuGhGx2k91k997+sSRm2bxgb5ag35n9457fPb/f93zn3HN+93fPCoaApJTJY+IlcQ2CxcAFgO3kTwylf4zgFuBAiGJVVbaa4tvedzgcHYN1GnAAyWl50xShPA0sBiStmMYIx0GsaXXqn4Pirv5u6lMAm22a7CPwAnAr597Aw6BCeZwi7mn5rnxHX/YIAUaPzhkb0MW9B2Lm8NOLFUQQuLfVWb7hVEtc7wtrRl5mQIj/CcTEmHGLDSRgid6U0uH3NO3sbegRwG63G3yBhA8ETIo5vdhAgPiJQU6p8XmbSrobe57vti7zi8Css0IthlCFWJdsmzS1+1qC0GpPaMH7MUBWkF7n5NglgJNb3Tm92p8mLjTbpvwSQCSlTB4THycc/LgEADja6jw0QRcviWuJweBt5+eQnT+Hsdl5pGaMw5xiIzHJCIC/3YO7ycl39d9wrKqMygOFuGorh5tSltk2ebaw2HI3Az/V2rskxTFx5mXkzllAdn4BpuTU0+rf1uyiqqSQ8t3bOVL8FYoS1JoiKuqfhMWWewDI18qpbLYyc8HPmbXoF4xKzQizBQMB6qvLcdUdpcV5DJ+3DSEEiUlGrDY7qZnjGZuVhxQXlp5w4rt69nz0FsXbN+N1N2tFFQE7hcWW6wTSonUmm63Mu+5uZi1cik6X0NPe4nJQUbyDqgM7qS4rorPDO6CfBINM1tSLycqfy8QZl5CcZu+xBQKdFH20ic/fehlvW0u0lAHqhMWWGyTKNeDCy5ew5I5H0MsmAFRFoWLfDvZ8uJHKA4WoinJGfoUkMSF/LrOvuoGciy5BSCGaPm8bWzb8npIvt0ZDGxBBYbHlqtG4mLf0LhYs+zUAihJk/2f/4fNNG2hxOaIkFw6rzc68pXdx4RXXIEmhR2T7xj/z+dvro3Gr6qIlZhmdDoCntZnXVt9DQ/XX0brsE81OB+++tJLdH/ybWx7/C0aLtSd2NNBs+3Mfbxi2wfdGffUh3McbNPP3Y0t+IhD1IxALxMljMU66EynRSkdttAtfOEa8AJI+heSC55H0oUQq3ppPY3MzGeM18q+Nm+GBkBKwzHyqZ/DdcLYkahZjRAtgmvYA8aMmR7Sbk/qtcZ42RqwASeNvQG9fFNHe2bSXcek+zeKMSAESUmdhnHxnRHuwvQH3vicRIqrcLQwjTgCdfB6W6atAhL8QqYF2ThQ9gtLZqmm8ESWA0MmYZ61GxBvDDapC6/7VBNuqNY85cgQQEubpj6MzjosweSv+Rqdz17CE1VCA6D4TGifdQ2JaQUS7v+FLvFVvROV7IEQtgN/nASDREJq2kiEdfeaV6CzZQ/ahty8mKev6iPaA+witB54Cwhc9XYI+ZO/ynyHrXr6ideA5ESpMyOZk4q35jJqzBiElACreilfxVr4+YP/4UbmYpt0f0a74Wzix51EIRg4y0SAD4Pe1R0s/+hnQXaLSyybkCTedHDyAQJ54O3LOr/oPrk/BMnN1rz4hqEoXrcWPovhcEX3idLqe+mJbc6T9dBG1AL1JJOgNEXY5Z3mfInyf5qZE+iz9I13N5X3GS7Vn9RREjjfUnintHkQtQO2RgwQDAQAy5BpUNTJN7UsE07QH+0xzO2rexle3rd9446deDIASDFJ75GA01AENBOjs8FJfcwiA3LxM3EWPoSr9iXArAElZy9DbF0b6atqL5+t1A8bLmjobAEdl6aAF1qFAk22wunQPANn5c8BTRuu+Vf3MhNswT1+JcdIdEbag9xju4idQB6j/62UTF+SFvt9Wl+3Rgro2ApR8sRVVVUkwyEy/4lo6G3f0OxP0GfP7TnP3PobS5R4wzoz5PyNBnwRA6c6PtKCujQCuuipqyooAmHPVMoQk4Xft7ncmhGGIaa6QJGZfeQMAVSWFOL89ogV17TLBwm2hbG30mPPIv3wJwIAzoRueileGlOZedMW1WG2hjySFW7XLDDUToKLoCxpqDgOw+Jb7MchmgAFngq/+U9qrNg7q22C0sOiWFUCoKnxk31da0dZOAEUJ8v7LT6EqCkaLlYU33ddj62zcQWtxuAhdJ77GXfIMp6a5fWHRzSuQTcmoitITQyvE6Y2pq7Ry5j7uxDI6nYysXDKycmlyVOOqOwpA0FNLp6sQgn78jTvwlK+F4OCVndw581l48wqEEBR9vImijzdpRReAqD+NnQqDbObeNW9itdnp9LXz14duxFVXdUa+0sflcPcf/km83kBzYx3rHrwen7dNS7qq5vWADq+bjc/cR5ffR4I+iRsffh5TcmS6OxhMyakse+h54vUGunwdvPHMfVoPHhimgkjjNxVsXrcSCO0Kt69+9bREkM1Wblu1HqvNjqqqvPvSSs22vVOh6RrQG87aKrr8frLzC0gyJZOdX0D5rk/o6hz4uZdNySx/8hVs500A4MPX1rB3+zvDQREYRgEAag/vp9PfQXb+XIyjUphSsIDK/btobzvR5/3W9EyWP7mBtMxQMeWTN17gq/f+Plz0gGEWAKD28AFUVWF83sUYjBamXrqYuooSWpvCv/CeP3kGy5/YgCVlDKqq8um/XuSLdyKO9mqOYRcA4JvyYlpc9UyccSmJBpn8y6/G53HjqCoDoOCqZSxd8TSJBplgoIvNL61k97bBEyQtoMkRmaHigrxZLHtobU+WWF74CSCYUrAA+H4H6X6viAEUYbFNcYA6NlYRrTY7191/LPbsvLB2R2Upbz73O82P1gwCd5zemLYUyIxVxA6vm/2fvU9CooHMnGkA7NryDzatfbjfxXHYIPhWmG1T1grU38Q2cgiTZl4GwOG9X56N8CDUd4UpLW+uJJSdg9/9w4OA2wWhhbAK0OjMxbkCEQwSlyEBqqqy8mzTiTVU1P96nAddEoDbdWgjiOKzTSp2EEGd4FH4fv9XJYK3AdHXmc8FCNY3Nx4qh14JUIvzcKmKGlmv/qFBZZ8s6R/ovgyrT/u9TWV6U0oHiAWMrL/FagMVhy4YmO9ylfWcuY879R6/p2mnQU6pQYglfdnPWQj2S3FiYbPrcFiq2ecAfd6mkqSktM8UwWyhwX8Jzi5EEMF6k859vevY0eMR1oE7z4i3pPt+i6o+AJx+XevsQlFhiyLEI57G8kP93TS053zcOL3FJy9RFfVqIcQMUDOBUVox1QhuwIlQS1HZFiR+i8d5cNADBP8HuMFoLz77BlAAAAAASUVORK5CYII=';
+
+  document.getElementById('btn-docx').addEventListener('click', () => {
+    const bodyHtml = buildPlanDocumentHTML();
+    const logoImg = '<img src="data:image/png;base64,' + RECOVERLY_LOGO_PNG_BASE64 + '" width="48" height="48" alt="Recoverly" style="margin-bottom:8px;" />';
+    const fullHtml = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40">' +
+      '<head><meta charset="utf-8"><title>Data Recovery Response Plan</title>' +
+      '<style>' +
+        'body{font-family:Calibri,Arial,sans-serif; color:#334155; font-size:11pt; line-height:1.5;}' +
+        'h1{color: var(--text); font-size:20pt;}' +
+        'h2{color:#2563EB; font-size:15pt; border-bottom:1px solid #E2E8F0; padding-bottom:4px; margin-top:22px;}' +
+        'h3{color: var(--text); font-size:12pt; margin-bottom:2px;}' +
+        'strong{color: var(--text);}' +
+      '</style></head>' +
+      '<body>' + logoImg + bodyHtml + '</body></html>';
+    const blob = new Blob(['\ufeff', fullHtml], { type: 'application/msword' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'recoverly-response-plan.doc';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('remember-toggle').addEventListener('change', e => {
+    rememberEnabled = e.target.checked;
+    try { localStorage.setItem(REMEMBER_KEY, rememberEnabled ? '1' : '0'); } catch (err) {}
+    if (rememberEnabled) {
+      const registry = loadRegistry();
+      if (registry.length === 0) {
+        createNewAssessment(true);
+      } else {
+        const lastActive = localStorage.getItem(ACTIVE_KEY);
+        switchAssessment((lastActive && registry.find(en => en.id === lastActive)) ? lastActive : registry[0].id);
+      }
+    } else {
+      renderAssessmentsList();
+    }
+  });
+  document.getElementById('new-assessment-btn').addEventListener('click', () => createNewAssessment(false));
+  document.getElementById('clear-all-btn').addEventListener('click', () => {
+    if (!confirm('Delete ALL saved assessments from this device? This cannot be undone.')) return;
+    try {
+      localStorage.removeItem(REGISTRY_KEY);
+      localStorage.removeItem(ACTIVE_KEY);
+      localStorage.setItem(REMEMBER_KEY, '0');
+    } catch (e) {}
+    rememberEnabled = false;
+    activeAssessmentId = null;
+    document.getElementById('remember-toggle').checked = false;
+    state = freshState();
+    renderAssessmentsList();
+    renderWeightsGrid();
+    refreshAll();
+  });
+
+  // Restore a remembered assessment first, if the user previously opted in...
+  (function initPersistence() {
+    try { rememberEnabled = localStorage.getItem(REMEMBER_KEY) === '1'; } catch (e) { rememberEnabled = false; }
+    document.getElementById('remember-toggle').checked = rememberEnabled;
+    if (rememberEnabled) {
+      const registry = loadRegistry();
+      const lastActive = localStorage.getItem(ACTIVE_KEY);
+      const entry = (lastActive && registry.find(en => en.id === lastActive)) ? registry.find(en => en.id === lastActive) : registry[0];
+      if (entry) {
+        state = Object.assign(freshState(), entry.state);
+        activeAssessmentId = entry.id;
+      }
+      renderAssessmentsList();
+      renderWeightsGrid();
+    }
+  })();
+
+  // ...then apply any incoming RTO/RPO handoff from Redline
+  // on top — a deliberate action just taken should win over an old save.
+  (function readIncomingParams() {
+    const params = new URLSearchParams(window.location.search);
+    const get = k => params.get(k);
+    if (get('rto')) state.rtoPromised = get('rto');
+    if (get('rpo')) state.rpoPromised = get('rpo');
+    if (get('exposure')) state.calculatorExposure = get('exposure');
+    if (get('scenario')) state.calculatorScenario = get('scenario');
+    if (get('rtoRealistic')) state.calculatorRtoRealistic = get('rtoRealistic');
+    if (get('rtoGap')) state.calculatorRtoGap = get('rtoGap');
+    if (get('rtoCost')) state.calculatorRtoCost = get('rtoCost');
+    if (get('mtd')) state.calculatorMtd = get('mtd');
+    state.calculatorMtdBreached = get('mtdBreached') === '1';
+    if (get('rpoRealistic')) state.calculatorRpoRealistic = get('rpoRealistic');
+    if (get('rpoGap')) state.calculatorRpoGap = get('rpoGap');
+    if (get('rpoCost')) state.calculatorRpoCost = get('rpoCost');
+    if (get('dataVolume')) state.calculatorDataVolume = get('dataVolume');
+  })();
+
+  // Periodic autosave rather than wiring every single input — simpler, and
+  // loses at most a few seconds of typing if a tab closes abruptly.
+  setInterval(() => { if (rememberEnabled) persistCurrentState(); }, 3000);
+
+  refreshAll();
+</script>
+
+</body>
+</html>

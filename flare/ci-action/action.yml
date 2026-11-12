@@ -1,0 +1,83 @@
+name: 'Flare CI Check'
+description: >-
+  Fails a build on a critical-severity or actively-exploited (CISA KEV)
+  advisory in your AI-stack dependencies, straight from OSV.dev - the
+  CI/CD companion to lab.krismccabe.com/flare/.
+author: 'Kris McCabe'
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  files:
+    description: >-
+      Space-separated manifest paths to scan (requirements.txt,
+      package.json, package-lock.json, pyproject.toml). Auto-detects
+      these filenames in working-directory if omitted.
+    required: false
+    default: ''
+  severity-threshold:
+    description: 'Minimum severity that fails the build: LOW, MEDIUM, HIGH, or CRITICAL.'
+    required: false
+    default: 'CRITICAL'
+  fail-on-kev:
+    description: >-
+      Fail the build on any CISA KEV (actively exploited) match,
+      regardless of severity-threshold. Set to "false" to disable.
+    required: false
+    default: 'true'
+  sarif:
+    description: >-
+      Path (relative to working-directory) to write a SARIF 2.1.0 file
+      for GitHub code scanning upload, e.g. "flare.sarif". Left empty,
+      no SARIF file is written.
+    required: false
+    default: ''
+  working-directory:
+    description: 'Directory to run the scan from.'
+    required: false
+    default: '.'
+
+outputs:
+  result:
+    description: '"pass" or "fail"'
+    value: ${{ steps.run.outputs.result }}
+
+runs:
+  using: 'composite'
+  steps:
+    # No download step: the action's own files (flare_check.py, this
+    # action.yml) are already present at github.action_path because
+    # GitHub checks out whatever ref the consumer's `uses:` line pins
+    # (e.g. @main, @v1, a commit SHA) before running a composite action.
+    # That's what makes version pinning actually mean something here -
+    # a workflow pinned to a tag keeps getting that tag's script, not
+    # whatever's newest on main.
+    - name: Run Flare check
+      id: run
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        set -e
+        ARGS=(--severity-threshold "${{ inputs.severity-threshold }}")
+        if [ "${{ inputs.fail-on-kev }}" = "false" ]; then
+          ARGS+=(--no-fail-on-kev)
+        fi
+        if [ -n "${{ inputs.sarif }}" ]; then
+          ARGS+=(--sarif "${{ inputs.sarif }}")
+        fi
+        if [ -n "${{ inputs.files }}" ]; then
+          for f in ${{ inputs.files }}; do
+            ARGS+=(--file "$f")
+          done
+        fi
+        set +e
+        python3 "${{ github.action_path }}/flare_check.py" "${ARGS[@]}"
+        code=$?
+        set -e
+        if [ "$code" -eq 0 ]; then
+          echo "result=pass" >> "$GITHUB_OUTPUT"
+        else
+          echo "result=fail" >> "$GITHUB_OUTPUT"
+        fi
+        exit "$code"

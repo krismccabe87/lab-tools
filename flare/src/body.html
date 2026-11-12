@@ -1,0 +1,478 @@
+<a class="skip-link" href="#main-content">Skip to content</a>
+
+<div class="cookie-banner" id="cookie-banner" role="dialog" aria-label="Cookie consent">
+  <p>This site uses Google Analytics to understand how the tools are used. Nothing loads or is tracked until you accept.</p>
+  <div class="cookie-banner-actions">
+    <button type="button" id="cookie-decline" class="btn small">Decline</button>
+    <button type="button" id="cookie-accept" class="btn primary small">Accept</button>
+  </div>
+</div>
+<script>
+(function(){
+  var consent = localStorage.getItem('cookie-consent');
+  if (consent === 'granted') { loadGoogleAnalytics(); return; }
+  if (consent === 'denied') { return; }
+  var banner = document.getElementById('cookie-banner');
+  banner.style.display = 'flex';
+  document.getElementById('cookie-accept').addEventListener('click', function(){
+    localStorage.setItem('cookie-consent', 'granted');
+    banner.style.display = 'none';
+    loadGoogleAnalytics();
+  });
+  document.getElementById('cookie-decline').addEventListener('click', function(){
+    localStorage.setItem('cookie-consent', 'denied');
+    banner.style.display = 'none';
+  });
+})();
+</script>
+
+  <div id="print-root"></div>
+
+  <header class="lab-header">
+    <div class="lab-header-inner" style="display:flex; align-items:center; justify-content:space-between;">
+      <a class="lab-back" href="/">&#8592; Kris's Lab</a>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" aria-pressed="false">
+          <svg class="icon-sun" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.5"/>
+            <path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12h2.5M19 12h2.5M4.2 19.8l1.8-1.8M18 6l1.8-1.8"/>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 14.2A8.5 8.5 0 1 1 9.8 4a7 7 0 0 0 10.2 10.2Z"/>
+          </svg>
+        </button>
+        <span style="display:flex; align-items:center; gap:8px; color:#fff; font-weight:700; font-size:14px;">
+          <svg viewBox="0 0 40 40" width="20" height="20" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M20 5.5 C15.5 11 12.5 15.5 12.5 21.5 C12.5 27.8 15.8 32.5 20.5 32.5 C25.3 32.5 28.5 28.6 28.5 23.8 C28.5 20 26.3 16.8 23.6 14.6 C24.3 18 22.7 21 20.2 22.2 C22 17 20.8 9.5 20 5.5 Z" fill="none" stroke="#93C5FD" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"/>
+            <circle cx="20.5" cy="27" r="1.7" fill="#2563EB"/>
+          </svg>
+          Flare
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <div class="hero" id="main-content">
+    <canvas class="hero-map" id="hero-map" aria-hidden="true"></canvas>
+    <div class="hero-inner">
+      <svg viewBox="0 0 40 40" width="50" height="50" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="margin-bottom:16px;">
+        <path d="M20 5.5 C15.5 11 12.5 15.5 12.5 21.5 C12.5 27.8 15.8 32.5 20.5 32.5 C25.3 32.5 28.5 28.6 28.5 23.8 C28.5 20 26.3 16.8 23.6 14.6 C24.3 18 22.7 21 20.2 22.2 C22 17 20.8 9.5 20 5.5 Z" fill="none" stroke="#93C5FD" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/>
+        <circle cx="20.5" cy="27" r="1.8" fill="#2563EB"/>
+      </svg>
+      <p class="eyebrow">Flare &middot; Free tool by Kris McCabe</p>
+      <h1>What's newly broken in your AI stack?</h1>
+      <p>Flare checks the libraries most AI applications actually depend on for live, high-severity advisories &mdash; plus the OWASP LLM Top 10 as a permanent reference for the risks that never show up as a CVE at all.</p>
+    </div>
+  </div>
+
+  <div class="console-chrome">
+    <div class="console-bar no-print" id="console-bar">
+      <div class="console-bar-inner">
+        <div class="console-status">
+          <span class="status-dot" id="status-dot" aria-hidden="true"></span>
+          <span class="console-sync-label">Sync</span>
+          <span id="console-sync-text">Loading advisory data&hellip;</span>
+        </div>
+        <div class="console-actions">
+          <button type="button" id="digest-btn" class="btn small" disabled>Copy digest</button>
+          <button type="button" id="sarif-btn" class="btn small" disabled title="Download a SARIF 2.1.0 file for GitHub code scanning, Azure DevOps, or any SARIF-reading dashboard">Export SARIF</button>
+          <button type="button" id="csv-btn" class="btn small" disabled title="Download a spreadsheet-ready vulnerability register (CSV)">Export CSV</button>
+          <button type="button" id="exec-onepager-btn" class="btn small" disabled title="Print or save a one-page executive summary of your current exposure">Executive one-pager</button>
+          <button type="button" id="refresh-btn" class="btn small" disabled>Check for newer advisories</button>
+        </div>
+      </div>
+    </div>
+    <div class="diagnostics-banner no-print" id="diagnostics-banner" hidden role="alert">
+      <p id="diagnostics-text"></p>
+      <button type="button" id="diagnostics-dismiss" class="btn small">Dismiss</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+
+    <div class="tabs no-print">
+      <button class="tab-btn active" data-tab="exposure">Your exposure</button>
+      <button class="tab-btn" data-tab="alerts">Alerts Live Stream</button>
+      <button class="tab-btn" data-tab="heatmap">Threat map</button>
+      <button class="tab-btn" data-tab="categories">Risk categories</button>
+      <button class="tab-btn" id="open-sources-drawer-btn" aria-haspopup="dialog" aria-controls="sources-drawer">Sources</button>
+    </div>
+
+    <!-- YOUR EXPOSURE TAB - the stack itself: which packages, picked right
+         here, no drawer in the way. The live feed of what's actually wrong
+         with them lives in its own tab so this one stays focused on
+         selection. -->
+    <div class="tab-panel active" id="tab-exposure">
+      <p class="team-banner no-print" id="team-banner" hidden aria-live="polite">
+        <span id="team-banner-text"></span>
+        <button type="button" class="btn small" id="team-leave-btn">Leave team view</button>
+      </p>
+
+      <div class="panel stack-summary-bar no-print" id="stack-summary-bar">
+        <div class="stack-summary-text">
+          <h2>Your exposure</h2>
+          <p class="sub">Pick the packages in your AI stack &mdash; Flare checks each one for live, high-severity advisories. See what's actually wrong with them under <button type="button" class="link-btn" data-goto-tab="alerts">Alerts Live Stream</button>.</p>
+          <p id="stack-summary-count" class="stack-summary-count"></p>
+        </div>
+        <button type="button" class="btn small" id="team-dashboard-toggle-btn" aria-haspopup="dialog" aria-expanded="false" aria-controls="team-dashboard-panel">Team dashboard</button>
+      </div>
+
+      <div class="panel no-print team-dashboard-panel" id="team-dashboard-panel" hidden>
+        <div class="team-dashboard-head">
+          <h3>Team dashboard</h3>
+          <button type="button" class="drawer-close" id="team-dashboard-close-btn" aria-label="Close team dashboard">&times;</button>
+        </div>
+        <p class="sub">Share this exact package list with your team via a link &mdash; no account or login needed. Anyone who opens the link sees the same live stack and can add or remove packages for everyone; changes sync automatically within about 20 seconds.</p>
+        <div id="team-create-row">
+          <label class="team-name-field">
+            Team or project name <span class="sub-inline">(optional, shown to anyone with the link)</span>
+            <input type="text" id="team-create-name-input" maxlength="60" placeholder="e.g. Platform team" autocomplete="off">
+          </label>
+          <button type="button" class="btn small primary" id="team-create-btn">Create a shareable team link</button>
+        </div>
+        <div class="team-link-row" id="team-link-row" hidden>
+          <input type="text" id="team-link-input" readonly aria-label="Shareable team link">
+          <button type="button" class="btn small" id="team-link-copy-btn">Copy link</button>
+          <button type="button" class="btn small" id="team-regenerate-btn" title="Mint a new link for this team and retire this one &mdash; use this if the link leaked or you just want to rotate it">Regenerate link</button>
+        </div>
+        <p class="team-dashboard-status" id="team-dashboard-status" aria-live="polite"></p>
+        <p class="team-dashboard-note">Anyone holding this link has full access to view and edit this shared list &mdash; the link itself is the access control, the same trust model as an unlisted document link. There's no per-person login, so don't post it somewhere public. Regenerate the link any time to cut off anyone still holding the old one. Teams untouched for 90 days are automatically deleted.</p>
+      </div>
+
+      <div class="panel no-print" id="stack-picker-panel">
+        <div class="sbom-import" id="sbom-import">
+          <h3 class="sbom-import-heading">Import from a lockfile or SBOM</h3>
+          <p class="sub">Upload <code>requirements.txt</code>, <code>package-lock.json</code>, <code>pyproject.toml</code>, or a CycloneDX/SPDX JSON SBOM &mdash; Flare selects whichever AI-stack packages below are actually in it, instead of you clicking through by hand.</p>
+          <div class="sbom-import-row">
+            <input type="file" id="sbom-file-input" accept=".txt,.json,.toml,text/plain,application/json" aria-label="Upload a lockfile or SBOM file">
+            <button type="button" class="btn small" id="sbom-paste-toggle" aria-expanded="false" aria-controls="sbom-paste-area">Paste instead</button>
+          </div>
+          <div class="sbom-paste-area" id="sbom-paste-area" hidden>
+            <textarea id="sbom-paste-input" rows="6" placeholder="Paste the contents of a requirements.txt, package-lock.json, pyproject.toml, or SBOM JSON here&hellip;" aria-label="Paste lockfile or SBOM contents"></textarea>
+            <button type="button" class="btn small primary" id="sbom-paste-submit">Import pasted text</button>
+          </div>
+          <p class="sbom-import-note">Parsed entirely in your browser &mdash; the file itself is never sent anywhere. Only matches against Flare's curated AI-stack list are auto-selected below; this isn't a general dependency scanner, so the rest of your file is left alone.</p>
+          <p class="sbom-import-result" id="sbom-import-result" aria-live="polite"></p>
+        </div>
+
+        <div class="drawer-search stack-inline-search">
+          <input type="search" id="stack-search-input" class="drawer-search-input" placeholder="Search packages&hellip;" aria-label="Search packages">
+        </div>
+        <p class="shield-suggestion-note" id="shield-suggestion-note" hidden>
+          Pre-selected based on the deployment pattern you told AI-SHIELD you use &mdash; adjust anytime.
+          <button type="button" class="btn small" id="shield-suggestion-dismiss">Got it</button>
+        </p>
+        <label class="remember-toggle-row">
+          <input type="checkbox" id="remember-toggle" checked> Remember my stack on this device
+        </label>
+        <div id="stack-selected-count" class="stack-selected-count"></div>
+        <div id="stack-grid"></div>
+
+        <div class="custom-add">
+          <h3 class="custom-add-heading">Not in the list? Add your own.</h3>
+          <form id="custom-add-form" class="custom-add-row" novalidate>
+            <input type="text" id="custom-name-input" class="custom-name-input" placeholder="Package name" maxlength="120" autocomplete="off">
+            <select id="custom-eco-select" class="custom-eco-select" aria-label="Ecosystem">
+              <option value="PyPI">PyPI</option>
+              <option value="npm">npm</option>
+              <option value="Go">Go</option>
+              <option value="Maven">Maven</option>
+              <option value="crates.io">crates.io</option>
+              <option value="RubyGems">RubyGems</option>
+              <option value="NuGet">NuGet</option>
+              <option value="Packagist">Packagist</option>
+            </select>
+            <button type="submit" class="btn small primary">Add &amp; check</button>
+          </form>
+          <p class="custom-add-note">Looking up a custom package sends its name to OSV.dev from your browser. Nothing else leaves this page.</p>
+          <p class="custom-add-error" id="custom-add-error" role="alert"></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ALERTS LIVE STREAM TAB - the actual ranked advisory feed for your
+         stack, plus the stats/filters/search that scope it. -->
+    <div class="tab-panel" id="tab-alerts">
+      <div class="panel" id="exposure-panel">
+        <div class="exposure-grid">
+          <div class="exposure-main">
+            <div class="change-history" id="change-history"></div>
+            <div class="top-priorities" id="top-priorities"></div>
+
+            <div class="alerts-toolbar no-print">
+              <button type="button" class="btn filters-trigger" id="open-filters-drawer-btn" aria-haspopup="dialog" aria-controls="filters-drawer">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M4 5h16l-6 7.3V19l-4 2v-8.7L4 5Z"/>
+                </svg>
+                Filters
+                <span class="filters-badge" id="filters-badge" hidden></span>
+              </button>
+              <button type="button" class="btn small" id="share-view-btn" title="Copy a link that reproduces this exact stack and filter selection">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/>
+                  <path d="M8.3 10.7 15.7 6.3M8.3 13.3l7.4 4.4"/>
+                </svg>
+                Share view
+              </button>
+              <div class="alerts-search">
+                <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/>
+                </svg>
+                <input type="search" id="alerts-search-input" placeholder="Search alerts&hellip; (package, CVE, keyword)" aria-label="Search alerts">
+              </div>
+            </div>
+            <p class="digest-note no-print" id="share-view-note" aria-live="polite"></p>
+
+            <div class="digest-panel no-print" id="digest-panel" hidden>
+              <div class="digest-panel-head">
+                <h3>Copyable digest</h3>
+                <button type="button" class="btn small" id="close-digest-btn">Close</button>
+              </div>
+              <textarea id="digest-box" class="digest-box" readonly rows="10" aria-label="Copyable exposure digest"></textarea>
+              <p class="digest-note" id="digest-copy-note" aria-live="polite"></p>
+            </div>
+
+            <div id="exposure-list">
+              <div class="empty-state">
+                <p>Loading the advisory snapshot&hellip;</p>
+              </div>
+            </div>
+          </div>
+
+          <aside class="exposure-stats no-print" id="exposure-stats" aria-label="At a glance"></aside>
+        </div>
+      </div>
+    </div>
+
+    <!-- THREAT MAP TAB -->
+    <div class="tab-panel" id="tab-heatmap">
+      <div class="panel">
+        <h2>Global threat map</h2>
+        <p class="sub">Every package Flare watches &mdash; not just the ones in your stack above. Darker cells mean more advisories at that severity, right now. Click a package to see its advisories.</p>
+        <div id="heatmap-top"></div>
+        <div id="heatmap-wrap">
+          <div class="empty-state">
+            <p>Loading the advisory snapshot&hellip;</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RISK CATEGORIES TAB -->
+    <div class="tab-panel" id="tab-categories">
+      <div class="panel">
+        <h2>The OWASP LLM &amp; ASI Top 10</h2>
+        <p class="sub">These are enduring risk categories, not news &mdash; they don't go stale the way a live advisory list does. Each one is flagged for whether it typically shows up as a CVE against a package you can patch, or as a property of how your application is built.</p>
+        <div id="owasp-list"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Sources drawer, Filters drawer, and the card modal are true siblings
+       of .wrap (not nested inside it) on purpose - when one of them opens
+       and marks .wrap inert to keep the background out of the tab order,
+       inertness cascades to everything inside .wrap and can't be
+       selectively un-set for a descendant. Living outside .wrap is what
+       lets each dialog stay interactive while the page behind it doesn't. -->
+  <div class="drawer-overlay no-print" id="sources-drawer-overlay"></div>
+  <div class="drawer no-print" id="sources-drawer" role="dialog" aria-modal="true" aria-label="Sources" aria-hidden="true" inert>
+    <div class="drawer-head">
+      <h2>Sources</h2>
+      <button type="button" class="drawer-close" id="sources-drawer-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="drawer-search">
+      <input type="search" id="sources-search-input" class="drawer-search-input" placeholder="Search sources&hellip;" aria-label="Search sources">
+    </div>
+    <div class="drawer-body">
+      <p class="sub">Where Flare's advisory data comes from, and what else you can add to it.</p>
+
+      <h3 class="sources-section-heading">Built-in sources</h3>
+      <div class="source-row">
+        <div class="source-row-main">
+          <span class="source-row-name">OSV.dev</span>
+          <p class="source-row-desc">Aggregates GitHub Security Advisories, PyPA, npm, Go, and other ecosystem feeds into one package-precise API. This is what the ranked list above is built on &mdash; always included.</p>
+        </div>
+        <span class="source-status-locked">Always on</span>
+      </div>
+      <div class="source-row">
+        <div class="source-row-main">
+          <span class="source-row-name">CISA Known Exploited Vulnerabilities</span>
+          <p class="source-row-desc">Fetched from CISA&rsquo;s official GitHub mirror of its KEV catalog (cisa.gov itself doesn&rsquo;t allow this from a browser) &mdash; this is what powers the &ldquo;Actively exploited&rdquo; badge. On by default since it directly affects that badge&rsquo;s accuracy; turning it off falls back to a small hand-maintained list rather than an empty one.</p>
+          <p class="source-row-status" id="kev-status"></p>
+        </div>
+        <label class="source-toggle">
+          <input type="checkbox" id="kev-toggle">
+          Enabled
+        </label>
+      </div>
+      <div class="source-row">
+        <div class="source-row-main">
+          <span class="source-row-name">GitHub Security Advisories</span>
+          <p class="source-row-desc">Queried directly for your selected stack, filtered by ecosystem and package name. Most of these already reach you via OSV.dev under the same GHSA ID &mdash; only advisories genuinely missing from OSV get added, so turning this on won't create duplicates.</p>
+          <p class="source-row-status" id="ghsa-status"></p>
+        </div>
+        <label class="source-toggle">
+          <input type="checkbox" id="ghsa-toggle">
+          Enabled
+        </label>
+      </div>
+      <div class="source-row">
+        <div class="source-row-main">
+          <span class="source-row-name">AI Stack CVEs (assurestart.co)</span>
+          <p class="source-row-desc">A live CVE feed pre-scoped to the exact package/vendor names this page tracks (openai, langchain, litellm, huggingface, vllm, and more), high-severity only. Merges NVD, MITRE&rsquo;s CVE List, CISA KEV, and CISA Vulnrichment. Shown as informational items below, not mixed into the ranked list &mdash; same as any other feed.</p>
+          <p class="source-row-status" id="assurestart-status"></p>
+        </div>
+        <label class="source-toggle">
+          <input type="checkbox" id="assurestart-toggle">
+          Enabled
+        </label>
+      </div>
+      <div class="source-row">
+        <div class="source-row-main">
+          <span class="source-row-name">Package maintenance status</span>
+          <p class="source-row-desc">A CVE count of zero doesn&rsquo;t mean a package is safe to keep depending on &mdash; an abandoned or maintainer-deprecated package with no CVEs yet is still a real supply-chain risk. Checks each of your selected PyPI/npm packages directly against the npm registry and PyPI&rsquo;s own API for its last release date and any maintainer deprecation notice. Off by default: unlike the checks above, this is one request per selected package to two more third-party registries.</p>
+          <p class="source-row-status" id="package-health-status"></p>
+        </div>
+        <label class="source-toggle">
+          <input type="checkbox" id="package-health-toggle">
+          Enabled
+        </label>
+      </div>
+      <div class="source-row">
+        <div class="source-row-main">
+          <span class="source-row-name">EPSS exploit probability</span>
+          <p class="source-row-desc">Severity and CISA KEV tell you how bad an advisory is and whether it&rsquo;s confirmed exploited &mdash; EPSS (FIRST.org&rsquo;s Exploit Prediction Scoring System) adds a continuous 0-100% estimate of the odds it gets exploited in the next 30 days, so two Critical, non-KEV advisories can still be told apart. Feeds into Top Priorities&rsquo; ranking; only ever covers advisories with a CVE. Off by default: one more third-party request beyond OSV/KEV/GHSA.</p>
+          <p class="source-row-status" id="epss-status"></p>
+        </div>
+        <label class="source-toggle">
+          <input type="checkbox" id="epss-toggle">
+          Enabled
+        </label>
+      </div>
+
+      <h3 class="sources-section-heading">Your feeds</h3>
+      <p class="sub" style="margin-bottom:14px;">Add an RSS or Atom feed from anywhere else you follow. These aren&rsquo;t security advisories &mdash; no severity, no CVSS, nothing to rank &mdash; so they're listed separately below, never mixed into the ranked exposure list.</p>
+      <div id="suggested-feed-wrap"></div>
+      <form id="feed-add-form" class="feed-add-row" novalidate>
+        <input type="text" id="feed-name-input" class="custom-name-input" placeholder="Name (optional)" maxlength="80" autocomplete="off">
+        <input type="url" id="feed-url-input" class="custom-name-input feed-url-input" placeholder="https://example.com/feed.xml" maxlength="500" autocomplete="off">
+        <button type="submit" class="btn small primary">Add feed</button>
+      </form>
+      <p class="custom-add-note">Fetched directly from your browser, right now and again on every reload. Most third-party feeds don&rsquo;t allow this from other websites (no CORS) and will show as unavailable rather than fail silently &mdash; nothing routes through a server of ours either way. Nothing beyond the feed URL itself is sent anywhere.</p>
+      <p class="custom-add-error" id="feed-add-error" role="alert"></p>
+      <div id="feed-list" class="feed-list"></div>
+
+      <div id="feed-items-wrap"></div>
+
+      <h3 class="sources-section-heading">Post to Slack / Teams</h3>
+      <p class="sub" style="margin-bottom:14px;">Paste an incoming webhook URL to push updates straight into a channel &mdash; sent directly from your browser to Slack/Teams, no server of ours in between. Important: this only fires while this browser tab is open. Flare is a static page with nothing running in the background, so &ldquo;automatic&rdquo; here means &ldquo;automatic for as long as you keep this tab around,&rdquo; not a 24/7 monitor &mdash; leave a tab open (or use Post now, below) if you need a guaranteed alert.</p>
+      <div class="webhook-config">
+        <label class="webhook-field">
+          Platform
+          <select id="webhook-platform">
+            <option value="slack">Slack</option>
+            <option value="teams">Microsoft Teams</option>
+          </select>
+        </label>
+        <label class="webhook-field">
+          Webhook URL
+          <input type="url" id="webhook-url-input" placeholder="https://hooks.slack.com/services/..." maxlength="500" autocomplete="off">
+        </label>
+        <label class="webhook-field webhook-field-checkbox">
+          <input type="checkbox" id="webhook-auto-toggle">
+          Auto-post when a new Critical or Actively exploited advisory appears (tab must stay open)
+        </label>
+        <div class="webhook-actions">
+          <button type="button" class="btn small" id="webhook-test-btn" disabled>Send test message</button>
+          <button type="button" class="btn small" id="webhook-post-now-btn" disabled>Post current summary now</button>
+        </div>
+        <p class="webhook-status" id="webhook-status" aria-live="polite"></p>
+      </div>
+
+      <h3 class="sources-section-heading">Compare anonymously</h3>
+      <p class="sub" style="margin-bottom:14px;">Opt in to send only aggregate counts (how many advisories, what share are critical, stack size) to an anonymous benchmark on a server I control &mdash; never package names, CVE/advisory IDs, or anything else that could identify your stack. Nothing is sent unless you click the button below.</p>
+      <div class="webhook-config">
+        <button type="button" class="btn small primary" id="benchmark-submit-btn" disabled>Compare my stack anonymously</button>
+        <input type="text" id="benchmark-website" name="website" autocomplete="off" tabindex="-1" aria-hidden="true" style="position:absolute; left:-9999px; width:1px; height:1px;">
+        <p class="webhook-status" id="benchmark-result" aria-live="polite"></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="drawer-overlay no-print" id="filters-drawer-overlay"></div>
+  <div class="drawer drawer-left no-print" id="filters-drawer" role="dialog" aria-modal="true" aria-label="Filters" aria-hidden="true" inert>
+    <div class="drawer-head">
+      <h2>Filters</h2>
+      <button type="button" class="drawer-close" id="filters-drawer-close" aria-label="Close">&times;</button>
+    </div>
+    <div class="drawer-body">
+      <p class="sub">Narrow the ranked list by fix/workaround status, your watch list, or date.</p>
+      <label class="filter-chip"><input type="checkbox" id="filter-has-fix"> Fix available</label>
+      <label class="filter-chip"><input type="checkbox" id="filter-no-fix"> No fix available</label>
+      <label class="filter-chip"><input type="checkbox" id="filter-has-workaround"> Workaround available</label>
+      <label class="filter-chip"><input type="checkbox" id="filter-no-workaround"> No known workaround</label>
+      <label class="filter-chip filter-chip-watch"><input type="checkbox" id="filter-watched-only"> ★ Watched only</label>
+      <label class="filter-chip filter-chip-sla"><input type="checkbox" id="filter-sla-breach"> ⏱ SLA breached only</label>
+      <label class="filter-chip filter-chip-select">
+        Date range
+        <div class="filter-date-row">
+          <select id="filter-date-basis" class="filter-date-select" aria-label="Filter by publish date or last update">
+            <option value="published">Published</option>
+            <option value="modified">Last updated</option>
+          </select>
+          <select id="filter-date-range" class="filter-date-select" aria-label="Filter by date range">
+            <option value="all">All time</option>
+            <option value="7">Last 7 days</option>
+            <option value="30">Last 30 days</option>
+            <option value="90">Last 90 days</option>
+          </select>
+        </div>
+      </label>
+
+      <div class="sla-settings">
+        <h3 class="sla-settings-heading">Remediation SLA targets</h3>
+        <p class="sla-settings-note">Days from publish date to remediate, by severity. An advisory open longer than its target is flagged &ldquo;SLA breached.&rdquo; Set a severity to 0 to stop tracking it.</p>
+        <div class="sla-target-row">
+          <label for="sla-target-critical">Critical</label>
+          <input type="number" id="sla-target-critical" min="0" max="365" step="1" inputmode="numeric">
+          <span>days</span>
+        </div>
+        <div class="sla-target-row">
+          <label for="sla-target-high">High</label>
+          <input type="number" id="sla-target-high" min="0" max="365" step="1" inputmode="numeric">
+          <span>days</span>
+        </div>
+        <div class="sla-target-row">
+          <label for="sla-target-medium">Medium</label>
+          <input type="number" id="sla-target-medium" min="0" max="365" step="1" inputmode="numeric">
+          <span>days</span>
+        </div>
+        <div class="sla-target-row">
+          <label for="sla-target-low">Low</label>
+          <input type="number" id="sla-target-low" min="0" max="365" step="1" inputmode="numeric">
+          <span>days</span>
+        </div>
+        <button type="button" class="btn small" id="sla-target-reset">Reset to defaults</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- CARD MODAL - clicking any alert card opens its full write-up here
+       instead of expanding in place, so the feed itself never grows or
+       reflows around whatever was last clicked. -->
+  <div class="card-modal-overlay no-print" id="card-modal-overlay"></div>
+  <div class="card-modal no-print" id="card-modal" role="dialog" aria-modal="true" aria-label="Advisory details" aria-hidden="true" inert>
+    <button type="button" class="card-modal-close" id="card-modal-close" aria-label="Close">&times;</button>
+    <div class="card-modal-body" id="card-modal-body"></div>
+  </div>
+
+  <footer>
+    <div class="links">
+      <a href="/ai-shield/" target="_blank" rel="noopener">AI-SHIELD &mdash; AI security &amp; trust maturity assessment &rarr;</a>
+      <a href="/schema-explorer/" target="_blank" rel="noopener">Schema Explorer &mdash; what breaks if you delete this? &rarr;</a>
+      <a href="https://github.com/krismccabe87/kris-lab/tree/main/flare/ci-action" target="_blank" rel="noopener">Flare CI Check &mdash; run this in your pipeline &rarr;</a>
+      <a href="https://krismccabe.com" target="_blank" rel="noopener">krismccabe.com</a>
+    </div>
+    <p class="disclaimer">Flare is released as open source under the MIT License &mdash; free to use, copy, adapt, and build on. It is provided "as is," without warranty of any kind. Advisory data comes from OSV.dev's public API and reflects what OSV has published; it is not a certified audit, a penetration test, or a guarantee that a package is safe just because nothing appears here. Flare automatically checks OSV.dev for advisories newer than the daily snapshot each time you load this page, and does the same whenever you add or check a custom package &mdash; every one of those checks sends the package names involved to OSV.dev (and, for some records, nvd.nist.gov) from your browser, which reveals your IP address to those services. Flare also fetches CISA's Known Exploited Vulnerabilities catalog from its official GitHub mirror (raw.githubusercontent.com) on every page load by default, to keep the "Actively exploited" badge current &mdash; that reveals your IP address to GitHub the same way; turn it off under CISA Known Exploited Vulnerabilities in the Sources tab if you'd rather rely on the small hand-maintained fallback list only. Flare also fetches a CVE feed from assurestart.co on every page load by default, pre-scoped to the package names this page tracks &mdash; that's a fixed URL, not built from your selections, but still reveals your IP address to assurestart.co the same way; turn it off under AI Stack CVEs in the Sources tab if you'd rather not. Nothing else leaves this page by default. Turning on GitHub Security Advisories in the Sources tab sends your selected package names to api.github.com the same way, and does so again automatically on every later page load while it stays enabled, exactly like CISA KEV above; adding a custom RSS/Atom feed there (including the suggested ones) sends nothing but that feed's own URL, fetched directly from your browser to wherever you pointed it. Turning on Package maintenance status in the Sources tab sends each of your selected PyPI/npm package names, one request per package, to pypi.org and registry.npmjs.org from your browser, and does so again automatically on every later page load while it stays enabled, same as GitHub Security Advisories above. Pasting a Slack or Teams webhook URL into the Sources tab and clicking "Send test message" or "Post current summary now" sends a message directly from your browser to that URL &mdash; wherever you pointed it, not through a server of ours; enabling "Auto-post" additionally does this automatically, without a click, whenever a new critical or actively-exploited advisory appears for your stack, but only while this browser tab stays open &mdash; Flare has no backend to alert from once the tab is closed. Clicking "Compare my stack anonymously" in the Sources tab sends aggregate counts only (advisory totals by category, stack size, which watchlist groups you use) to an anonymous benchmark at krismccabe.com/api/, a server I control &mdash; never package names, advisory IDs, or anything else that could identify your specific stack; nothing is sent until you click it. Additional-reference links on a signal card come directly from that advisory's own citations in OSV &mdash; Flare does not independently verify or vouch for them. The curated risk-category reference is hand-maintained and reviewed periodically, not live-fetched. The Known Exploited Vulnerabilities list is live-fetched by default as described above; if that fetch fails or is turned off, Flare falls back to a small hand-maintained list rather than showing no "actively exploited" data at all. Not affiliated with or endorsed by OWASP, OSV, Google, CISA, NIST, GitHub, or any named vendor.</p>
+  </footer>

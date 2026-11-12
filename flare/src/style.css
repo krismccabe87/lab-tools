@@ -1,0 +1,1123 @@
+  /* Flare follows the same light/dark toggle as the rest of the lab -
+     panel/surface tokens come straight from the shared lab.css palette.
+     --accent-soft is a local token for the pale-blue accent text this page
+     uses (letters, tags, ids): #93C5FD reads fine on the permanently-dark
+     header/hero, but needs to fall back to the solid --accent blue for
+     contrast once panels can be light. Same pattern, same reasoning, as
+     AI-SHIELD's --accent-soft - copied verbatim rather than reinvented. */
+  body {
+    --accent-soft: var(--accent);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) body { --accent-soft: #93C5FD; }
+  }
+  :root[data-theme="dark"] body { --accent-soft: #93C5FD; }
+
+  /* The shared .eyebrow class assumes it's only ever used on the fixed-dark
+     hero (where #93C5FD is fine); this page also reuses it inside a panel,
+     which needs the theme-aware accent instead for contrast in light mode. */
+  .panel .eyebrow { color: var(--accent-soft); }
+
+  /* Executive one-pager (print/PDF) - a dedicated report container,
+     separate from the shared .no-print convention (which still covers
+     plain Ctrl+P of the current filtered card list, unchanged). Only
+     takes over the print output when body.printing-onepager is set (by
+     printExecOnePager() right before window.print()) - a bare Ctrl+P
+     without that class prints the normal page exactly as before.
+     Styling adapted from AI-SHIELD's #print-root/.onepager pattern:
+     fixed light-mode hex colors throughout (not theme tokens), since a
+     printed page has no "current theme" to respect. */
+  #print-root { display: none; }
+  @media print {
+    body.printing-onepager > *:not(#print-root) { display: none !important; }
+    body.printing-onepager #print-root { display: block !important; }
+    /* Without this, body's own themed background (dark in dark mode)
+       still shows around #print-root's white card - only body's
+       CHILDREN get display:none above, not body itself. */
+    body.printing-onepager { background: #fff !important; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  #print-root {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: #1E293B; background: #fff; max-width: 720px; margin: 0 auto; padding: 20px;
+  }
+  #print-root h1 { color: #0F172A; font-size: 22px; font-weight: 800; margin: 0 0 8px; break-after: avoid-page; }
+  #print-root h2 { color: #2563EB; font-size: 16px; font-weight: 700; margin: 22px 0 4px; border-bottom: 1px solid #E2E8F0; padding-bottom: 4px; break-after: avoid-page; }
+  #print-root p, #print-root li { font-size: 12.5px; line-height: 1.6; margin: 0 0 8px; break-inside: avoid-page; }
+  #print-root .p-eyebrow { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #2563EB; margin: 0 0 6px; }
+  #print-root .p-identity { font-size: 11.5px; color: #64748B; margin: 0 0 4px; }
+  #print-root .p-score-box { display: flex; align-items: baseline; gap: 8px; margin: 14px 0 6px; }
+  #print-root .p-score-num { font-size: 34px; font-weight: 800; }
+  #print-root .p-score-denom { font-size: 13px; font-weight: 700; color: #334155; }
+  #print-root .p-lead { font-size: 13.5px; line-height: 1.7; margin: 10px 0 6px; }
+  #print-root .p-gap { border-left: 3px solid #EA580C; background: #FFEDD5; padding: 8px 12px; margin-bottom: 8px; border-radius: 0 8px 8px 0; }
+  #print-root .p-gap-critical { border-left-color: #DC2626; background: #FEE2E2; }
+  #print-root .p-next { font-size: 11.5px; color: #334155; }
+  #print-root .p-footer { margin-top: 18px; padding-top: 10px; border-top: 1px solid #E2E8F0; font-size: 10.5px; color: #94A3B8; }
+
+  .lab-header-inner { max-width: 1080px; }
+
+  /* Condensed vs. the shared lab default - a full-height hero ahead of a
+     console/dashboard just pushes the actual data below the fold on
+     every visit. Still brand-establishing, just shorter. */
+  .hero { padding: 28px 24px 24px; position: relative; overflow: hidden; }
+  .hero svg { width: 34px; height: 34px; margin-bottom: 10px !important; }
+  .hero h1 { color: #fff; font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 800; letter-spacing: -0.02em; margin: 0 0 8px; max-width: 660px; margin-left: auto; margin-right: auto; }
+  .hero p { color: #94A3B8; font-size: 14px; max-width: 580px; margin: 0 auto; }
+  .hero .eyebrow { margin: 0 auto 6px; }
+  /* Dot-matrix world map + drifting "advisory detected" pulses, drawn on
+     canvas (see initHeroMap in script.js) - a background layer behind the
+     hero copy, themed around what the tool actually does rather than
+     generic decoration. Static (no canvas, no JS) under reduced motion;
+     the plain dark hero background already reads fine on its own. */
+  .hero-map { position: absolute; inset: 0; z-index: 0; }
+  .hero-inner { position: relative; z-index: 1; }
+  @media (prefers-reduced-motion: reduce) { .hero-map { display: none; } }
+
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 24px 20px 64px; }
+  /* Widen the working area on genuinely large screens instead of leaving
+     1080px of content stranded in the middle of a much bigger viewport -
+     the console/dashboard read the user asked for needs the extra
+     horizontal room to actually do something with (see the exposure-list
+     multi-column rule further down), not just wider margins either side. */
+  @media (min-width: 1440px) { .wrap { max-width: 1240px; } }
+  @media (min-width: 1680px) { .wrap { max-width: 1400px; } }
+
+  /* ---------- Reused verbatim from AI-SHIELD: panel, buttons, tabs ---------- */
+  .panel {
+    background: var(--surface-2); border: 1px solid var(--border); color: var(--text);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.28);
+  }
+  .panel h2 { font-size: 19px; font-weight: 700; color: var(--text); margin: 0 0 4px; }
+  .panel .sub { font-size: 13px; color: var(--text-muted); margin: 0 0 20px; }
+  .panel h3 { color: var(--text); }
+
+  .btn {
+    border: 1px solid var(--border); background: var(--surface-3); color: var(--text);
+    font-family: inherit; font-size: 13px; font-weight: 600; padding: 9px 14px; border-radius: 8px;
+    cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn:hover:not(:disabled) { border-color: var(--accent); background: rgba(37,99,235,0.12); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover:not(:disabled) { background: var(--accent-hv); border-color: var(--accent-hv); }
+  .btn.small { font-size: 12px; padding: 7px 12px; }
+
+  .tabs { display: flex; gap: 4px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); padding: 6px; margin-bottom: 20px; box-shadow: 0 12px 40px rgba(0,0,0,0.28); }
+  .tab-btn {
+    flex: 1; border: none; background: transparent; font-family: inherit; font-size: 14px; font-weight: 700;
+    color: var(--text-muted); padding: 12px 8px; border-radius: 8px; cursor: pointer; transition: all 0.15s ease;
+  }
+  .tab-btn.active { background: var(--accent); color: #fff; }
+  .tab-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); }
+  .empty-state p { font-size: 14px; max-width: 420px; margin: 0 auto; }
+
+  /* ---------- Stack summary bar + slide-in drawer ----------
+     The package picker used to sit inline at full height, pushing the
+     actual advisory list (the reason anyone's here) below a huge grid of
+     ~50 chips every single visit. Moving it into an off-canvas drawer
+     keeps that real estate for the list/stats instead - editing your
+     stack is an occasional action, not something that needs to occupy
+     the page permanently. */
+  .stack-summary-bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    flex-wrap: wrap; padding: 18px 22px; margin-bottom: 16px;
+  }
+  .stack-summary-bar h2 { font-size: 17px; font-weight: 700; color: var(--text); margin: 0 0 4px; }
+  .stack-summary-bar .sub { font-size: 12.5px; color: var(--text-muted); margin: 0 0 6px; max-width: 560px; }
+  .stack-summary-count { font-size: 12.5px; font-weight: 600; color: var(--accent-soft); margin: 0; }
+  .link-btn {
+    border: none; background: none; padding: 0; margin: 0; font: inherit; font-weight: 700;
+    color: var(--accent-soft); cursor: pointer; text-decoration: underline;
+  }
+  .link-btn:hover { color: var(--accent); }
+
+  /* ---------- Team dashboard: link-based shared stack (no accounts) ----------
+     A persistent banner (visible whenever a ?team= link is applied) plus a
+     collapsible panel for creating a new link or copying the current one.
+     Deliberately styled close to .shield-suggestion-note - both are
+     "informational strip above the stack picker" callouts. */
+  .team-banner {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    font-size: 12.5px; font-weight: 600; color: var(--text); background: rgba(37,99,235,0.1);
+    border: 1px solid var(--accent); border-radius: 8px; padding: 10px 14px; margin: 0 0 16px;
+  }
+  .team-banner[hidden] { display: none; }
+  /* Fixed amber (not the accent-tinted default above) once the link has
+     died mid-session - same "explicit hex, not a derived token" contrast
+     reasoning as .shape-tag.technique elsewhere in this file. */
+  .team-banner.team-banner-dead { background: rgba(217,119,6,0.12); border-color: #D97706; }
+  .team-dashboard-panel { margin-bottom: 16px; }
+  .team-dashboard-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 4px; }
+  .team-dashboard-head h3 { font-size: 15px; font-weight: 700; color: var(--text); margin: 0; }
+  .team-name-field {
+    display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--text);
+    margin: 0 0 12px; max-width: 360px;
+  }
+  .team-name-field .sub-inline { font-weight: 400; color: var(--text-muted); }
+  .team-name-field input {
+    font-family: inherit; font-size: 13px; padding: 9px 12px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--input-bg, var(--surface-3)); color: var(--text);
+  }
+  .team-link-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 4px 0 0; }
+  .team-link-row[hidden] { display: none; }
+  #team-link-input {
+    flex: 1; min-width: 220px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px;
+    padding: 9px 12px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--input-bg, var(--surface-3)); color: var(--text);
+  }
+  .team-dashboard-status { font-size: 12.5px; font-weight: 600; color: var(--text); margin: 10px 0 0; min-height: 1em; }
+  .team-dashboard-status:empty { margin: 0; }
+  .team-dashboard-status.team-status-error { color: #DC2626; }
+  .team-dashboard-note { font-size: 11.5px; color: var(--text-muted); margin: 12px 0 0; }
+  @media (max-width: 640px) {
+    .team-banner { flex-direction: column; align-items: stretch; }
+  }
+
+  .alerts-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 0 0 14px; }
+  .alerts-search {
+    display: flex; align-items: center; gap: 8px; flex: 1; min-width: 200px;
+    border: 1px solid var(--border); border-radius: 8px; padding: 8px 12px; background: var(--surface-3); color: var(--text-muted);
+  }
+  .alerts-search input {
+    flex: 1; min-width: 0; border: none; background: none; font-family: inherit; font-size: 13px; color: var(--text); outline: none;
+  }
+  .alerts-search input::placeholder { color: var(--text-muted); }
+  .alerts-search:focus-within { border-color: var(--accent); }
+  .stack-summary-bar .btn.primary { flex-shrink: 0; }
+
+  /* Generic off-canvas drawer, shared by the stack picker and Sources -
+     same slide-in-from-the-right pattern for any "occasional edit,
+     shouldn't occupy the page permanently" panel. */
+  .drawer-overlay {
+    position: fixed; inset: 0; background: rgba(6,10,20,0.55); z-index: 190;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+  }
+  .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+
+  .drawer {
+    position: fixed; top: 0; right: 0; height: 100dvh; width: min(440px, 92vw);
+    background: var(--surface-2); border-left: 1px solid var(--border);
+    box-shadow: -16px 0 48px rgba(0,0,0,0.35);
+    transform: translateX(100%); transition: transform 0.25s ease;
+    z-index: 200; overflow-y: auto; display: flex; flex-direction: column;
+  }
+  .drawer.open { transform: translateX(0); }
+  /* Left-hand variant, used for the exposure filters drawer - same panel,
+     opens from the opposite edge so it doesn't collide with the stack/Sources
+     drawers on the right. */
+  .drawer.drawer-left {
+    left: 0; right: auto; border-left: none; border-right: 1px solid var(--border);
+    box-shadow: 16px 0 48px rgba(0,0,0,0.35); transform: translateX(-100%);
+  }
+  .drawer.drawer-left.open { transform: translateX(0); }
+  .drawer-head {
+    position: sticky; top: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 20px; background: var(--surface-2); border-bottom: 1px solid var(--border);
+  }
+  .drawer-head h2 { font-size: 16px; font-weight: 700; color: var(--text); margin: 0; }
+  .drawer-close {
+    width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-3);
+    color: var(--text); font-size: 18px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  }
+  .drawer-close:hover { border-color: var(--accent); }
+  /* Sticky right below the (also sticky) drawer head, so search stays
+     usable no matter how far you've scrolled the list below it. */
+  .drawer-search {
+    position: sticky; top: 65px; z-index: 1; padding: 12px 20px;
+    background: var(--surface-2); border-bottom: 1px solid var(--border);
+  }
+  .drawer-search-input {
+    width: 100%; box-sizing: border-box; font-family: inherit; font-size: 13px; padding: 9px 12px;
+    border-radius: 8px; border: 1px solid var(--border); background: var(--input-bg, var(--surface-3)); color: var(--text);
+  }
+  /* The stack picker now lives inline on the page, not inside a scrollable
+     drawer - reset the sticky-below-drawer-head positioning and drawer
+     chrome (padding/background/border) that only made sense in that
+     context; the input itself keeps the same look via .drawer-search-input. */
+  .stack-inline-search { position: static; padding: 0 0 14px; background: none; border-bottom: none; }
+  .drawer-body { padding: 18px 20px 32px; }
+  .drawer-body .sub { font-size: 13px; color: var(--text-muted); margin: 0 0 16px; }
+  .remember-toggle-row {
+    display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--text);
+    cursor: pointer; margin: 0 0 18px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 10px;
+    background: var(--surface-3);
+  }
+  body.drawer-open { overflow: hidden; }
+  @media (max-width: 640px) {
+    .stack-summary-bar { flex-direction: column; align-items: stretch; }
+    .stack-summary-bar .btn.primary { width: 100%; justify-content: center; }
+    /* Five tabs no longer fit an even 1/5-width split without each
+       label wrapping into a squeezed multi-line mess - scrolls
+       horizontally instead, same pattern as a mobile app's tab bar. */
+    .tabs { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .tab-btn { flex: none; white-space: nowrap; padding: 12px 16px; }
+  }
+
+  /* Card modal - the full write-up for one advisory, centered over the
+     page rather than sliding in from an edge like the drawers (there's no
+     "direction" a single card came from). Sits above the drawer layer
+     (z-index 200) since either could technically be open at once. */
+  .card-modal-overlay {
+    position: fixed; inset: 0; background: rgba(6,10,20,0.6); z-index: 210;
+    opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+  }
+  .card-modal-overlay.open { opacity: 1; pointer-events: auto; }
+  .card-modal {
+    position: fixed; top: 50%; left: 50%; z-index: 211;
+    width: min(680px, 92vw); max-height: min(760px, 88dvh); overflow-y: auto;
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px;
+    box-shadow: 0 24px 64px rgba(0,0,0,0.45);
+    transform: translate(-50%, -48%) scale(0.97); opacity: 0; pointer-events: none;
+    transition: transform 0.18s ease, opacity 0.18s ease;
+  }
+  .card-modal.open { transform: translate(-50%, -50%) scale(1); opacity: 1; pointer-events: auto; }
+  .card-modal-close {
+    position: sticky; top: 12px; float: right; margin: 12px 12px -32px 0;
+    width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface-3);
+    color: var(--text); font-size: 18px; line-height: 1; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    z-index: 2;
+  }
+  .card-modal-close:hover { border-color: var(--accent); }
+  .card-modal-body { padding: 20px 22px 26px; }
+  .signal-modal-head { padding: 0 0 12px; }
+  .signal-modal-head .signal-title-row { padding-right: 34px; }
+  .card-modal-body .signal-body { padding: 12px 0 0; border-top: 1px solid var(--border); }
+  @media (max-width: 640px) {
+    .card-modal { width: 100vw; max-height: 100dvh; height: 100dvh; border-radius: 0; top: 0; left: 0; transform: translate(0,8px) scale(1); }
+    .card-modal.open { transform: translate(0,0) scale(1); }
+    .card-modal-body { padding: 18px 16px 26px; }
+  }
+
+  /* ---------- Risk categories tab: the curated OWASP layer ---------- */
+  .owasp-entry {
+    border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px;
+    margin-bottom: 14px; background: var(--surface-3);
+  }
+  .owasp-entry:last-child { margin-bottom: 0; }
+  .owasp-entry .oe-head {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+    flex-wrap: wrap; margin-bottom: 8px;
+  }
+  .owasp-entry .oe-id { font-size: 11.5px; font-weight: 700; color: var(--accent-soft); letter-spacing: 0.03em; }
+  .owasp-entry h3 { font-size: 15.5px; margin: 2px 0 0; color: var(--text); }
+
+  /* The shape-tag is the tool's "intellectual spine" per the requirements
+     brief: it tells a reader up front whether a category is the kind of
+     thing that ships as a package CVE (green - there's a concrete lever,
+     update the package) or the kind that's a property of how the
+     application is built (amber - no patch fixes this, only a decision).
+     Fixed explicit hex, not the --safe-bg/--amber-bg tinted tokens: at this
+     badge's small font size those tinted pairs measure well under WCAG AA
+     (as low as 2.86:1 in light mode, and the dark-mode low-alpha overlay
+     composites to ~3.5:1 against the panel behind it) - confirmed by
+     computing real contrast ratios, not eyeballing it. Same fix AI-SHIELD's
+     RATING_BANDS already uses: solid fill, fixed color, guaranteed contrast
+     in both themes rather than derived from theme tokens. */
+  .shape-tag {
+    display: inline-flex; align-items: center; font-size: 11px; font-weight: 700;
+    padding: 4px 10px; border-radius: 20px; white-space: nowrap; flex-shrink: 0;
+  }
+  .shape-tag.cve { background: #15803D; color: #fff; }             /* ratio 5.02:1 */
+  .shape-tag.technique { background: #D97706; color: #0B1220; }    /* ratio 5.88:1 */
+
+  .owasp-entry .oe-summary { font-size: 13.5px; color: var(--text); line-height: 1.65; margin: 0 0 10px; }
+  .owasp-entry .oe-looks-like {
+    font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin: 0 0 12px;
+    padding: 8px 12px; border-left: 2px solid var(--border); font-style: italic;
+  }
+  .owasp-entry .oe-looks-like b { color: var(--text); font-weight: 600; font-style: normal; }
+  .owasp-entry .oe-mitigations { margin: 0; padding-left: 18px; }
+  .owasp-entry .oe-mitigations li { font-size: 12.5px; color: var(--text-muted); line-height: 1.6; margin-bottom: 5px; }
+  .owasp-entry .oe-mitigations li:last-child { margin-bottom: 0; }
+  /* Only rendered when a confident MITRE ATLAS crosswalk exists (see
+     owasp.json's atlasNote) - quiet/outlined like .pkg-version, not a
+     loud badge, since it's a cross-reference link rather than a status. */
+  .atlas-badge {
+    display: inline-flex; align-items: center; margin-top: 14px;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.02em;
+    color: var(--accent-soft); border: 1px solid var(--border); border-radius: 20px;
+    padding: 3px 10px; text-decoration: none;
+  }
+  .atlas-badge:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* ---------- Your exposure tab: the curated stack selector ---------- */
+  .stack-selected-count { font-size: 12.5px; color: var(--text-muted); margin: 0 0 16px; }
+
+  .stack-group { margin-bottom: 22px; }
+  .stack-group:last-child { margin-bottom: 0; }
+  .stack-group-head {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+    margin-bottom: 10px; flex-wrap: wrap;
+  }
+  .stack-group-head h3 { font-size: 13.5px; margin: 0; color: var(--text); }
+  .stack-group-head .sg-blurb { font-size: 12px; color: var(--text-muted); margin: 2px 0 0; }
+  .stack-group-actions button {
+    border: none; background: none; font-family: inherit; font-size: 11.5px; font-weight: 700;
+    color: var(--accent-soft); cursor: pointer; padding: 2px 4px;
+  }
+  .stack-group-actions button:hover { text-decoration: underline; }
+
+  .stack-grid-inner {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px;
+  }
+  /* Adapted from AI-SHIELD's .deploy-grid/.deploy-option chip pattern. */
+  .stack-option {
+    border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; cursor: pointer;
+    background: var(--surface-3); display: flex; flex-direction: column; gap: 2px;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .stack-option:hover { border-color: var(--accent); }
+  .stack-option.selected {
+    border-color: var(--accent); background: rgba(37,99,235,0.14); box-shadow: 0 0 0 1px var(--accent) inset;
+  }
+  .stack-option .s-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .stack-option .s-eco { font-size: 11px; color: var(--text-muted); }
+  /* Shown only for a package with an exact version on file (SBOM/lockfile
+     import) - monospace to read as data, not another label, and
+     deliberately quiet (border, not a filled pill) since it's informational,
+     not a status the way the health badges below are. */
+  .pkg-version {
+    display: inline-flex; align-self: flex-start; align-items: center; margin-top: 3px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 10.5px;
+    color: var(--text-muted); border: 1px solid var(--border); border-radius: 20px; padding: 1px 7px;
+  }
+
+  /* Custom packages (decision 4): dashed border makes "this one isn't
+     from the snapshot" legible without a legend. */
+  .stack-option.is-custom { border-style: dashed; position: relative; padding-right: 30px; }
+  /* var(--text-muted), not --accent-soft: on the .selected chip's blue-
+     tinted background, blue-on-blue-tint measures 3.91:1 in light mode -
+     under AA at this size. Same failure mode as the shape-tag and
+     signal-field-label fixes above. */
+  .custom-tag {
+    font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+    color: var(--text-muted); margin-left: 4px; vertical-align: middle;
+  }
+  .custom-remove {
+    position: absolute; top: 6px; right: 6px; width: 18px; height: 18px; border-radius: 50%;
+    border: none; background: rgba(0,0,0,0.18); color: var(--text-muted); font-size: 13px; line-height: 1;
+    cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0;
+  }
+  .custom-remove:hover { background: #DC2626; color: #fff; }
+  .custom-status { display: block; font-size: 11px; color: var(--text-muted); margin-top: 4px; }
+  .custom-status-ok { color: var(--text); font-weight: 600; }
+  .custom-status-error { color: var(--text-muted); }
+
+  /* Package maintenance status (opt-in, Sources tab) - solid fill + white
+     text, same reasoning as every severity/KEV badge on this page: a
+     fixed hex guarantees contrast regardless of theme or the chip's own
+     .selected state (which itself changes the background underneath),
+     rather than a plain-colored text label that would need re-checking
+     against every combination. align-self:flex-start keeps it a tight
+     pill rather than stretched full-width by the flex-column parent. */
+  .pkg-health {
+    display: inline-flex; align-self: flex-start; align-items: center; margin-top: 3px;
+    font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em;
+    padding: 2px 7px; border-radius: 20px; color: #fff;
+  }
+  .pkg-health-deprecated { background: #B91C1C; }  /* 6.52:1 */
+  .pkg-health-stale      { background: #92400E; }  /* 7.09:1 */
+  .custom-retry {
+    border: none; background: none; font-family: inherit; font-size: 11px; font-weight: 700;
+    color: var(--accent-soft); cursor: pointer; padding: 0; margin-left: 4px; text-decoration: underline;
+  }
+
+  /* Add-your-own form */
+  .custom-add { padding: 16px 20px; margin: 16px 0; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); }
+  .custom-add-heading { font-size: 13.5px; font-weight: 700; color: var(--text); margin: 0 0 10px; }
+  .custom-add-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .custom-name-input, .custom-eco-select {
+    font-family: inherit; font-size: 13px; padding: 8px 10px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--input-bg, var(--surface-3)); color: var(--text);
+  }
+  .custom-name-input { flex: 1; min-width: 160px; }
+  .custom-add-note { font-size: 11.5px; color: var(--text-muted); margin: 8px 0 0; }
+
+  .shield-suggestion-note {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    font-size: 12.5px; color: var(--text); background: rgba(37,99,235,0.08);
+    border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; margin: 0 0 16px;
+  }
+  /* The class's own display:flex above beats the browser's native
+     [hidden] { display: none } rule at equal specificity (author CSS
+     always wins over the UA stylesheet) - without this, setting
+     el.hidden = true via "Got it" flips the attribute but the note
+     stays visually onscreen. */
+  .shield-suggestion-note[hidden] { display: none; }
+  /* var(--text), not a fixed red - #DC2626 on --surface-2 measures 4.41:1
+     in light mode and 3.39:1 in dark, both under AA at this size. The red
+     accent glyph is decorative only; the message itself must be readable. */
+  .custom-add-error { font-size: 12px; color: var(--text); font-weight: 700; margin: 8px 0 0; min-height: 1em; }
+  .custom-add-error:empty { margin: 0; }
+  .custom-add-error:not(:empty)::before { content: '\26A0 '; color: #DC2626; }
+
+  /* SBOM/lockfile import - sits above the manual grid as the fast path,
+     styled like a distinct callout (accent-tinted border) rather than
+     another plain panel, since it's the thing most likely to replace
+     clicking through the grid entirely. */
+  .sbom-import {
+    border: 1px solid var(--accent); border-radius: 10px; background: var(--surface-2);
+    padding: 16px 20px; margin: 0 0 18px;
+  }
+  .sbom-import-heading { font-size: 14px; font-weight: 700; color: var(--text); margin: 0 0 6px; }
+  .sbom-import .sub { font-size: 12.5px; margin: 0 0 12px; }
+  .sbom-import .sub code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11.5px; background: var(--surface-3); padding: 1px 4px; border-radius: 4px; }
+  .sbom-import-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  #sbom-file-input {
+    font-size: 12.5px; color: var(--text-muted); max-width: 100%;
+  }
+  .sbom-paste-area { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+  #sbom-paste-input {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px;
+    padding: 10px 12px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--input-bg, var(--surface-3)); color: var(--text); resize: vertical;
+  }
+  .sbom-import-note { font-size: 11.5px; color: var(--text-muted); margin: 10px 0 0; }
+  .sbom-import-result { font-size: 12.5px; font-weight: 600; color: var(--text); margin: 10px 0 0; min-height: 1em; }
+  .sbom-import-result:empty { margin: 0; }
+  .sbom-import-result .sbom-warn { color: #B45309; font-weight: 700; }
+
+  .source-note { font-weight: 400; }
+
+  /* ---------- Sources tab: built-in source toggles + custom feeds ---------- */
+  .sources-section-heading {
+    font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--text-muted); margin: 28px 0 12px;
+  }
+  .sources-section-heading:first-of-type { margin-top: 4px; }
+  .source-row {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+    border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; background: var(--surface-3);
+    margin-bottom: 10px;
+  }
+  /* Same fix as .shield-suggestion-note[hidden] - display:flex above beats
+     the native [hidden] rule at equal specificity otherwise. Used by the
+     Sources drawer search to hide non-matching rows. */
+  .source-row[hidden] { display: none; }
+  .source-row-main { min-width: 0; }
+  .source-row-name { font-size: 13.5px; font-weight: 700; color: var(--text); }
+  .source-row-desc { font-size: 12.5px; color: var(--text-muted); line-height: 1.55; margin: 4px 0 0; }
+  .source-row-status { font-size: 12px; color: var(--text-muted); margin: 6px 0 0; }
+  .source-status-locked {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+    color: var(--text-muted); white-space: nowrap; flex-shrink: 0; padding-top: 2px;
+  }
+  .source-toggle {
+    display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--text);
+    cursor: pointer; white-space: nowrap; flex-shrink: 0; padding-top: 2px;
+  }
+
+  /* Slack/Teams webhook config - a small settings block, same shape as
+     the SLA target editor: not a source row (this is outbound, not
+     data coming in), so styled as its own card rather than forced into
+     the source-row layout above. */
+  .webhook-config {
+    display: flex; flex-direction: column; gap: 10px; border: 1px solid var(--border); border-radius: 10px;
+    background: var(--surface-3); padding: 14px 16px;
+  }
+  .webhook-field { display: flex; flex-direction: column; gap: 5px; font-size: 12.5px; font-weight: 600; color: var(--text); }
+  .webhook-field select, .webhook-field input[type="url"] {
+    font-family: inherit; font-size: 13px; padding: 8px 10px; border-radius: 8px;
+    border: 1px solid var(--border); background: var(--input-bg, var(--surface)); color: var(--text);
+  }
+  .webhook-field-checkbox { flex-direction: row; align-items: center; gap: 8px; font-weight: 500; }
+  .webhook-field-checkbox input { flex-shrink: 0; }
+  .webhook-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .webhook-status { font-size: 12px; color: var(--text-muted); margin: 0; min-height: 1em; }
+
+  /* One-click quick-add for a verified, credible feed (OWASP Gen AI
+     Security Project) - pre-fills the form and submits through the same
+     addFeed() path rather than a separate add mechanism. Hidden once
+     added (see suggestedFeedRowHtml). */
+  #suggested-feed-wrap {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;
+  }
+  #suggested-feed-wrap:empty { margin-bottom: 0; }
+  .suggested-feed-chip {
+    display: inline-flex; align-items: center; font-family: inherit; font-size: 12px; font-weight: 600;
+    color: var(--accent-soft); background: rgba(37,99,235,0.1); border: 1px dashed var(--border);
+    border-radius: 20px; padding: 6px 12px; margin: 0; cursor: pointer;
+  }
+  .suggested-feed-chip:hover { border-color: var(--accent); border-style: solid; }
+
+  .feed-add-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .feed-url-input { flex: 2; min-width: 220px; }
+  .feed-list { margin: 14px 0 0; }
+  .feed-row {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+    border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; background: var(--surface-3);
+    margin-bottom: 8px;
+  }
+  .feed-row-main { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+  .feed-row-name { font-size: 13px; font-weight: 700; color: var(--text); }
+  .feed-row-url { font-size: 11.5px; color: var(--text-muted); word-break: break-all; }
+
+  .drawer-search-empty { font-size: 12.5px; color: var(--text-muted); font-style: italic; padding: 8px 0; }
+  .feed-items-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+  .feed-item {
+    border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; background: var(--surface-3);
+  }
+  .feed-item a, .feed-item span { font-size: 13px; font-weight: 600; color: var(--text); text-decoration: none; line-height: 1.4; }
+  .feed-item a:hover { color: var(--accent-soft); text-decoration: underline; }
+  .feed-item-meta { font-size: 11px; color: var(--text-muted); margin-top: 6px; }
+
+  /* ---------- Console chrome: persistent status bar + diagnostics ----------
+     Sticky as one block so the warning banner appears/disappears directly
+     under the status bar rather than being covered by it. Sits outside
+     .wrap (full-bleed background) with an inner max-width to line up with
+     the tabs/panels below. */
+  .console-chrome { position: sticky; top: 0; z-index: 40; }
+  /* Thin status-colored line along the top edge - the same green/blue/red
+     as the dot below, just given a second, more peripheral read so "is
+     this live and healthy" registers before you've even looked at the
+     text. :has() reaches from the bar down into the dot buried two levels
+     inside it, so the color only has to be set once (on the dot, via JS)
+     rather than duplicated onto the bar itself. */
+  .console-bar {
+    background: var(--surface-2); border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .console-bar::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+    background: #64748B; transition: background 0.25s ease;
+  }
+  .console-bar:has(.status-dot.ok)::before { background: #16A34A; }
+  .console-bar:has(.status-dot.checking)::before { background: #2563EB; }
+  .console-bar:has(.status-dot.warn)::before { background: #DC2626; }
+  .console-bar-inner {
+    max-width: 1080px; margin: 0 auto; padding: 10px 20px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  }
+  .console-status { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-muted); }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: #64748B; flex-shrink: 0; }
+  .status-dot.ok { background: #16A34A; }
+  .status-dot.checking { background: #2563EB; animation: flare-pulse-dot 1.2s ease-in-out infinite; }
+  .status-dot.warn { background: #DC2626; }
+  @keyframes flare-pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+  @media (prefers-reduced-motion: reduce) { .status-dot.checking { animation: none; } }
+  /* A small tag ahead of the message, same monospace/uppercase treatment
+     as a terminal log line's severity prefix - reads as a live feed
+     entry rather than plain body copy. */
+  .console-sync-label {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--text-muted); border: 1px solid var(--border); border-radius: 4px;
+    padding: 1px 5px; flex-shrink: 0;
+  }
+  #console-sync-text {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--text);
+  }
+  .console-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .diagnostics-banner {
+    background: var(--amber-bg); border-bottom: 1px solid var(--border);
+    padding: 10px 20px; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .diagnostics-banner p { margin: 0; font-size: 12.5px; color: var(--text); }
+  .diagnostics-banner[hidden] { display: none; }
+
+  /* ---------- Your exposure tab: the ranked advisory list ---------- */
+  .digest-panel {
+    border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2);
+    padding: 14px 16px; margin: 0 0 16px;
+  }
+  .digest-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 0 10px; }
+  .digest-panel-head h3 { font-size: 13.5px; font-weight: 700; color: var(--text); margin: 0; }
+  .digest-box {
+    width: 100%; box-sizing: border-box; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 12px; line-height: 1.6; color: var(--text); background: var(--input-bg, var(--surface-3));
+    border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; resize: vertical;
+  }
+  .digest-note { font-size: 12px; color: var(--text-muted); margin: 8px 0 0; min-height: 1em; }
+
+  /* Dense two-panel layout: ranked list + an always-visible summary of the
+     same scope, so "what am I exposed to" doesn't require reading every
+     card. Stacks on narrow viewports, summary first. */
+  /* min-width: 0 on both tracks - grid items default to min-width: auto,
+     which refuses to shrink a track below its content's intrinsic min-content
+     width even when the track has an explicit length. Without this, long
+     unbreakable content (a stat label, a card's monospace chip, the digest
+     textarea) can silently push the whole grid wider than .wrap and bleed
+     off the right edge of the viewport - confirmed happening in real use at
+     viewport widths between the 860px stacking breakpoint and ~1100px,
+     which the original two-viewport regression pass (390px, 1100px+) never
+     covered. */
+  .exposure-grid { display: grid; grid-template-columns: minmax(0, 1fr) 200px; gap: 20px; align-items: start; margin-top: 4px; }
+  @media (max-width: 860px) { .exposure-grid { grid-template-columns: 1fr; } .exposure-stats { order: -1; position: static; } }
+  /* .exposure-stats (the At a Glance sidebar) is .no-print - without this,
+     the grid still reserves its 200px column empty, leaving the printed
+     advisory list narrower than the page for no reason. */
+  @media print { .exposure-grid { grid-template-columns: 1fr; } }
+  .exposure-main { min-width: 0; }
+  .exposure-stats { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+  /* Sticky only once the layout is two columns (860px+, see above) - stays
+     in view while the list scrolls, so "how bad is this" doesn't require
+     scrolling back up. console-chrome is itself sticky at top:0; this
+     offset clears its rendered height plus a little breathing room. */
+  @media (min-width: 861px) {
+    .exposure-stats { position: sticky; top: 76px; max-height: calc(100vh - 92px); overflow-y: auto; }
+  }
+  .exposure-stats-heading { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin: 0 0 2px; }
+  .exposure-stats-scope { font-weight: 500; opacity: 0.75; }
+  .exposure-stats-hint { font-size: 11px; color: var(--text-muted); margin: 0 0 2px; }
+  /* Tiles are <button>s when clickable (see statTileHtml in script.js) -
+     reset the button chrome so they still read as the same plain stat
+     card, then layer hover/active feedback back on top. */
+  .stat-tile {
+    border: 1px solid var(--border); border-left: 4px solid var(--border); border-radius: 8px;
+    padding: 10px 12px; background: var(--surface-3); min-width: 0; margin: 0;
+    font-family: inherit; text-align: left; width: 100%; display: block; appearance: none;
+  }
+  button.stat-tile { cursor: pointer; transition: border-color 0.12s ease, box-shadow 0.12s ease; }
+  button.stat-tile:hover { border-color: var(--accent); }
+  button.stat-tile:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  /* Selection reads as a ring rather than a solid fill, so it never hides
+     the tile's own severity/kev/fix color-coding underneath. */
+  .stat-tile.is-active { box-shadow: 0 0 0 2px var(--accent) inset; border-color: var(--accent); }
+  .stat-value { display: flex; align-items: center; gap: 6px; font-size: 22px; font-weight: 800; color: var(--text); line-height: 1.1; }
+  .stat-label { font-size: 11px; color: var(--text-muted); margin-top: 2px; overflow-wrap: break-word; }
+  /* Border-stripe accent only, not text color - a colored number on
+     --surface-3 measured well under 3:1 in dark mode for several of these
+     hexes (kev 1.54:1, accent 2.80:1), the same failure class already fixed
+     twice elsewhere on this page. var(--text) stays the guaranteed-safe
+     number color in both themes; the stripe is decorative, not
+     information-bearing, since the label text already names the stat. Each
+     stripe color is picked to match its matching pill on the advisory cards
+     (fix green, kev/critical red-browns) where one exists. */
+  .stat-tile.stat-critical { border-left-color: #DC2626; }
+  .stat-tile.stat-kev { border-left-color: #7C2D12; }
+  .stat-tile.stat-fix { border-left-color: #15803D; }
+  .stat-tile.stat-workaround { border-left-color: #7C3AED; }
+  .stat-tile.stat-watched { border-left-color: #CA8A04; }
+  .stat-tile.stat-sla-breach { border-left-color: #9A3412; }
+  /* Icon stays the same neutral muted tone as the label on every tile,
+     same reasoning as the border-stripe-only rule above: several of these
+     hexes fail text/icon contrast against --surface-3 in dark mode, so the
+     border stripe (a thick, larger area easier to keep legible) carries the
+     color-coding and the icon stays a safe, consistent neutral. */
+  .stat-icon { flex: none; color: var(--text-muted); }
+
+  /* A contextual pointer to AI-SHIELD, not just the footer link - shown
+     only alongside real stats (i.e. once a stack is selected), so it reads
+     as "here's the bigger picture" rather than a generic ad. */
+  .cross-link-card { border: 1px dashed var(--border); border-radius: 8px; padding: 10px 12px; margin-top: 4px; }
+  .cross-link-card p { font-size: 11.5px; line-height: 1.5; color: var(--text-muted); margin: 0; }
+  .cross-link-card a { color: var(--accent-soft); font-weight: 600; text-decoration: none; }
+  .cross-link-card a:hover { text-decoration: underline; }
+
+  /* Deliberately quiet - it annotates a card as freshly fetched, it does
+     not compete with the severity/KEV badges next to it. var(--text), not
+     --text-muted: in dark mode --text-muted IS this same grey (#94A3B8),
+     so a muted-on-muted pairing collapses to ~4.1:1 at this size - fixed
+     by using the higher-contrast text token instead (7.5-8.9:1 both themes). */
+  .src-live {
+    display: inline-flex; align-items: center; font-size: 10px; font-weight: 600;
+    padding: 3px 8px; border-radius: 20px; background: rgba(148,163,184,0.18); color: var(--text);
+  }
+  .signal-count { font-size: 12.5px; color: var(--text-muted); margin: 0 0 14px; }
+
+  /* What changed - a "since your last visit" diff, sitting above Top
+     priorities so "what's new" is seen before "what matters most".
+     Distinct accent color (violet, not the blue Top priorities uses)
+     so two stacked callout boxes read as different things at a glance,
+     not a duplicated element. Reuses .priority-row/.priority-body/etc
+     verbatim for the row layout - same "ranked shortlist" shape, just a
+     different heading and tag set. */
+  /* display:none, not just margin:0 - the base rule below still applies
+     its border/padding/background to an empty element, so margin alone
+     left a small bordered box with nothing in it visible on screen
+     (e.g. a first-ever visit, before there's any prior-visit snapshot to
+     diff against). */
+  .change-history:empty { display: none; }
+  .change-history {
+    border: 1px solid var(--border); border-left: 3px solid #7C3AED; border-radius: 10px;
+    background: var(--surface-2); padding: 16px 18px; margin: 0 0 18px;
+  }
+  .change-history-head h3 { font-size: 14px; font-weight: 700; color: var(--text); margin: 0 0 3px; }
+  .change-history-head .sub { font-size: 12px; color: var(--text-muted); margin: 0 0 12px; }
+  .change-history-more { font-size: 11.5px; color: var(--text-muted); margin: 8px 0 0; }
+
+  /* Top priorities - a ranked shortlist above the full feed, not another
+     list to scroll through. Left accent bar (not a full colored fill,
+     which would fight the badges inside each row for attention) marks it
+     as a distinct "read this first" zone. display:none when empty (see
+     JS: renders nothing under ~4 advisories) - margin:0 alone still left
+     the base rule's border/padding/background showing as a stray empty
+     box, same bug as .change-history above. */
+  .top-priorities:empty { display: none; }
+  .top-priorities {
+    border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 10px;
+    background: var(--surface-2); padding: 16px 18px; margin: 0 0 18px;
+  }
+  .priority-head h3 { font-size: 14px; font-weight: 700; color: var(--text); margin: 0 0 3px; }
+  .priority-head .sub { font-size: 12px; color: var(--text-muted); margin: 0 0 12px; }
+  .priority-list { display: flex; flex-direction: column; gap: 8px; }
+  .priority-row {
+    display: flex; align-items: center; gap: 12px; width: 100%; text-align: left;
+    font-family: inherit; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--surface-3); padding: 9px 12px; cursor: pointer; color: inherit;
+  }
+  .priority-row:hover { border-color: var(--accent); }
+  .priority-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .priority-rank {
+    flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--accent);
+    color: #fff; font-size: 11.5px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  }
+  .priority-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+  .priority-pkg { font-size: 12.5px; font-weight: 700; color: var(--text); }
+  .priority-summary { font-size: 12px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .priority-badges { display: flex; gap: 5px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; max-width: 45%; }
+  @media (max-width: 640px) {
+    .priority-row { flex-wrap: wrap; }
+    .priority-badges { max-width: 100%; }
+  }
+  /* Single column by default; widened to a gap-safe multi-column layout at
+     very wide viewports below (>=1600px) - see that rule for why CSS
+     columns rather than CSS grid. */
+  .signal-list { display: flex; flex-direction: column; gap: 10px; }
+  /* Cards vary a little in height (package name/summary length, badge
+     count) even though they're compact-only now (full detail lives in the
+     modal, not inline) - a CSS grid with 2+ explicit columns lays out in
+     strict rows, so one taller card leaves a visible gap under every
+     shorter card beside it in that row. CSS multi-column layout doesn't
+     have that problem: each column fills top-to-bottom independently.
+     break-inside: avoid stops a single card from being split across the
+     column boundary. Only at genuinely wide viewports - below this a
+     single column reads better than two narrow ones. */
+  @media (min-width: 1600px) {
+    .signal-list { display: block; column-count: 2; column-gap: 16px; }
+    .signal-card { break-inside: avoid; margin-bottom: 10px; }
+  }
+
+  /* Sharper corners, a thin left "status stripe" colored by severity (the
+     .sev-* classes below), a touch less border-radius than the rest of the
+     page's rounded panels - console-readout framing rather than a
+     marketing card, without touching the shared panel/button language
+     used everywhere else. */
+  .signal-card {
+    position: relative; border: 1px solid var(--border); border-left: 3px solid var(--border);
+    border-radius: 7px; background: var(--surface-3); overflow: hidden;
+  }
+  .signal-card.sev-critical { border-left-color: #DC2626; }
+  .signal-card.sev-high     { border-left-color: #B45309; }
+  .signal-card.sev-medium   { border-left-color: #A16207; }
+  .signal-card.sev-low      { border-left-color: #0F766E; }
+  .signal-card.sev-unknown  { border-left-color: #64748B; }
+  .signal-card.is-kev { border-color: #7C2D12; border-left-color: #7C2D12; border-left-width: 4px; }
+  .signal-card.is-watched { box-shadow: 0 0 0 1px rgba(202,138,4,0.5) inset; }
+
+  /* Brief highlight on a card that just appeared from a live update
+     (checkForNewAdvisories/GHSA/KEV/custom-package check) - see
+     withReorderAnimation() in script.js, which also FLIPs the transform
+     on cards that merely changed position. Gated on prefers-reduced-motion
+     in JS (the class is never added at all under reduced motion), so no
+     media-query override needed here. */
+  @keyframes flare-card-flash {
+    0% { box-shadow: 0 0 0 2px var(--accent), 0 0 24px rgba(37,99,235,0.35); }
+    100% { box-shadow: 0 0 0 0 rgba(37,99,235,0); }
+  }
+  .card-just-updated { animation: flare-card-flash 1.6s ease-out; }
+
+  /* A star button layered on top of the (unrelated) expand/collapse
+     button, not nested inside it - <button> can't contain <button>. Sized
+     as a real touch target even though it's visually small. */
+  .watch-toggle {
+    position: absolute; top: 10px; right: 10px; z-index: 2;
+    width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+    border: 1px solid transparent; background: none; border-radius: 6px; cursor: pointer;
+    font-size: 17px; line-height: 1; color: var(--text-muted); padding: 0;
+  }
+  .watch-toggle:hover { background: rgba(148,163,184,0.16); border-color: var(--border); }
+  .watch-toggle.is-watched { color: #CA8A04; }
+  .watch-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+
+  .signal-head {
+    width: 100%; text-align: left; border: none; background: none; font-family: inherit;
+    cursor: pointer; padding: 12px 44px 12px 14px; display: block; color: inherit;
+  }
+  .signal-head:hover { background: rgba(148,163,184,0.08); }
+  .signal-title-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin: 0 0 6px; }
+  .signal-pkg { font-size: 13px; font-weight: 700; color: var(--text); }
+  .signal-badges { display: flex; gap: 6px; flex-wrap: wrap; max-width: 100%; }
+  .signal-summary { font-size: 13.5px; color: var(--text); line-height: 1.5; margin: 0 0 8px; }
+  .signal-meta-row { display: flex; gap: 14px; font-size: 11.5px; color: var(--text-muted); flex-wrap: wrap; }
+  /* The advisory ID is the one thing on this row a technical reader scans
+     for - monospace sets it apart from the plain-text dates beside it,
+     the same "this is data, not prose" cue used for CVSS vectors and
+     fixed-in versions elsewhere on the card. */
+  .signal-id { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-weight: 600; color: var(--text); }
+
+  .signal-body { padding: 12px 14px 14px; border-top: 1px solid var(--border); }
+  .signal-body[hidden] { display: none; }
+  .signal-links { display: flex; gap: 14px; flex-wrap: wrap; margin: 0 0 14px; }
+  .signal-links a { font-size: 12px; font-weight: 600; color: var(--accent-soft); text-decoration: none; }
+  .signal-links a:hover { text-decoration: underline; }
+
+  /* "Additional coverage" links, repositioned right under the plain-English
+     summary instead of buried after every technical field - real,
+     already-fetched citations from the advisory's own record, given chip
+     styling so they read as a distinct, findable row rather than a plain
+     link list easy to miss while scanning. */
+  .signal-coverage {
+    display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap;
+    margin: 0 0 14px; padding: 8px 10px; border: 1px dashed var(--border); border-radius: 7px;
+  }
+  .signal-coverage-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); flex-shrink: 0; }
+  .coverage-links { display: flex; gap: 6px; flex-wrap: wrap; }
+  .coverage-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11.5px; font-weight: 600; color: var(--accent-soft); text-decoration: none;
+    background: rgba(37,99,235,0.1); border: 1px solid var(--border); border-radius: 20px; padding: 3px 10px;
+  }
+  .coverage-chip:hover { border-color: var(--accent); text-decoration: underline; }
+  /* Distinguished from the OSV-sourced reference chips beside it - dashed
+     border reads as "go search", not "here's a specific citation Flare
+     vetted", since it links to a live Google News query, not a fetched or
+     curated result. */
+  .coverage-chip-news { border-style: dashed; }
+
+  /* The dense "quick facts" strip - CVSS, attack vector, known fixes - set
+     visually apart (recessed tint, its own border) from the longer prose
+     fields below it, so the card reads as two tiers instead of one flat
+     stack of equally-weighted labeled fields. */
+  .signal-quickfacts {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px 18px;
+    background: rgba(148,163,184,0.07); border: 1px solid var(--border); border-radius: 7px;
+    padding: 12px 14px; margin: 0 0 14px;
+  }
+  .signal-quickfacts .signal-field { margin-bottom: 0; }
+  .qf-cvss-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .qf-score { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 15px; font-weight: 700; color: var(--text); }
+  .qf-score-max { font-size: 11px; font-weight: 500; color: var(--text-muted); }
+  .qf-vector {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 10.5px; color: var(--text-muted);
+    background: rgba(148,163,184,0.16); padding: 2px 6px; border-radius: 4px; word-break: break-all;
+  }
+
+  /* Small labeled rule marking the boundary between the glanceable quick
+     facts above and the full prose writeup below - not a tab (state that
+     needs to survive a full innerHTML re-render on every filter/sort
+     change adds real complexity for a boundary a plain divider already
+     communicates), just a clearer seam than another identical field label. */
+  .signal-divider {
+    display: flex; align-items: center; gap: 10px; margin: 4px 0 14px;
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted);
+  }
+  .signal-divider::before, .signal-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  /* Matches the typography of every other expanded-card field (Threat
+     level / Description / Vectors of attack / Known workaround) instead of
+     a standalone colored panel - a solid green box here duplicated the
+     fix-badge pill above it and read as a mismatched sticker next to the
+     red/maroon severity and KEV badges. The header pill already flags
+     "a fix exists"; this field just states the version, in a small
+     monospace chip using the same neutral tint as inline code elsewhere
+     on the card, not a semantic color of its own. */
+  .fixed-in-chips { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+  .fixed-in-version {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12.5px; font-weight: 600;
+    background: rgba(148,163,184,0.18); color: var(--text); padding: 2px 7px; border-radius: 5px; display: inline-block;
+  }
+
+  /* One shared pill component for every badge on a card (severity, KEV,
+     fix-available) - they used to be three different rules (.sev-badge
+     and .kev-badge shared a base but with different radius/case/size, and
+     .fix-badge never got a base rule at all: no padding, no radius,
+     display:block, browser-default font-size - a real bug, not just a
+     style choice, confirmed by inspecting its computed styles). Every
+     badge now gets the exact same shape/type; only the color changes.
+     Fixed explicit hex per color, same reasoning as the shape-tag
+     elsewhere on this page: guaranteed >=4.5:1 with white text regardless
+     of theme, rather than derived tokens. */
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 700;
+    padding: 3px 9px; border-radius: 20px; white-space: nowrap; flex-shrink: 0;
+    text-transform: uppercase; letter-spacing: 0.03em;
+  }
+  .badge-icon { flex-shrink: 0; }
+  .badge.badge-critical { background: #DC2626; color: #fff; }  /* 4.83:1 */
+  .badge.badge-high     { background: #B45309; color: #fff; }  /* 5.02:1 */
+  .badge.badge-medium   { background: #A16207; color: #fff; }  /* 4.92:1 */
+  .badge.badge-low      { background: #0F766E; color: #fff; }  /* 5.47:1 */
+  .badge.badge-unknown  { background: #64748B; color: #fff; }  /* 4.76:1 */
+  .badge.badge-kev      { background: #7C2D12; color: #fff; }  /* 9.37:1 */
+  /* Deliberately the site's own accent blue, not a semantic green - the
+     severity/KEV badges it sits beside are a red/maroon "danger" cluster,
+     and a solid saturated green pill fought with them for attention while
+     conveying the opposite (good news) at the same visual weight. Blue
+     reads as "informational" without competing on the alert color wheel. */
+  .badge.badge-fix      { background: #15803D; color: #fff; }  /* green reads as "good news" - 5.97:1 */
+  /* Solid fill + white text again, same reasoning as every badge above -
+     the one thing on a card more urgent than "actively exploited" is
+     "actively exploited AND past CISA's own deadline for it", so this
+     needs its own distinct red rather than reusing badge-critical's. */
+  .badge.badge-overdue  { background: #B91C1C; color: #fff; }  /* 6.52:1 */
+  /* Your own team's remediation-policy deadline, not CISA's - a distinct
+     fact from badge-overdue above, so it gets its own color rather than
+     implying the same federal-deadline weight. */
+  .badge.badge-sla-breach { background: #9A3412; color: #fff; }  /* 7.31:1 */
+
+  .kev-explanation { margin-top: 6px; }
+  .kev-explanation a { color: var(--accent-soft); font-weight: 600; text-decoration: none; }
+  .kev-explanation a:hover { text-decoration: underline; }
+
+  /* Trigger button that opens the left-hand filters drawer, plus its
+     active-filter-count badge so the count is visible without opening it. */
+  .filters-trigger { position: relative; display: inline-flex; align-items: center; gap: 7px; margin: 0 0 14px; }
+  .filters-badge {
+    display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px;
+    padding: 0 5px; border-radius: 999px; background: var(--accent); color: #fff; font-size: 11px; font-weight: 700;
+  }
+  .filters-badge[hidden] { display: none; }
+
+  /* Filter controls live in the left-hand drawer now - one full-width row
+     per control, unlike the old always-visible horizontal strip. */
+  .filter-chip {
+    display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text); cursor: pointer;
+    padding: 11px 13px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-3);
+    margin: 0 0 10px;
+  }
+  .filter-chip-watch:has(input:checked) { color: #CA8A04; font-weight: 700; border-color: rgba(202,138,4,0.5); }
+  .filter-chip-select { flex-direction: column; align-items: stretch; gap: 8px; }
+  .filter-date-row { display: flex; gap: 8px; }
+
+  /* Remediation SLA target editor - a small settings block, not another
+     filter chip, so it reads as configuration rather than a toggle. */
+  .sla-settings {
+    margin-top: 6px; padding: 13px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-3);
+  }
+  .sla-settings-heading { font-size: 12.5px; font-weight: 700; margin: 0 0 4px; color: var(--text); }
+  .sla-settings-note { font-size: 11.5px; color: var(--text-muted); margin: 0 0 12px; line-height: 1.5; }
+  .sla-target-row { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 13px; color: var(--text); }
+  .sla-target-row label { flex: 1 1 auto; }
+  .sla-target-row input[type="number"] {
+    width: 56px; padding: 5px 6px; border: 1px solid var(--border); border-radius: 6px;
+    background: var(--surface); color: var(--text); font-size: 13px; text-align: right;
+  }
+  .sla-target-row input[type="number"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .sla-target-row span { font-size: 11.5px; color: var(--text-muted); }
+  #sla-target-reset { margin-top: 2px; }
+  .filter-date-select {
+    font-family: inherit; font-size: 13px; color: var(--text); background: var(--input-bg, var(--surface-2));
+    border: 1px solid var(--border); border-radius: 6px; padding: 7px 9px; cursor: pointer; width: 100%; box-sizing: border-box; flex: 1; min-width: 0;
+  }
+
+  #show-more-btn { display: block; margin: 16px auto 0; }
+
+  /* Structured expanded-card fields: Threat level / Description / Vectors
+     of attack / Known workaround / Known fixes, in that order. */
+  .signal-field { margin: 0 0 14px; }
+  .signal-field:last-of-type { margin-bottom: 0; }
+  .signal-field-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-muted); margin: 0 0 5px; }
+  .signal-field-body { font-size: 12.5px; color: var(--text-muted); line-height: 1.65; margin: 0; }
+  .signal-field-empty { font-size: 12.5px; color: var(--text-muted); font-style: italic; margin: 0; }
+
+  /* Rule-based TL;DR (script.js: plainEnglishSentence) - the one thing on
+     an expanded card meant to be read first, so it gets its own visual
+     weight instead of looking like just another labeled field. */
+  .signal-plain-english {
+    font-size: 13.5px; font-weight: 600; line-height: 1.55; color: var(--text);
+    background: var(--surface-2); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+    border-radius: 8px; padding: 10px 12px; margin: 0 0 14px;
+  }
+  /* Vectors of attack + Known fixes + CVSS now live in .signal-quickfacts
+     above (an auto-fit grid, not a fixed 2-column one) - kept this
+     comment's spot so the file's read order still matches the card's
+     visual order. */
+
+  /* Rendered output of mdLite() - the real OSV `details` text is
+     markdown, and this replaces the literal ### / ** / ` characters
+     with actual structure. */
+  .md-body p { margin: 0 0 8px; }
+  .md-body p:last-child { margin-bottom: 0; }
+  /* These are the advisory's OWN sub-headings (## Patches, ## References,
+     etc.), not part of Flare's field labels above (DESCRIPTION, IMPACT) -
+     without a clear break the two looked like the same level of heading,
+     and inline **bold** text in the paragraphs below read as a third,
+     indistinguishable kind of emphasis. Uppercase + small-caps sizing
+     matches the visual language of .signal-field-label one step down, and
+     the top rule gives each one room to read as a real section break. */
+  .md-body .md-heading {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;
+    color: var(--text-muted); margin: 16px 0 6px; padding-top: 12px; border-top: 1px solid var(--border);
+  }
+  .md-body .md-heading:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+  .md-body ul, .md-body ol { margin: 0 0 8px; padding-left: 20px; }
+  .md-body ul:last-child, .md-body ol:last-child { margin-bottom: 0; }
+  .md-body li { margin-bottom: 3px; }
+  .md-body strong { color: var(--text); font-weight: 700; }
+  .md-body a { color: var(--accent-soft); font-weight: 600; text-decoration: none; }
+  .md-body a:hover { text-decoration: underline; }
+
+  /* Long, deeply technical Description bodies (multi-heading exploit
+     writeups, byte tables) collapse to a preview by default - see
+     descriptionIsLong() in script.js. The plain-English summary and
+     Impact/Vectors/Fixes fields already answer "should I patch this";
+     this is for the reader who wants the full writeup on purpose. */
+  .md-body-clamped { max-height: 220px; overflow: hidden; position: relative; }
+  .md-body-clamped::after {
+    content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 56px;
+    background: linear-gradient(to bottom, transparent, var(--surface-3));
+  }
+  .desc-toggle-btn { margin-top: 8px; }
+  /* var(--text), not --text-muted - same reasoning as .src-live: at this
+     size a muted-on-muted-tint pairing fails AA in dark mode. */
+  .md-body code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11.5px;
+    background: rgba(148,163,184,0.18); padding: 1px 5px; border-radius: 4px; color: var(--text);
+  }
+  .md-body pre {
+    margin: 0 0 8px; padding: 10px 12px; background: var(--surface-3); border: 1px solid var(--border);
+    border-radius: 6px; overflow-x: auto; font-size: 11px; line-height: 1.5;
+  }
+  .md-body pre:last-child { margin-bottom: 0; }
+  .md-body pre code { background: none; padding: 0; }
+
+  .related-btn { margin-top: 6px; }
+  .related-banner {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px;
+    padding: 10px 14px; margin: 0 0 14px; font-size: 13px; color: var(--text);
+  }
+  .related-banner p { margin: 0; }
+
+  /* ---------- Threat map tab: the full watchlist, not the selection ---------- */
+  .top-offenders { font-size: 12.5px; color: var(--text-muted); margin: 4px 0 18px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .top-offenders-label { font-weight: 700; color: var(--text); }
+
+  .heatmap-scroll { overflow-x: auto; }
+  .heatmap { width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 480px; }
+  .heatmap thead th {
+    text-align: center; font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.03em; color: var(--text-muted); padding: 8px 6px; border-bottom: 1px solid var(--border);
+  }
+  .heatmap thead th:first-child { text-align: left; }
+  .heatmap-group-row td {
+    font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--accent-soft); padding: 16px 6px 6px; border-bottom: 1px solid var(--border);
+  }
+  .heatmap-pkg-row { cursor: pointer; }
+  .heatmap-pkg-row:hover { background: rgba(148,163,184,0.08); }
+  .heatmap-pkg-row:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+  .heatmap-pkg-name {
+    padding: 8px 10px; font-size: 12.5px; font-weight: 600; color: var(--text);
+    border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  .heat-cell, .heat-cell-empty { text-align: center; padding: 8px 6px; border-bottom: 1px solid var(--border); font-weight: 700; font-size: 12px; }
+  .heat-cell { color: #fff; }                              /* fixed hex fills - contrast already verified on the sev-badge family */
+  .heat-cell-empty { color: var(--text-muted); font-weight: 400; }
+  .kev-dot { color: #7C2D12; font-size: 9px; vertical-align: middle; }
+
+  footer { max-width: 1080px; }
+  footer .disclaimer { max-width: 660px; }
+
+  @media (max-width: 640px) {
+    .panel { padding: 22px; }
+    .owasp-entry { padding: 16px 18px; }
+    .stack-grid-inner { grid-template-columns: 1fr 1fr; }
+  }

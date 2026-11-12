@@ -1,0 +1,216 @@
+{
+  "schema": 1,
+  "framework": "OWASP LLM Top 10 & ASI Top 10, 2026 edition",
+  "note": "IDs and category names here match the crosswalks already cited throughout AI-SHIELD's pillars.json exactly — the two tools are not allowed to disagree about what LLM04 or ASI01 means. LLM06 and LLM08 aren't cited anywhere in AI-SHIELD, so they're defined here for the first time to complete the full ten-item list; every other ID's name is taken verbatim from an existing AI-SHIELD crosswalk.",
+  "atlasNote": "Where an item maps cleanly to a specific MITRE ATLAS (Adversarial Threat Landscape for AI Systems) technique, its ID is included as 'atlas' below — this is Flare's own crosswalk, not an official MITRE-published mapping, and is left off entirely rather than forced for items (LLM03, LLM07, LLM10, ASI01, ASI03, ASI08) where no single ATLAS technique corresponds closely enough to name with confidence.",
+  "items": [
+    {
+      "id": "LLM01:2026",
+      "name": "Prompt Injection",
+      "shape": "technique",
+      "summary": "An attacker gets your model to ignore its instructions and follow theirs instead — sometimes by talking to it directly, sometimes by hiding instructions inside a document, webpage, or email the model reads on your behalf. It's not a bug in any library; it's a property of how instructions and data share the same channel in a language model.",
+      "looksLike": "Your support bot suddenly recommends a competitor, or an agent that reads incoming email executes a task nobody asked it to.",
+      "mitigations": [
+        "Treat anything the model reads that wasn't typed by a trusted user — documents, web pages, tool output — as untrusted input, not instructions.",
+        "Give the model the minimum tool access the task needs, so a successful injection has less to work with.",
+        "Add a human approval step before any action with real-world consequences: sending money, deleting data, sending email."
+      ],
+      "atlas": {
+        "id": "AML.T0051",
+        "name": "LLM Prompt Injection",
+        "url": "https://atlas.mitre.org/techniques/AML.T0051"
+      }
+    },
+    {
+      "id": "LLM02:2026",
+      "name": "Sensitive Information Disclosure",
+      "shape": "technique",
+      "summary": "The model reveals information it shouldn't — memorized training data, a previous user's conversation, an internal system prompt, or data from a connected source the current user isn't supposed to see. It usually isn't a hack; it's the model doing exactly what it was asked, without anyone having drawn the boundary.",
+      "looksLike": "A user asks an odd enough question and gets back a fragment of someone else's support ticket, or an internal price list nobody meant to expose.",
+      "mitigations": [
+        "Apply the same access controls to what the model can retrieve that you'd apply to a human employee with the same job.",
+        "Strip or mask secrets, credentials, and personal data before anything reaches the model's context window.",
+        "Test with prompts specifically designed to extract training data or system instructions before shipping."
+      ],
+      "atlas": {
+        "id": "AML.T0057",
+        "name": "LLM Data Leakage",
+        "url": "https://atlas.mitre.org/techniques/AML.T0057"
+      }
+    },
+    {
+      "id": "LLM03:2026",
+      "name": "Excessive Agency",
+      "shape": "technique",
+      "summary": "The model, or an agent built on it, is given more permission, autonomy, or reach than the task actually requires — it can delete records when it only needed to read them, or act without anyone checking its work. When it makes a mistake, the mistake is as large as the permission it was given.",
+      "looksLike": "An agent asked to ‘clean up old test data’ deletes production records because nothing stopped it from having write access to the wrong database.",
+      "mitigations": [
+        "Scope credentials and API access per task, not per application — the narrowest permission that gets the job done.",
+        "Require explicit confirmation for irreversible actions: delete, send, pay, publish.",
+        "Log every action an agent takes with enough detail to reconstruct what happened and why."
+      ]
+    },
+    {
+      "id": "LLM04:2026",
+      "name": "Supply Chain",
+      "shape": "cve",
+      "summary": "The models, datasets, plugins, and libraries you build on carry their own security history — a compromised package, a poisoned public model checkpoint, or an unpatched dependency vulnerability becomes your problem the moment you install it. This is the one category that behaves like traditional software security, because it mostly is.",
+      "looksLike": "A routine dependency update pulls in a package with a known remote-code-execution flaw nobody on the team noticed.",
+      "mitigations": [
+        "Pin and review dependency versions — don't auto-update AI libraries without checking their advisory history first.",
+        "Prefer models and datasets from sources that publish provenance and integrity hashes.",
+        "This is exactly what Flare's watchlist checks — keep it pointed at what you actually run."
+      ],
+      "atlas": {
+        "id": "AML.T0010",
+        "name": "AI Supply Chain Compromise",
+        "url": "https://atlas.mitre.org/techniques/AML.T0010"
+      }
+    },
+    {
+      "id": "LLM05:2026",
+      "name": "Data & Model Poisoning",
+      "shape": "cve",
+      "summary": "Someone tampers with the data a model is trained or fine-tuned on, or with the model artifact itself, so it behaves normally until a specific trigger makes it behave badly. Because the corruption happens before deployment, standard runtime monitoring won't catch it.",
+      "looksLike": "A fine-tuned model performs perfectly in testing, then reliably fails in one specific, attacker-chosen way once it's live.",
+      "mitigations": [
+        "Only load model files and checkpoints from sources you can verify, using integrity hashes where the source provides them.",
+        "Treat unpickling or deserializing a downloaded model file as running untrusted code, because it often is.",
+        "Record exactly which data and base model version produced each fine-tune, so a bad result is traceable."
+      ],
+      "atlas": {
+        "id": "AML.T0020",
+        "name": "Poison Training Data",
+        "url": "https://atlas.mitre.org/techniques/AML.T0020"
+      }
+    },
+    {
+      "id": "LLM06:2026",
+      "name": "System Prompt Leakage",
+      "shape": "technique",
+      "summary": "Your system prompt — the private instructions that shape how the model behaves — gets extracted by a user who asks the right way. On its own that's mostly embarrassing, but a leaked system prompt often reveals internal business logic, tool names, or the exact phrasing an attacker needs to craft a working prompt injection.",
+      "looksLike": "A user posts your assistant's full internal instructions online within a day of launch.",
+      "mitigations": [
+        "Never put anything in a system prompt you'd be unhappy to see published — no real credentials, no exploitable business logic.",
+        "Keep genuinely sensitive rules (pricing floors, escalation thresholds) enforced in code the model calls, not in prose the model recites.",
+        "Test whether your system prompt survives direct extraction attempts before launch, and periodically after."
+      ],
+      "atlas": {
+        "id": "AML.T0056",
+        "name": "Extract LLM System Prompt",
+        "url": "https://atlas.mitre.org/techniques/AML.T0056"
+      }
+    },
+    {
+      "id": "LLM07:2026",
+      "name": "Misinformation",
+      "shape": "technique",
+      "summary": "The model states something false with the same confidence as something true, and nothing in the product stops that false statement from reaching a user as if it were fact. This is a property of how these models generate text, not a bug that gets patched away.",
+      "looksLike": "A customer-facing assistant cites a return policy, warranty term, or medical detail that doesn't exist and never did.",
+      "mitigations": [
+        "For anything consequential — medical, legal, financial, safety — ground responses in a retrieved source document rather than the model's unaided memory, and show the source.",
+        "Add a visible, honest confidence signal rather than presenting every answer with equal certainty.",
+        "Route high-stakes categories of question to a human, or require sign-off before a generated answer reaches a customer."
+      ]
+    },
+    {
+      "id": "LLM08:2026",
+      "name": "Unbounded Consumption",
+      "shape": "cve",
+      "summary": "Nothing limits how much compute, tokens, or cost a single request — or a single user — can consume, so one expensive prompt, one bad loop in an agent, or one deliberate abuse pattern can degrade service or run up a bill for everyone. Serving and inference libraries occasionally ship with these limits missing or misconfigured by default.",
+      "looksLike": "A single support case turns into an agent that loops calling the same expensive tool hundreds of times before anyone notices.",
+      "mitigations": [
+        "Set hard per-request and per-user limits on tokens, tool calls, and wall-clock time, and fail closed when they're hit.",
+        "Rate-limit and meter usage per API key or per user, not just at the account level.",
+        "Alert on cost or usage anomalies the same way you'd alert on a traffic spike."
+      ],
+      "atlas": {
+        "id": "AML.T0034",
+        "name": "Cost Harvesting",
+        "url": "https://atlas.mitre.org/techniques/AML.T0034"
+      }
+    },
+    {
+      "id": "LLM09:2026",
+      "name": "Vector & Embedding Weaknesses",
+      "shape": "cve",
+      "summary": "The database that stores your embeddings for retrieval (RAG) has its own attack surface — access control gaps that let one tenant's data bleed into another's results, injection-style attacks against the query interface, or plain unpatched vulnerabilities in the vector database software itself.",
+      "looksLike": "A multi-tenant RAG deployment occasionally returns a snippet of another customer's document in someone else's answer.",
+      "mitigations": [
+        "Enforce tenant or user isolation at the vector database level, not just in application logic sitting in front of it.",
+        "Keep the vector database patched and watched the same way you'd watch a production SQL database — it's exactly that, with extra steps.",
+        "Sanitize what gets embedded in the first place; malicious content embedded once gets retrieved indefinitely."
+      ],
+      "atlas": {
+        "id": "AML.T0070",
+        "name": "RAG Poisoning",
+        "url": "https://atlas.mitre.org/techniques/AML.T0070"
+      }
+    },
+    {
+      "id": "LLM10:2026",
+      "name": "Improper Output Handling",
+      "shape": "cve",
+      "summary": "Whatever the model outputs gets passed downstream — into a database query, a shell command, a rendered web page, another API — without the same validation you'd apply to input from an untrusted user. Because a model can be manipulated into producing anything, its output deserves exactly that level of suspicion.",
+      "looksLike": "A model-generated string ends up executed as a SQL query or rendered as unescaped HTML — a classic web vulnerability with nothing AI-specific about the fix.",
+      "mitigations": [
+        "Validate and escape model output exactly as you would any other untrusted input, at every downstream boundary it crosses.",
+        "Never construct a shell command, SQL query, or file path by directly concatenating model output.",
+        "Treat ‘the model said so’ as no more trustworthy than ‘the user said so’ anywhere output flows into code execution."
+      ]
+    },
+    {
+      "id": "ASI01:2026",
+      "name": "Agent Goal Hijack",
+      "shape": "technique",
+      "summary": "An autonomous agent's actual objective gets redirected mid-task — through a manipulated tool result, a poisoned piece of context, or a chain of smaller nudges — so it ends up pursuing a goal nobody set for it, while still appearing to work normally.",
+      "looksLike": "An agent tasked with summarizing support tickets ends up forwarding a sensitive one to an external address because the ticket's content redirected it.",
+      "mitigations": [
+        "Keep the agent's original goal explicit and re-check outputs against it at each step, not just at the end.",
+        "Don't let tool output silently become new instructions — treat it as data to evaluate, not commands to follow.",
+        "Bound what a single agent run can do irreversibly before a human reviews the plan."
+      ]
+    },
+    {
+      "id": "ASI03:2026",
+      "name": "Agent Identity & Privilege Abuse",
+      "shape": "technique",
+      "summary": "An agent acts under a shared, over-privileged, or poorly-scoped identity, so there's no reliable way to tell which of its actions were legitimate and which were manipulated — and no way to revoke one agent's access without breaking everything else that uses the same credential.",
+      "looksLike": "Every agent in your system shares one API key, so when one gets compromised, all of them do.",
+      "mitigations": [
+        "Give each agent, or agent type, its own identity and credentials, scoped to only what that agent needs.",
+        "Log actions with the specific agent identity attached, not just ‘the system,’ so abuse is traceable to its source.",
+        "Rotate and revoke agent credentials independently of each other and of human user credentials."
+      ]
+    },
+    {
+      "id": "ASI04:2026",
+      "name": "Agentic Supply Chain Compromise",
+      "shape": "cve",
+      "summary": "Every tool, plugin, or MCP server an agent can call is a dependency with its own security posture, and the agent inherits whatever that dependency does, intentionally or otherwise. Unlike traditional supply chain risk, this one can change at runtime if the agent connects to tools discovered dynamically.",
+      "looksLike": "An agent connects to a community-published MCP server that looks legitimate and turns out to exfiltrate every request it handles.",
+      "mitigations": [
+        "Maintain an explicit allowlist of tools and MCP servers an agent may connect to — never auto-trust discovery.",
+        "Review a new tool's actual behavior, not just its description, before granting an agent access to it.",
+        "Apply the same vendor and dependency scrutiny to a tool/plugin ecosystem that you'd apply to a code dependency."
+      ],
+      "atlas": {
+        "id": "AML.T0010.005",
+        "name": "AI Agent Tool",
+        "url": "https://atlas.mitre.org/techniques/AML.T0010.005"
+      }
+    },
+    {
+      "id": "ASI08:2026",
+      "name": "Cascading Agent Failures",
+      "shape": "technique",
+      "summary": "In a system of multiple agents — or an agent that calls sub-agents — one agent's error, hallucination, or compromise propagates downstream as if it were verified fact, and the failure compounds instead of getting caught, because each agent tends to trust the last one's output more than it should.",
+      "looksLike": "A research agent hallucinates a fact, a summarizing agent repeats it as established, and a customer-facing agent states it with full confidence three hops later.",
+      "mitigations": [
+        "Don't let agents pass unverified claims to each other as if they were confirmed — carry a confidence or provenance signal through the chain.",
+        "Add validation checkpoints between agents in a pipeline, not just at the very start and end.",
+        "Design for partial failure: one agent going wrong shouldn't silently take the whole chain down the same wrong path."
+      ]
+    }
+  ]
+}

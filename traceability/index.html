@@ -1,0 +1,1129 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<!-- Apply a stored theme choice before first paint, so there's no flash
+     of the wrong theme while lab-theme.js is still loading. -->
+<script>
+(function(){try{var t=localStorage.getItem('lab-theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();
+</script>
+<!-- Google Analytics - only loads after cookie consent, see banner script below -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  function loadGoogleAnalytics(){
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-QE309XG3DJ';
+    document.head.appendChild(s);
+    gtag('js', new Date());
+    gtag('config', 'G-QE309XG3DJ');
+  }
+</script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Traceability — Multi-System Data Lineage &amp; Recovery Sequence Visualizer | Kris McCabe</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon-16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="description" content="Map system dependencies, detect circular recovery hazards, and generate a topologically sorted recovery sequence — then hand the recovery-time gap straight to Redline." />
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Kris's Lab">
+<meta property="og:title" content="Traceability — Multi-System Data Lineage &amp; Recovery Sequence Visualizer">
+<meta property="og:description" content="Map system dependencies, detect circular recovery hazards, and generate a topologically sorted recovery sequence — then hand the recovery-time gap straight to Redline.">
+<meta property="og:url" content="https://lab.krismccabe.com/traceability/">
+<meta property="og:image" content="https://lab.krismccabe.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Traceability — Multi-System Data Lineage &amp; Recovery Sequence Visualizer">
+<meta name="twitter:description" content="Map system dependencies, detect circular recovery hazards, and generate a topologically sorted recovery sequence — then hand the recovery-time gap straight to Redline.">
+<meta name="twitter:image" content="https://lab.krismccabe.com/og-image.png">
+<link rel="stylesheet" href="/assets/lab.css?v=6">
+<script src="/assets/lab-theme.js?v=1" defer></script>
+<style>
+  .lab-header-inner { max-width: 1160px; display:flex; align-items:center; justify-content:space-between; }
+
+  .hero { padding: 48px 24px 40px; }
+  .hero h1 { color: #fff; font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 800; letter-spacing: -0.02em; margin: 0 0 14px; max-width: 700px; margin-left: auto; margin-right: auto; }
+  .hero p { color: #94A3B8; font-size: 15px; max-width: 620px; margin: 0 auto; }
+
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 24px 20px 64px; }
+  @media (min-width: 1024px) {
+    .lab-header-inner, .wrap, footer { max-width: 1560px; }
+  }
+  .panel h2 { font-size: 17px; font-weight: 700; color: var(--text); margin: 0 0 4px; }
+  .panel h3 { font-size: 13px; font-weight: 700; color: var(--text); margin: 0 0 10px; }
+  .panel .sub { font-size: 13px; color: var(--text-muted); margin: 0 0 18px; }
+
+  .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; align-items: end; margin-bottom: 10px; }
+  .field label { display: block; font-size: 11px; font-weight: 600; color: var(--text); margin-bottom: 5px; }
+  select.tr-select, input.tr-input { width: 100%; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); padding: 9px 11px; font-family: inherit; font-size: 13px; color: var(--text); font-weight: 500; }
+  select.tr-select:focus, input.tr-input:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+  .btn { border: 1px solid var(--border); background: var(--surface); color: var(--text); font-family: inherit; font-size: 13px; font-weight: 700; padding: 10px 18px; border-radius: 8px; cursor: pointer; text-decoration: none; transition: border-color 0.15s ease, background 0.15s ease; display: inline-flex; align-items: center; gap: 6px; }
+  .btn:hover { border-color: var(--accent); background: rgba(37, 99, 235, 0.12); text-decoration: none; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { background: var(--accent-hv); border-color: var(--accent-hv); color: #fff; }
+  .btn.small { padding: 6px 12px; font-size: 12px; }
+  .btn.danger { color: var(--risk); }
+
+  .two-col { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: 20px; align-items: start; }
+  @media (max-width: 900px) { .two-col { grid-template-columns: minmax(0, 1fr); } }
+
+  .mini-list { margin-top: 12px; max-height: 180px; overflow-y: auto; }
+  .mini-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 6px; background: var(--surface-2); margin-bottom: 5px; font-size: 12px; }
+  .mini-row .tier-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; flex-shrink: 0; }
+  .mini-row .row-label { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mini-row .row-actions { flex-shrink: 0; display: flex; gap: 4px; }
+  .mini-row button { border: none; background: none; color: var(--text-muted); cursor: pointer; font-size: 13px; line-height: 1; padding: 7px 8px; min-width: 24px; min-height: 24px; }
+  .mini-row button[data-remove-node]:hover, .mini-row button[data-remove-edge]:hover { color: var(--risk); }
+  .mini-row button[data-edit-node]:hover { color: var(--accent); }
+
+  .diagram-wrap { display: flex; justify-content: center; margin: 8px 0 16px; overflow-x: auto; background: var(--surface-2); border-radius: 10px; border: 1px solid var(--border); }
+  .tr-node:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .diagram-wrap svg { max-width: 100%; height: auto; }
+
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; font-size: 11px; color: var(--text-muted); justify-content: center; margin-bottom: 4px; }
+  .legend span { display: inline-flex; align-items: center; gap: 5px; }
+  .legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+  .warning-banner { border-radius: 10px; padding: 14px 16px; margin-bottom: 16px; font-size: 13px; }
+  .warning-banner.cycle { background: var(--risk-bg); color:var(--risk); border-left: 4px solid var(--risk); }
+  .warning-banner.conflict { background: var(--amber-bg); color:var(--amber); border-left: 4px solid var(--amber); }
+  .warning-banner strong { display: block; margin-bottom: 4px; }
+
+  .phase-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; margin-top: 8px; }
+  .phase-card { border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; background: var(--surface); }
+  .phase-card h3 { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent); margin: 0 0 10px; }
+  .phase-item { font-size: 12px; padding: 7px 9px; border-radius: 6px; background: var(--surface-2); margin-bottom: 6px; }
+  .phase-item .name { font-weight: 700; color: var(--text); display: block; }
+  .phase-item .meta { color: var(--text-muted); font-size: 11px; }
+  .phase-empty { font-size: 12px; color: var(--text-muted); font-style: italic; }
+
+  .metric-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 12px; margin: 14px 0; }
+  .metric-card { border-radius: 10px; padding: 14px 16px; }
+  .metric-card .metric-value { font-size: 24px; font-weight: 800; }
+  .metric-card .metric-label { font-size: 11px; font-weight: 600; margin-top: 2px; }
+
+  .impact-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 16px; }
+  .impact-list h3 { font-size: 12px; font-weight: 700; margin: 0 0 8px; }
+  .impact-item { display: flex; justify-content: space-between; padding: 8px 10px; border-radius: 6px; margin-bottom: 5px; font-size: 12px; cursor: pointer; border: none; width: 100%; text-align: left; font-family: inherit; }
+  .impact-item.upstream { background: rgba(37, 99, 235, 0.12); color: var(--accent-hv); }
+  .impact-item.downstream { background: var(--amber-bg); color: #92400E; }
+  .impact-none { font-size: 12px; color: var(--text-muted); font-style: italic; }
+
+  .action-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 8px; }
+  .saved-badge { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-radius: 8px; font-size: 12px; background: var(--surface-2); margin-bottom: 14px; }
+
+  details.raw-import { background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+  details.raw-import summary { cursor: pointer; font-size: 12px; font-weight: 700; color: var(--accent); }
+  details.raw-import[open] summary { margin-bottom: 10px; }
+  details.raw-import .sub { font-size: 12px; line-height: 1.6; color: var(--text-muted); margin: 0; }
+  details.raw-import code { background: var(--panel-bg); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; font-size: 11px; color: var(--text); word-break: break-word; }
+  /* color explicit, not left to the browser default - confirmed via a
+     real computed-style check that a bare <textarea> renders black text
+     (rgb(0,0,0)) regardless of page theme, invisible against this dark
+     background. */
+  textarea.tr-textarea { width: 100%; min-height: 100px; margin-top: 10px; font-family: monospace; font-size: 12px; border: 1px solid var(--border); border-radius: 8px; padding: 10px; background: var(--panel-bg); color: var(--text); }
+
+  footer { max-width: 1160px; }
+  footer .disclaimer { max-width: 700px; }
+
+  @media (max-width: 640px) { .panel { padding: 20px; } }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Traceability — Multi-System Data Lineage & Recovery Sequence Visualizer",
+  "description": "Map system dependencies, detect circular recovery hazards, and generate a topologically sorted recovery sequence — then hand the recovery-time gap straight to Redline.",
+  "url": "https://lab.krismccabe.com/traceability/",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Any (runs in browser)",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "author": {
+    "@type": "Person",
+    "name": "Kris McCabe",
+    "url": "https://krismccabe.com/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/assets/swiss.css?v=5">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to content</a>
+
+<div class="cookie-banner" id="cookie-banner" role="dialog" aria-label="Cookie consent">
+  <p>This site uses Google Analytics to understand how the tools are used. Nothing loads or is tracked until you accept.</p>
+  <div class="cookie-banner-actions">
+    <button type="button" id="cookie-decline" class="btn small">Decline</button>
+    <button type="button" id="cookie-accept" class="btn primary small">Accept</button>
+  </div>
+</div>
+<script>
+(function(){
+  var consent = localStorage.getItem('cookie-consent');
+  if (consent === 'granted') { loadGoogleAnalytics(); return; }
+  if (consent === 'denied') { return; }
+  var banner = document.getElementById('cookie-banner');
+  banner.style.display = 'flex';
+  document.getElementById('cookie-accept').addEventListener('click', function(){
+    localStorage.setItem('cookie-consent', 'granted');
+    banner.style.display = 'none';
+    loadGoogleAnalytics();
+  });
+  document.getElementById('cookie-decline').addEventListener('click', function(){
+    localStorage.setItem('cookie-consent', 'denied');
+    banner.style.display = 'none';
+  });
+})();
+</script>
+
+  <header class="lab-header">
+    <div class="lab-header-inner">
+      <a class="lab-back" href="/">&#8592; Kris's Lab</a>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" aria-pressed="false">
+          <svg class="icon-sun" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.5"/>
+            <path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12h2.5M19 12h2.5M4.2 19.8l1.8-1.8M18 6l1.8-1.8"/>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 14.2A8.5 8.5 0 1 1 9.8 4a7 7 0 0 0 10.2 10.2Z"/>
+          </svg>
+        </button>
+        <span style="display:flex; align-items:center; gap:8px; color:#fff; font-weight:700; font-size:14px;">
+        <svg viewBox="0 0 40 40" width="22" height="22" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="10" cy="10" r="4" fill="#93C5FD"/>
+          <circle cx="30" cy="10" r="4" fill="#93C5FD"/>
+          <circle cx="20" cy="28" r="4" fill="#2563EB"/>
+          <line x1="10" y1="10" x2="18" y2="25" stroke="#93C5FD" stroke-width="1.8"/>
+          <line x1="30" y1="10" x2="22" y2="25" stroke="#93C5FD" stroke-width="1.8"/>
+          <line x1="20" y1="28" x2="20" y2="34" stroke="#DC2626" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        Traceability
+      </span>
+      </div>
+    </div>
+  </header>
+
+  <div class="hero" id="main-content">
+    <svg viewBox="0 0 40 40" width="48" height="48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="margin-bottom:16px;">
+      <circle cx="10" cy="10" r="4" fill="#93C5FD"/>
+      <circle cx="30" cy="10" r="4" fill="#93C5FD"/>
+      <circle cx="20" cy="28" r="4" fill="#2563EB"/>
+      <line x1="10" y1="10" x2="18" y2="25" stroke="#93C5FD" stroke-width="1.8"/>
+      <line x1="30" y1="10" x2="22" y2="25" stroke="#93C5FD" stroke-width="1.8"/>
+      <line x1="20" y1="28" x2="20" y2="34" stroke="#DC2626" stroke-width="2" stroke-linecap="round"/>
+    </svg>
+    <p class="eyebrow">Free tool &middot; Kris McCabe</p>
+    <h1>Multi-System Data Lineage &amp; Recovery Sequence Visualizer</h1>
+    <p>Map how your systems actually depend on each other, then let a topological sort — grounded in standard graph theory, TOGAF data architecture, and NIST SP 800-34 contingency planning — tell you the one recovery order that doesn't create a hazard.</p>
+  </div>
+
+  <div class="wrap">
+
+    <div class="panel">
+      <h2>Build the map</h2>
+      <p class="sub">Start from a preset architecture or a blank canvas, then add systems and the dependencies between them.</p>
+
+      <div class="field-row">
+        <div class="field" style="grid-column: span 2;">
+          <label for="tr-preset">Preset architecture</label>
+          <select id="tr-preset" class="tr-select"></select>
+        </div>
+      </div>
+      <div id="saved-map-badge" class="saved-badge" style="display:none;">
+        <span id="saved-map-text"></span>
+        <button class="btn small" id="load-saved-map-btn">Reload it</button>
+      </div>
+
+      <div class="two-col" style="margin-top:8px;">
+        <div>
+          <h3 id="node-form-title">Add a system</h3>
+          <div class="field">
+            <label for="node-name-input">System name</label>
+            <input type="text" id="node-name-input" class="tr-input" placeholder="e.g. Snowflake Data Warehouse">
+          </div>
+          <div class="field-row" style="margin-top:10px;">
+            <div class="field">
+              <label for="node-tier-select">Tier / criticality</label>
+              <select id="node-tier-select" class="tr-select"></select>
+            </div>
+            <div class="field">
+              <label for="node-interface-select">Interface type</label>
+              <select id="node-interface-select" class="tr-select"></select>
+            </div>
+          </div>
+          <div class="field" style="margin-top:10px; max-width:180px;">
+            <label for="node-hours-input">Est. recovery time (hrs)</label>
+            <input type="number" id="node-hours-input" class="tr-input" value="1" min="0.25" step="0.25">
+          </div>
+          <div style="display:flex; gap:8px; margin-top:10px;">
+            <button class="btn primary small" id="add-node-btn">+ Add System</button>
+            <button class="btn small" id="cancel-edit-btn" style="display:none;">Cancel edit</button>
+          </div>
+          <div class="mini-list" id="node-list"></div>
+
+          <h3 style="margin-top:20px;">Add a dependency</h3>
+          <p class="sub" style="margin-bottom:10px;">Source feeds Target — Target cannot be trusted until Source is restored.</p>
+          <div class="field">
+            <label for="edge-from-select">Source (feeds &rarr;)</label>
+            <select id="edge-from-select" class="tr-select"></select>
+          </div>
+          <div class="field" style="margin-top:10px;">
+            <label for="edge-to-select">Target (depends on Source)</label>
+            <select id="edge-to-select" class="tr-select"></select>
+          </div>
+          <button class="btn primary small" id="add-edge-btn" style="margin-top:10px;">+ Add Dependency</button>
+          <p id="edge-error" style="font-size:12px; color:var(--risk); margin:6px 0 0;"></p>
+          <div class="mini-list" id="edge-list"></div>
+
+          <details class="raw-import" style="margin-top:20px;">
+            <summary>Advanced: paste CSV or JSON to batch-create</summary>
+            <p class="sub">CSV, one system or dependency per line:</p>
+            <p class="sub"><code>NODE,name,tier(0-3),interfaceType,hours</code></p>
+            <p class="sub"><code>EDGE,fromName,toName</code></p>
+            <p class="sub" style="margin-top:8px;">Or paste a JSON object:</p>
+            <p class="sub"><code>{"nodes":[{"name":"","tier":0,"interfaceType":"REST API","hours":1}],"edges":[{"from":"","to":""}]}</code></p>
+            <textarea class="tr-textarea" id="raw-import-input" placeholder="Paste CSV lines or a JSON object..."></textarea>
+            <button class="btn small" id="raw-import-btn" style="margin-top:10px;">Parse &amp; merge</button>
+            <p id="raw-import-status" style="font-size:12px; margin-top:8px;"></p>
+          </details>
+
+          <div class="action-bar" style="margin-top:20px;">
+            <button class="btn small" id="save-map-btn">Save Map</button>
+            <button class="btn small danger" id="clear-map-btn">Clear Saved Map</button>
+          </div>
+        </div>
+
+        <div>
+          <h3>Dependency map</h3>
+          <div class="legend">
+            <span><i style="background:var(--navy);"></i> Tier 0 — Infra/Auth</span>
+            <span><i style="background:var(--accent);"></i> Tier 1 — Master Data</span>
+            <span><i style="background:var(--amber);"></i> Tier 2 — Transactional</span>
+            <span><i style="background:var(--safe);"></i> Tier 3 — Analytics</span>
+            <span><i style="background:var(--risk);"></i> Unresolved / circular</span>
+          </div>
+          <span id="tr-node-hint" class="visually-hidden">Activate to show this system's blast radius below</span>
+          <div class="diagram-wrap" id="diagram-wrap"></div>
+          <p class="sub" style="text-align:center; margin:0;">Scroll to zoom, drag to pan, click a system for its blast radius below.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="warnings-panel" style="display:none;" aria-live="assertive"></div>
+
+    <div class="panel">
+      <h2>Calculated recovery sequence</h2>
+      <p class="sub">A topological sort of the dependency graph, grouped into the four standard recovery phases — the order within each phase already respects every dependency, not just the tier label. "Wave" is that calculated order: everything in Wave 1 has no prerequisites, Wave 2 depends only on Wave 1, and so on — restore in wave order and nothing gets started before what it needs.</p>
+      <div class="phase-grid" id="phase-grid" aria-live="polite"></div>
+    </div>
+
+    <div class="panel" id="blast-panel">
+      <h2>Blast radius analysis</h2>
+      <p class="sub" id="blast-sub">Click any system in the map above to see what it depends on, and what depends on it.</p>
+      <div id="blast-content" aria-live="polite"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Export &amp; hand off</h2>
+      <p class="sub">Send the dependency-chain recovery time for the selected system straight to Redline, or take the whole map with you.</p>
+      <div class="action-bar">
+        <a class="btn primary" id="redline-handoff-btn" href="/redline/" target="_blank" rel="noopener">Pass Recovery Time to Redline &rarr;</a>
+        <button class="btn" id="export-csv-btn">&#8681; Export Runbook Checklist (CSV)</button>
+        <button class="btn" id="export-md-btn">&#8681; Export Architecture Markdown Brief</button>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="links">
+      <a href="/redline/" target="_blank" rel="noopener">Redline &mdash; the True Cost of Downtime calculator &rarr;</a>
+      <a href="/schema-explorer/" target="_blank" rel="noopener">Schema Explorer &mdash; what breaks if you delete this? &rarr;</a>
+      <a href="/recoverly/" target="_blank" rel="noopener">Recoverly &mdash; data recovery maturity assessment &rarr;</a>
+      <a href="/tabletop/" target="_blank" rel="noopener">Tabletop &mdash; Incident Command practice exercise &rarr;</a>
+      <a href="/agent-impact/" target="_blank" rel="noopener">Agent-Impact &mdash; AI agent Blast Radius &amp; guardrail simulator &rarr;</a>
+      <a href="https://krismccabe.com" target="_blank" rel="noopener">krismccabe.com</a>
+    </div>
+    <p class="disclaimer">An independent tool by Kris McCabe. Grounded in generic TOGAF Data Architecture principles, standard graph theory (topological sorting over directed acyclic graphs), and the publicly documented NIST SP 800-34 Rev. 1 Contingency Planning Guide for Federal Information Systems &mdash; not derived from any employer's internal or proprietary architecture. Maps, tiers, and recovery-time estimates are illustrative starting points for discussion, not a substitute for a formal dependency audit or Business Impact Analysis.</p>
+  </footer>
+
+<script>
+  // ---------------------------------------------------------------
+  // DATA MODEL
+  // ---------------------------------------------------------------
+  const TIERS = [
+    { id: 0, label: 'Tier 0 — Infrastructure & Auth', short: 'Tier 0', color: 'var(--navy)', hex: '#0F172A' },
+    { id: 1, label: 'Tier 1 — Primary Master Data', short: 'Tier 1', color: 'var(--accent)', hex: '#2563EB' },
+    { id: 2, label: 'Tier 2 — Transactional / Integration', short: 'Tier 2', color: 'var(--amber)', hex: '#D97706' },
+    { id: 3, label: 'Tier 3 — Downstream Analytics', short: 'Tier 3', color: 'var(--safe)', hex: '#16A34A' }
+  ];
+  const INTERFACE_TYPES = ['REST API', 'ETL', 'CDC', 'Event Bus'];
+  const PHASE_TITLES = ['Phase 1 — Infrastructure & Auth Prerequisites', 'Phase 2 — Master / Reference Data', 'Phase 3 — Core Transaction Engines', 'Phase 4 — Downstream Analytics & Sync Consumers'];
+
+  function tierOf(id) { return TIERS[id] || TIERS[0]; }
+
+  function slugify(name) {
+    return name.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'system';
+  }
+  function uniqueId(base, existingIds) {
+    let id = base, n = 2;
+    while (existingIds.has(id)) { id = base + '-' + n; n++; }
+    return id;
+  }
+
+  const PRESETS = {
+    'sf-mule-snowflake': {
+      label: 'Salesforce + Middleware + Snowflake Warehouse',
+      nodes: [
+        { name: 'Identity Provider (SSO)', tier: 0, interfaceType: 'REST API', hours: 0.5 },
+        { name: 'Salesforce CRM', tier: 1, interfaceType: 'REST API', hours: 2 },
+        { name: 'ERP Billing System', tier: 1, interfaceType: 'REST API', hours: 2.5 },
+        { name: 'MuleSoft Integration Layer', tier: 2, interfaceType: 'ETL', hours: 1.5 },
+        { name: 'Snowflake Data Warehouse', tier: 3, interfaceType: 'ETL', hours: 3 },
+        { name: 'BI Dashboard', tier: 3, interfaceType: 'REST API', hours: 0.5 }
+      ],
+      edges: [
+        ['Identity Provider (SSO)', 'Salesforce CRM'],
+        ['Identity Provider (SSO)', 'ERP Billing System'],
+        ['Salesforce CRM', 'MuleSoft Integration Layer'],
+        ['ERP Billing System', 'MuleSoft Integration Layer'],
+        ['MuleSoft Integration Layer', 'Snowflake Data Warehouse'],
+        ['Snowflake Data Warehouse', 'BI Dashboard']
+      ]
+    },
+    'erp-broker-analytics': {
+      label: 'Core ERP + Async Message Broker + Analytics',
+      nodes: [
+        { name: 'Config / Secrets Store', tier: 0, interfaceType: 'REST API', hours: 0.5 },
+        { name: 'Core ERP', tier: 1, interfaceType: 'REST API', hours: 3 },
+        { name: 'Order Management System', tier: 2, interfaceType: 'REST API', hours: 2 },
+        { name: 'Kafka Message Broker', tier: 2, interfaceType: 'Event Bus', hours: 1 },
+        { name: 'Fulfilment Service', tier: 2, interfaceType: 'Event Bus', hours: 1.5 },
+        { name: 'Analytics Lake', tier: 3, interfaceType: 'ETL', hours: 2.5 },
+        { name: 'Executive Dashboard', tier: 3, interfaceType: 'REST API', hours: 0.5 }
+      ],
+      edges: [
+        ['Config / Secrets Store', 'Core ERP'],
+        ['Config / Secrets Store', 'Order Management System'],
+        ['Core ERP', 'Kafka Message Broker'],
+        ['Order Management System', 'Kafka Message Broker'],
+        ['Kafka Message Broker', 'Fulfilment Service'],
+        ['Fulfilment Service', 'Analytics Lake'],
+        ['Kafka Message Broker', 'Analytics Lake'],
+        ['Analytics Lake', 'Executive Dashboard']
+      ]
+    },
+    'blank': { label: 'Blank Canvas', nodes: [], edges: [] }
+  };
+
+  let NODES = [];
+  let EDGES = [];
+  let selectedNodeId = null;
+
+  function loadPreset(key) {
+    const preset = PRESETS[key];
+    NODES = [];
+    EDGES = [];
+    const nameToId = new Map();
+    preset.nodes.forEach(n => {
+      const id = uniqueId(slugify(n.name), new Set(NODES.map(x => x.id)));
+      NODES.push({ id, name: n.name, tier: n.tier, interfaceType: n.interfaceType, hours: n.hours });
+      nameToId.set(n.name, id);
+    });
+    preset.edges.forEach(([from, to]) => {
+      if (nameToId.has(from) && nameToId.has(to)) EDGES.push({ from: nameToId.get(from), to: nameToId.get(to) });
+    });
+    selectedNodeId = null;
+    renderAll();
+  }
+
+  // ---------------------------------------------------------------
+  // GRAPH ALGORITHMS — Kahn's algorithm run wave-by-wave (BFS layering)
+  // so the same computation gives both a valid topological order AND a
+  // layout level for the diagram, rather than computing them twice.
+  // ---------------------------------------------------------------
+  function computeWaves(nodes, edges) {
+    const ids = nodes.map(n => n.id);
+    const idSet = new Set(ids);
+    const inDegree = new Map(ids.map(id => [id, 0]));
+    const adj = new Map(ids.map(id => [id, []]));
+    edges.forEach(e => {
+      if (!idSet.has(e.from) || !idSet.has(e.to)) return;
+      adj.get(e.from).push(e.to);
+      inDegree.set(e.to, inDegree.get(e.to) + 1);
+    });
+    const working = new Map(inDegree);
+    let frontier = ids.filter(id => working.get(id) === 0);
+    const waves = [];
+    const visited = new Set();
+    while (frontier.length) {
+      frontier.sort((a, b) => {
+        const na = nodes.find(n => n.id === a), nb = nodes.find(n => n.id === b);
+        return (na.tier - nb.tier) || na.name.localeCompare(nb.name);
+      });
+      waves.push(frontier.slice());
+      frontier.forEach(id => visited.add(id));
+      const next = new Set();
+      frontier.forEach(id => {
+        adj.get(id).forEach(v => {
+          working.set(v, working.get(v) - 1);
+          if (working.get(v) === 0 && !visited.has(v)) next.add(v);
+        });
+      });
+      frontier = [...next];
+    }
+    const unresolved = ids.filter(id => !visited.has(id));
+    return { waves, unresolved, adj };
+  }
+
+  // DFS cycle detection with full path reconstruction, so the warning can
+  // name the exact loop (A -> B -> C -> A) rather than just listing every
+  // node that's stuck.
+  function findCycle(nodes, edges) {
+    const ids = nodes.map(n => n.id);
+    const idSet = new Set(ids);
+    const adj = new Map(ids.map(id => [id, []]));
+    edges.forEach(e => { if (idSet.has(e.from) && idSet.has(e.to)) adj.get(e.from).push(e.to); });
+    const WHITE = 0, GRAY = 1, BLACK = 2;
+    const color = new Map(ids.map(id => [id, WHITE]));
+    const parent = new Map();
+    let cyclePath = null;
+    function dfs(u) {
+      color.set(u, GRAY);
+      for (const v of adj.get(u)) {
+        if (cyclePath) return;
+        if (color.get(v) === WHITE) { parent.set(v, u); dfs(v); }
+        else if (color.get(v) === GRAY) {
+          const path = [v];
+          let cur = u;
+          while (cur !== v && cur !== undefined) { path.push(cur); cur = parent.get(cur); }
+          path.push(v);
+          cyclePath = path.reverse();
+        }
+      }
+      if (!cyclePath) color.set(u, BLACK);
+    }
+    for (const id of ids) { if (color.get(id) === WHITE && !cyclePath) dfs(id); }
+    return cyclePath;
+  }
+
+  function findTierConflicts(nodes, edges) {
+    const byId = new Map(nodes.map(n => [n.id, n]));
+    return edges
+      .filter(e => byId.has(e.from) && byId.has(e.to) && byId.get(e.from).tier > byId.get(e.to).tier)
+      .map(e => ({ from: byId.get(e.from), to: byId.get(e.to) }));
+  }
+
+  function ancestors(nodeId, edges) {
+    const parents = new Map();
+    edges.forEach(e => { if (!parents.has(e.to)) parents.set(e.to, []); parents.get(e.to).push(e.from); });
+    const seen = new Set(), queue = [nodeId], result = [];
+    while (queue.length) {
+      const cur = queue.shift();
+      (parents.get(cur) || []).forEach(p => {
+        if (!seen.has(p)) { seen.add(p); result.push(p); queue.push(p); }
+      });
+    }
+    return result;
+  }
+
+  function descendants(nodeId, edges) {
+    const children = new Map();
+    edges.forEach(e => { if (!children.has(e.from)) children.set(e.from, []); children.get(e.from).push(e.to); });
+    const seen = new Set(), queue = [nodeId], result = [];
+    while (queue.length) {
+      const cur = queue.shift();
+      (children.get(cur) || []).forEach(c => {
+        if (!seen.has(c)) { seen.add(c); result.push(c); queue.push(c); }
+      });
+    }
+    return result;
+  }
+
+  // Critical-path recovery time: the longest cumulative-hours chain of
+  // prerequisites leading into this node, plus its own recovery time - a
+  // standard Critical Path Method calculation, not a fabricated figure.
+  function criticalPathHours(nodeId, nodes, edges) {
+    const byId = new Map(nodes.map(n => [n.id, n]));
+    const parents = new Map();
+    edges.forEach(e => { if (!parents.has(e.to)) parents.set(e.to, []); parents.get(e.to).push(e.from); });
+    const memo = new Map();
+    function longestTo(id, stack) {
+      if (memo.has(id)) return memo.get(id);
+      if (stack.has(id)) return 0; // cycle guard - treat as no further upstream contribution
+      stack.add(id);
+      const ps = parents.get(id) || [];
+      const own = (byId.get(id) || { hours: 0 }).hours || 0;
+      const best = ps.length === 0 ? 0 : Math.max(...ps.map(p => longestTo(p, stack)));
+      stack.delete(id);
+      const total = own + best;
+      memo.set(id, total);
+      return total;
+    }
+    return longestTo(nodeId, new Set());
+  }
+
+  // ---------------------------------------------------------------
+  // DIAGRAM — layered top-to-bottom SVG, real canvas text measurement to
+  // size each node box (same approach as Schema Explorer's radial diagram,
+  // adapted to a layered graph instead of a radial one).
+  // ---------------------------------------------------------------
+  let _measureCtx = null;
+  function measureTextWidth(text, fontSize, weight) {
+    if (!_measureCtx) _measureCtx = document.createElement('canvas').getContext('2d');
+    _measureCtx.font = (weight || 700) + ' ' + fontSize + 'px Inter, -apple-system, sans-serif';
+    return _measureCtx.measureText(text).width;
+  }
+
+  function buildDiagram(nodes, edges, waves, unresolved, selectedId) {
+    const rowHeight = 96, boxHeight = 46, gap = 24, margin = 30;
+    const rows = waves.slice();
+    if (unresolved.length) rows.push(unresolved);
+
+    const rowLayouts = rows.map(rowIds => {
+      let x = 0;
+      const boxes = rowIds.map(id => {
+        const n = nodes.find(nn => nn.id === id);
+        const w = Math.max(140, measureTextWidth(n.name, 12) + 28);
+        const box = { id, n, w, x };
+        x += w + gap;
+        return box;
+      });
+      return { boxes, rowWidth: x - gap };
+    });
+
+    const maxRowWidth = Math.max(...rowLayouts.map(r => r.rowWidth), 200);
+    const svgWidth = maxRowWidth + margin * 2;
+    const svgHeight = margin * 2 + rows.length * rowHeight;
+
+    let nodesHtml = '', edgesHtml = '';
+    const centers = new Map();
+
+    rowLayouts.forEach((row, rowIdx) => {
+      const offsetX = margin + (maxRowWidth - row.rowWidth) / 2;
+      const y = margin + rowIdx * rowHeight;
+      row.boxes.forEach(box => {
+        const x = offsetX + box.x;
+        const isUnresolved = unresolved.includes(box.id);
+        const tier = tierOf(box.n.tier);
+        const fill = isUnresolved ? '#DC2626' : tier.hex;
+        centers.set(box.id, { x: x + box.w / 2, top: y, bottom: y + boxHeight, cx: x + box.w / 2, cy: y + boxHeight / 2 });
+        const isSelected = box.id === selectedId;
+        nodesHtml += '<g class="tr-node" data-id="' + box.id + '" style="cursor:pointer;" tabindex="0" role="button" aria-describedby="tr-node-hint">' +
+          '<rect x="' + x + '" y="' + y + '" width="' + box.w + '" height="' + boxHeight + '" rx="8" fill="' + fill + '" ' +
+          (isSelected ? 'stroke="#0F172A" stroke-width="3"' : 'stroke="#fff" stroke-width="1.5"') + '/>' +
+          '<text x="' + (x + box.w / 2) + '" y="' + (y + boxHeight / 2 - 5) + '" font-size="11.5" font-weight="700" fill="#fff" text-anchor="middle" dominant-baseline="middle">' + box.n.name + '</text>' +
+          '<text x="' + (x + box.w / 2) + '" y="' + (y + boxHeight / 2 + 12) + '" font-size="9" fill="rgba(255,255,255,0.85)" text-anchor="middle" dominant-baseline="middle">' + (isUnresolved ? 'UNRESOLVED' : tier.short) + ' &middot; ' + box.n.interfaceType + '</text>' +
+          '</g>';
+      });
+    });
+
+    edges.forEach(e => {
+      const from = centers.get(e.from), to = centers.get(e.to);
+      if (!from || !to) return;
+      const sameRow = Math.abs(from.cy - to.cy) < 1;
+      const path = sameRow
+        ? 'M ' + from.cx + ' ' + from.cy + ' Q ' + ((from.cx + to.cx) / 2) + ' ' + (from.cy - 34) + ' ' + to.cx + ' ' + to.cy
+        : 'M ' + from.cx + ' ' + from.bottom + ' L ' + to.cx + ' ' + to.top;
+      edgesHtml += '<path class="tr-edge" data-from="' + e.from + '" data-to="' + e.to + '" d="' + path + '" fill="none" stroke="#94A3B8" stroke-width="1.8" marker-end="url(#tr-arrow)"/>';
+    });
+
+    return '<svg viewBox="0 0 ' + svgWidth + ' ' + svgHeight + '" width="' + Math.min(svgWidth, 1300) + '" role="img" aria-label="Dependency map with ' + nodes.length + ' systems">' +
+      '<defs><marker id="tr-arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#94A3B8"/></marker></defs>' +
+      edgesHtml + nodesHtml + '</svg>';
+  }
+
+  function wireDiagramInteractivity() {
+    const wrap = document.getElementById('diagram-wrap');
+    const svg = wrap.querySelector('svg');
+    if (!svg) return;
+    let zoom = 1, panX = 0, panY = 0, dragging = false, startX = 0, startY = 0, panStartX = 0, panStartY = 0;
+    function apply() { svg.style.transform = 'translate(' + panX + 'px,' + panY + 'px) scale(' + zoom + ')'; svg.style.transformOrigin = 'center center'; }
+    svg.style.cursor = 'grab';
+    svg.addEventListener('wheel', e => { e.preventDefault(); zoom = Math.min(3, Math.max(0.5, zoom + (e.deltaY > 0 ? -0.1 : 0.1))); apply(); }, { passive: false });
+    svg.addEventListener('mousedown', e => {
+      if (e.target.closest('.tr-node')) return;
+      dragging = true; startX = e.clientX; startY = e.clientY; panStartX = panX; panStartY = panY; svg.style.cursor = 'grabbing';
+    });
+    window.addEventListener('mousemove', e => { if (!dragging) return; panX = panStartX + (e.clientX - startX); panY = panStartY + (e.clientY - startY); apply(); });
+    window.addEventListener('mouseup', () => { dragging = false; svg.style.cursor = 'grab'; });
+
+    svg.querySelectorAll('.tr-node').forEach(g => {
+      const id = g.dataset.id;
+      g.addEventListener('mouseenter', () => {
+        svg.querySelectorAll('.tr-node, .tr-edge').forEach(el => {
+          const match = el === g || el.dataset.from === id || el.dataset.to === id;
+          el.style.opacity = match ? '1' : '0.2';
+        });
+      });
+      g.addEventListener('mouseleave', () => { svg.querySelectorAll('.tr-node, .tr-edge').forEach(el => { el.style.opacity = ''; }); });
+      g.addEventListener('click', () => { selectedNodeId = id; renderAll(); });
+      g.addEventListener('keydown', e => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+        selectedNodeId = id;
+        renderAll();
+      });
+    });
+  }
+
+  // ---------------------------------------------------------------
+  // RENDER
+  // ---------------------------------------------------------------
+  function renderAll() {
+    renderNodeAndEdgeSelectors();
+    renderMiniLists();
+
+    const { waves, unresolved } = computeWaves(NODES, EDGES);
+    const cyclePath = unresolved.length ? findCycle(NODES, EDGES) : null;
+    const tierConflicts = findTierConflicts(NODES, EDGES);
+
+    const focusedNode = document.activeElement && document.activeElement.closest && document.activeElement.closest('.tr-node');
+    const focusedId = focusedNode ? focusedNode.dataset.id : null;
+
+    document.getElementById('diagram-wrap').innerHTML = NODES.length
+      ? buildDiagram(NODES, EDGES, waves, unresolved, selectedNodeId)
+      : '<p style="padding:40px; color:var(--text-muted); font-size:13px;">Add at least one system to see the map.</p>';
+    wireDiagramInteractivity();
+
+    if (focusedId) {
+      const toRefocus = document.querySelector('.tr-node[data-id="' + focusedId + '"]');
+      if (toRefocus) toRefocus.focus();
+    }
+
+    renderWarnings(cyclePath, unresolved, tierConflicts);
+    renderPhases(waves, unresolved);
+    renderBlastRadius();
+    updateSavedBadge();
+  }
+
+  function byId(id) { return NODES.find(n => n.id === id); }
+
+  function renderNodeAndEdgeSelectors() {
+    const nodeOpts = NODES.map(n => '<option value="' + n.id + '">' + n.name + '</option>').join('');
+    document.getElementById('edge-from-select').innerHTML = nodeOpts || '<option value="">No systems yet</option>';
+    document.getElementById('edge-to-select').innerHTML = nodeOpts || '<option value="">No systems yet</option>';
+  }
+
+  function renderMiniLists() {
+    const nodeList = document.getElementById('node-list');
+    nodeList.innerHTML = NODES.map(n => {
+      const label = n.name + ' (' + tierOf(n.tier).short + ', ' + n.hours + 'h)';
+      return '<div class="mini-row"><span class="row-label" title="' + label + '"><span class="tier-dot" style="background:' + tierOf(n.tier).hex + ';"></span>' + label + '</span><span class="row-actions"><button data-edit-node="' + n.id + '" title="Edit" aria-label="Edit ' + n.name + '">&#9998;</button><button data-remove-node="' + n.id + '" title="Delete" aria-label="Delete ' + n.name + '">&times;</button></span></div>';
+    }).join('') || '<p class="phase-empty">No systems yet.</p>';
+    nodeList.querySelectorAll('[data-edit-node]').forEach(btn => btn.addEventListener('click', () => startEditNode(btn.dataset.editNode)));
+    nodeList.querySelectorAll('[data-remove-node]').forEach(btn => btn.addEventListener('click', () => removeNode(btn.dataset.removeNode)));
+
+    const edgeList = document.getElementById('edge-list');
+    edgeList.innerHTML = EDGES.map((e, i) => {
+      const from = byId(e.from), to = byId(e.to);
+      if (!from || !to) return '';
+      const label = from.name + ' → ' + to.name;
+      return '<div class="mini-row"><span class="row-label" title="' + label + '">' + label + '</span><span class="row-actions"><button data-remove-edge="' + i + '" title="Remove" aria-label="Remove dependency: ' + label + '">&times;</button></span></div>';
+    }).join('') || '<p class="phase-empty">No dependencies yet.</p>';
+    edgeList.querySelectorAll('[data-remove-edge]').forEach(btn => btn.addEventListener('click', () => { EDGES.splice(parseInt(btn.dataset.removeEdge, 10), 1); renderAll(); }));
+  }
+
+  function removeNode(id) {
+    const node = byId(id);
+    if (!node) return;
+    const touchingEdges = EDGES.filter(e => e.from === id || e.to === id).length;
+    const warning = touchingEdges
+      ? 'Delete "' + node.name + '"? This also removes its ' + touchingEdges + ' connected dependenc' + (touchingEdges === 1 ? 'y' : 'ies') + '.'
+      : 'Delete "' + node.name + '"?';
+    if (!confirm(warning)) return;
+    NODES = NODES.filter(n => n.id !== id);
+    EDGES = EDGES.filter(e => e.from !== id && e.to !== id);
+    if (selectedNodeId === id) selectedNodeId = null;
+    if (editingNodeId === id) cancelEdit();
+    renderAll();
+  }
+
+  // ---------------------------------------------------------------
+  // EDIT MODE — the Add System form doubles as the Edit form. Editing
+  // never changes a node's id (edges reference ids, not names), so a
+  // rename can never silently orphan a dependency.
+  // ---------------------------------------------------------------
+  let editingNodeId = null;
+
+  function startEditNode(id) {
+    const node = byId(id);
+    if (!node) return;
+    editingNodeId = id;
+    document.getElementById('node-name-input').value = node.name;
+    document.getElementById('node-tier-select').value = String(node.tier);
+    document.getElementById('node-interface-select').value = node.interfaceType;
+    document.getElementById('node-hours-input').value = node.hours;
+    document.getElementById('node-form-title').textContent = 'Edit system';
+    document.getElementById('add-node-btn').textContent = 'Save Changes';
+    document.getElementById('cancel-edit-btn').style.display = 'inline-flex';
+    document.getElementById('node-name-input').scrollIntoView({ behavior: 'smooth', block: 'center' });
+    document.getElementById('node-name-input').focus();
+  }
+
+  function cancelEdit() {
+    editingNodeId = null;
+    document.getElementById('node-name-input').value = '';
+    document.getElementById('node-tier-select').value = '0';
+    document.getElementById('node-interface-select').value = INTERFACE_TYPES[0];
+    document.getElementById('node-hours-input').value = '1';
+    document.getElementById('node-form-title').textContent = 'Add a system';
+    document.getElementById('add-node-btn').textContent = '+ Add System';
+    document.getElementById('cancel-edit-btn').style.display = 'none';
+  }
+
+  function renderWarnings(cyclePath, unresolved, tierConflicts) {
+    const panel = document.getElementById('warnings-panel');
+    let html = '';
+    if (cyclePath) {
+      const names = cyclePath.map(id => (byId(id) || { name: id }).name);
+      html += '<div class="warning-banner cycle"><strong>&#9888; Circular Dependency Warning</strong>' +
+        names.join(' &rarr; ') + '. These systems can never be resolved into a safe recovery order until this loop is broken — pick one dependency in the cycle and either remove it or re-point it.';
+      const extraBlocked = unresolved.filter(id => !cyclePath.includes(id));
+      if (extraBlocked.length) html += '<br>Also blocked as a result: ' + extraBlocked.map(id => (byId(id) || {}).name).join(', ') + '.';
+      html += '</div>';
+    }
+    if (tierConflicts.length) {
+      html += '<div class="warning-banner conflict"><strong>Tier ordering note</strong>' +
+        tierConflicts.map(c => c.from.name + ' (' + tierOf(c.from.tier).short + ') must be restored before ' + c.to.name + ' (' + tierOf(c.to.tier).short + ') per the declared dependency — the actual graph takes precedence over tier labels here.').join('<br>') +
+        '</div>';
+    }
+    panel.style.display = html ? 'block' : 'none';
+    panel.innerHTML = html;
+  }
+
+  function renderPhases(waves, unresolved) {
+    const grid = document.getElementById('phase-grid');
+    const waveIndexOf = new Map();
+    waves.forEach((w, i) => w.forEach(id => waveIndexOf.set(id, i)));
+
+    let html = '';
+    for (let tier = 0; tier <= 3; tier++) {
+      const items = NODES.filter(n => n.tier === tier && waveIndexOf.has(n.id))
+        .sort((a, b) => waveIndexOf.get(a.id) - waveIndexOf.get(b.id) || a.name.localeCompare(b.name));
+      html += '<div class="phase-card"><h3>' + PHASE_TITLES[tier] + '</h3>';
+      if (items.length === 0) {
+        html += '<p class="phase-empty">No systems in this phase.</p>';
+      } else {
+        items.forEach(n => {
+          html += '<div class="phase-item"><span class="name">' + n.name + '</span><span class="meta">Wave ' + (waveIndexOf.get(n.id) + 1) + ' &middot; ' + n.interfaceType + ' &middot; ~' + n.hours + 'h</span></div>';
+        });
+      }
+      html += '</div>';
+    }
+    if (unresolved.length) {
+      html += '<div class="phase-card" style="border-color:var(--risk);"><h3 style="color:var(--risk);">Unresolved (circular)</h3>' +
+        unresolved.map(id => '<div class="phase-item" style="background:var(--risk-bg);"><span class="name">' + (byId(id) || {}).name + '</span></div>').join('') + '</div>';
+    }
+    grid.innerHTML = html;
+  }
+
+  function renderBlastRadius() {
+    const content = document.getElementById('blast-content');
+    const sub = document.getElementById('blast-sub');
+    if (!selectedNodeId || !byId(selectedNodeId)) {
+      content.innerHTML = '';
+      sub.textContent = 'Click any system in the map above to see what it depends on, and what depends on it.';
+      updateRedlineHandoff(null);
+      return;
+    }
+    const node = byId(selectedNodeId);
+    const up = ancestors(selectedNodeId, EDGES);
+    const down = descendants(selectedNodeId, EDGES);
+    const chainHours = criticalPathHours(selectedNodeId, NODES, EDGES);
+    sub.textContent = 'Showing ' + node.name + ' — click any listed system to jump to it instead.';
+
+    let html = '<div class="action-bar" style="margin:0 0 4px;">' +
+      '<button class="btn small" id="blast-edit-btn">&#9998; Edit ' + node.name + '</button>' +
+      '<button class="btn small danger" id="blast-delete-btn">&times; Delete ' + node.name + '</button>' +
+      '</div>';
+    html += '<div class="metric-cards">' +
+      '<div class="metric-card" style="background: rgba(37, 99, 235, 0.12);"><div class="metric-value" style="color:var(--accent-hv);">' + up.length + '</div><div class="metric-label" style="color:var(--accent-hv);">Upstream prerequisites</div></div>' +
+      '<div class="metric-card" style="background:var(--amber-bg);"><div class="metric-value" style="color:#92400E;">' + down.length + '</div><div class="metric-label" style="color:#92400E;">Downstream blast radius</div></div>' +
+      '<div class="metric-card" style="background:var(--surface-2);" title="The longest cumulative-hours chain of prerequisite systems leading into this one, plus its own recovery time — not a sum of every upstream system, just the slowest path."><div class="metric-value" style="color: var(--text);">' + chainHours.toFixed(2).replace(/\.00$/, '') + 'h</div><div class="metric-label" style="color:var(--text-muted);">Dependency-chain recovery time (longest path)</div></div>' +
+      '</div>';
+
+    html += '<div class="impact-cols">';
+    html += '<div class="impact-list"><h3>Must be restored first</h3>' + (up.length
+      ? up.map(id => '<button class="impact-item upstream" data-jump="' + id + '"><span>' + (byId(id) || {}).name + '</span><span>&rarr;</span></button>').join('')
+      : '<p class="impact-none">No upstream dependencies — this system can be restored independently.</p>') + '</div>';
+    html += '<div class="impact-list"><h3>Impacted if this is late or wrong</h3>' + (down.length
+      ? down.map(id => '<button class="impact-item downstream" data-jump="' + id + '"><span>' + (byId(id) || {}).name + '</span><span>&rarr;</span></button>').join('')
+      : '<p class="impact-none">Nothing downstream depends on this system.</p>') + '</div>';
+    html += '</div>';
+
+    content.innerHTML = html;
+    content.querySelectorAll('[data-jump]').forEach(btn => btn.addEventListener('click', () => { selectedNodeId = btn.dataset.jump; renderAll(); }));
+    document.getElementById('blast-edit-btn').addEventListener('click', () => startEditNode(node.id));
+    document.getElementById('blast-delete-btn').addEventListener('click', () => removeNode(node.id));
+
+    updateRedlineHandoff({ node, chainHours, upCount: up.length, downCount: down.length });
+  }
+
+  // ---------------------------------------------------------------
+  // REDLINE HANDOFF — a genuine Critical Path Method figure, not a
+  // fabricated number: the longest cumulative-hours chain of prerequisite
+  // systems feeding into the selected node, plus its own recovery time.
+  // ---------------------------------------------------------------
+  function b64EncodeUnicode(str) {
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode('0x' + p1)));
+  }
+
+  function riskiestNode() {
+    if (!NODES.length) return null;
+    let best = NODES[0], bestHours = -1;
+    NODES.forEach(n => {
+      const h = criticalPathHours(n.id, NODES, EDGES);
+      if (h > bestHours) { bestHours = h; best = n; }
+    });
+    return { node: best, chainHours: bestHours };
+  }
+
+  function updateRedlineHandoff(selection) {
+    const btn = document.getElementById('redline-handoff-btn');
+    const effective = selection || riskiestNode();
+    if (!effective) { btn.href = '/redline/'; return; }
+    const note = effective.node.name + ' cannot be safely restored until its full dependency chain completes (~' + effective.chainHours.toFixed(2).replace(/\.00$/, '') + 'h of upstream recovery time, from Traceability).';
+    const params = new URLSearchParams();
+    params.set('depRestoreHours', String(Math.round(effective.chainHours * 100) / 100));
+    params.set('depNote', note);
+    btn.href = '/redline/?' + params.toString();
+  }
+
+  // ---------------------------------------------------------------
+  // ADD NODE / ADD EDGE / RAW IMPORT
+  // ---------------------------------------------------------------
+  document.getElementById('add-node-btn').addEventListener('click', () => {
+    const nameInput = document.getElementById('node-name-input');
+    const name = nameInput.value.trim();
+    if (!name) return;
+    const tier = parseInt(document.getElementById('node-tier-select').value, 10);
+    const interfaceType = document.getElementById('node-interface-select').value;
+    const hours = Math.max(0.25, parseFloat(document.getElementById('node-hours-input').value) || 1);
+
+    if (editingNodeId) {
+      const node = byId(editingNodeId);
+      if (node) { node.name = name; node.tier = tier; node.interfaceType = interfaceType; node.hours = hours; }
+      cancelEdit();
+      renderAll();
+      return;
+    }
+
+    const id = uniqueId(slugify(name), new Set(NODES.map(n => n.id)));
+    NODES.push({ id, name, tier, interfaceType, hours });
+    nameInput.value = '';
+    renderAll();
+  });
+
+  document.getElementById('cancel-edit-btn').addEventListener('click', cancelEdit);
+
+  document.getElementById('add-edge-btn').addEventListener('click', () => {
+    const from = document.getElementById('edge-from-select').value;
+    const to = document.getElementById('edge-to-select').value;
+    const errorEl = document.getElementById('edge-error');
+    if (!from || !to) { errorEl.textContent = 'Add at least two systems first.'; return; }
+    if (from === to) { errorEl.textContent = 'A system cannot depend on itself.'; return; }
+    if (EDGES.some(e => e.from === from && e.to === to)) { errorEl.textContent = 'That dependency already exists.'; return; }
+    errorEl.textContent = '';
+    EDGES.push({ from, to });
+    renderAll();
+  });
+
+  document.getElementById('raw-import-btn').addEventListener('click', () => {
+    const raw = document.getElementById('raw-import-input').value.trim();
+    const statusEl = document.getElementById('raw-import-status');
+    if (!raw) { statusEl.textContent = 'Paste something first.'; statusEl.style.color = 'var(--risk)'; return; }
+
+    let nodesAdded = 0, edgesAdded = 0;
+    const nameToId = new Map(NODES.map(n => [n.name.toLowerCase(), n.id]));
+
+    function addNodeByName(name, tier, interfaceType, hours) {
+      const key = name.toLowerCase();
+      if (nameToId.has(key)) return nameToId.get(key);
+      const id = uniqueId(slugify(name), new Set(NODES.map(n => n.id)));
+      NODES.push({ id, name, tier: tier || 0, interfaceType: interfaceType || 'REST API', hours: hours || 1 });
+      nameToId.set(key, id);
+      nodesAdded++;
+      return id;
+    }
+    function addEdgeByNames(fromName, toName) {
+      const fromId = nameToId.get(fromName.toLowerCase()) || addNodeByName(fromName);
+      const toId = nameToId.get(toName.toLowerCase()) || addNodeByName(toName);
+      if (fromId === toId) return;
+      if (!EDGES.some(e => e.from === fromId && e.to === toId)) { EDGES.push({ from: fromId, to: toId }); edgesAdded++; }
+    }
+
+    let parsedSomething = false;
+    try {
+      const data = JSON.parse(raw);
+      if (data && Array.isArray(data.nodes)) {
+        data.nodes.forEach(n => { if (n && n.name) addNodeByName(n.name, n.tier, n.interfaceType, n.hours); });
+        parsedSomething = true;
+      }
+      if (data && Array.isArray(data.edges)) {
+        data.edges.forEach(e => { if (e && e.from && e.to) addEdgeByNames(e.from, e.to); });
+        parsedSomething = true;
+      }
+    } catch (e) {
+      raw.split('\n').forEach(line => {
+        const parts = line.split(',').map(p => p.trim());
+        if (parts[0] === 'NODE' && parts[1]) { addNodeByName(parts[1], parseInt(parts[2], 10), parts[3], parseFloat(parts[4])); parsedSomething = true; }
+        else if (parts[0] === 'EDGE' && parts[1] && parts[2]) { addEdgeByNames(parts[1], parts[2]); parsedSomething = true; }
+      });
+    }
+
+    if (!parsedSomething) {
+      statusEl.textContent = 'Could not find any NODE/EDGE lines or a valid {nodes, edges} JSON object.';
+      statusEl.style.color = 'var(--risk)';
+      return;
+    }
+    statusEl.textContent = 'Imported ' + nodesAdded + ' system(s) and ' + edgesAdded + ' dependency(ies).';
+    statusEl.style.color = 'var(--safe)';
+    document.getElementById('raw-import-input').value = '';
+    renderAll();
+  });
+
+  // ---------------------------------------------------------------
+  // OPT-IN PERSISTENCE — explicit Save Map / Clear Map only.
+  // ---------------------------------------------------------------
+  const SAVED_KEY = 'traceability_saved_map_v1';
+
+  function saveMap() {
+    try {
+      localStorage.setItem(SAVED_KEY, JSON.stringify({ nodes: NODES, edges: EDGES, savedAt: new Date().toISOString() }));
+      updateSavedBadge();
+    } catch (e) { console.warn('Could not save map to local storage:', e); }
+  }
+  function clearSavedMap() {
+    try { localStorage.removeItem(SAVED_KEY); } catch (e) { /* ignore */ }
+    updateSavedBadge();
+  }
+  function loadSavedMap() {
+    let saved;
+    try { saved = JSON.parse(localStorage.getItem(SAVED_KEY)); } catch (e) { return false; }
+    if (!saved || !Array.isArray(saved.nodes)) return false;
+    NODES = saved.nodes;
+    EDGES = saved.edges || [];
+    selectedNodeId = null;
+    return true;
+  }
+  function updateSavedBadge() {
+    const badge = document.getElementById('saved-map-badge');
+    const text = document.getElementById('saved-map-text');
+    let saved;
+    try { saved = JSON.parse(localStorage.getItem(SAVED_KEY)); } catch (e) { saved = null; }
+    if (saved && Array.isArray(saved.nodes) && saved.nodes.length) {
+      badge.style.display = 'flex';
+      text.textContent = 'Saved map from ' + new Date(saved.savedAt).toLocaleString() + ' (' + saved.nodes.length + ' systems)';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  document.getElementById('save-map-btn').addEventListener('click', saveMap);
+  document.getElementById('clear-map-btn').addEventListener('click', clearSavedMap);
+  document.getElementById('load-saved-map-btn').addEventListener('click', () => { loadSavedMap(); renderAll(); });
+
+  // ---------------------------------------------------------------
+  // EXPORTS
+  // ---------------------------------------------------------------
+  function downloadBlob(content, mime, filename) {
+    const blob = new Blob([content], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  document.getElementById('export-csv-btn').addEventListener('click', () => {
+    const { waves, unresolved } = computeWaves(NODES, EDGES);
+    const waveIndexOf = new Map();
+    waves.forEach((w, i) => w.forEach(id => waveIndexOf.set(id, i)));
+    const rows = [['Phase', 'Wave', 'System', 'Tier', 'Interface Type', 'Est. Recovery Hours', 'Upstream Count', 'Downstream Count', 'Status']];
+    NODES.slice().sort((a, b) => (a.tier - b.tier) || ((waveIndexOf.get(a.id) || 0) - (waveIndexOf.get(b.id) || 0))).forEach(n => {
+      const isUnresolved = unresolved.includes(n.id);
+      rows.push([
+        isUnresolved ? 'Unresolved' : PHASE_TITLES[n.tier],
+        isUnresolved ? '-' : String((waveIndexOf.get(n.id) || 0) + 1),
+        n.name, tierOf(n.tier).short, n.interfaceType, String(n.hours),
+        String(ancestors(n.id, EDGES).length), String(descendants(n.id, EDGES).length),
+        isUnresolved ? 'Blocked by circular dependency' : 'OK'
+      ]);
+    });
+    const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
+    downloadBlob(csv, 'text/csv', 'traceability-runbook-checklist.csv');
+  });
+
+  document.getElementById('export-md-btn').addEventListener('click', () => {
+    const { waves, unresolved } = computeWaves(NODES, EDGES);
+    const cyclePath = unresolved.length ? findCycle(NODES, EDGES) : null;
+    const tierConflicts = findTierConflicts(NODES, EDGES);
+    const waveIndexOf = new Map();
+    waves.forEach((w, i) => w.forEach(id => waveIndexOf.set(id, i)));
+
+    const lines = [];
+    lines.push('# Traceability — Architecture & Recovery Sequence Brief');
+    lines.push('');
+    lines.push('**Generated:** ' + new Date().toISOString().slice(0, 10));
+    lines.push('**Systems:** ' + NODES.length + ' &middot; **Dependencies:** ' + EDGES.length);
+    lines.push('');
+    if (cyclePath) {
+      lines.push('## Circular dependency warning');
+      lines.push('');
+      lines.push(cyclePath.map(id => (byId(id) || {}).name).join(' -> ') + '. This must be resolved before a safe recovery order exists.');
+      lines.push('');
+    }
+    if (tierConflicts.length) {
+      lines.push('## Tier ordering notes');
+      lines.push('');
+      tierConflicts.forEach(c => lines.push('- ' + c.from.name + ' (' + tierOf(c.from.tier).short + ') must be restored before ' + c.to.name + ' (' + tierOf(c.to.tier).short + ') per the declared dependency.'));
+      lines.push('');
+    }
+    lines.push('## Recovery sequence');
+    lines.push('');
+    for (let tier = 0; tier <= 3; tier++) {
+      lines.push('### ' + PHASE_TITLES[tier]);
+      const items = NODES.filter(n => n.tier === tier && waveIndexOf.has(n.id)).sort((a, b) => waveIndexOf.get(a.id) - waveIndexOf.get(b.id));
+      if (!items.length) lines.push('_No systems in this phase._');
+      items.forEach(n => lines.push('- **' + n.name + '** — Wave ' + (waveIndexOf.get(n.id) + 1) + ', ' + n.interfaceType + ', ~' + n.hours + 'h'));
+      lines.push('');
+    }
+    if (unresolved.length) {
+      lines.push('### Unresolved (circular)');
+      unresolved.forEach(id => lines.push('- ' + (byId(id) || {}).name));
+      lines.push('');
+    }
+    lines.push('## Disclaimer');
+    lines.push('');
+    lines.push('Grounded in generic TOGAF Data Architecture principles, standard graph theory (topological sorting over directed acyclic graphs), and the publicly documented NIST SP 800-34 Rev. 1 Contingency Planning Guide. This map and its recovery-time estimates are illustrative starting points for discussion, not a substitute for a formal dependency audit or Business Impact Analysis.');
+
+    downloadBlob(lines.join('\n'), 'text/markdown', 'traceability-architecture-brief.md');
+  });
+
+  // ---------------------------------------------------------------
+  // INIT
+  // ---------------------------------------------------------------
+  document.getElementById('tr-preset').innerHTML = Object.keys(PRESETS).map(key => '<option value="' + key + '">' + PRESETS[key].label + '</option>').join('');
+  document.getElementById('tr-preset').addEventListener('change', e => loadPreset(e.target.value));
+  document.getElementById('node-tier-select').innerHTML = TIERS.map(t => '<option value="' + t.id + '">' + t.label + '</option>').join('');
+  document.getElementById('node-interface-select').innerHTML = INTERFACE_TYPES.map(t => '<option value="' + t + '">' + t + '</option>').join('');
+
+  if (loadSavedMap()) {
+    renderAll();
+  } else {
+    loadPreset('sf-mule-snowflake');
+  }
+</script>
+
+</body>
+</html>

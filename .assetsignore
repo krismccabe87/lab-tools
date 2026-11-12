@@ -1,0 +1,9 @@
+# Workers Static Assets ignore file: https://developers.cloudflare.com/workers/static-assets/binding/#ignoring-assets
+#
+# These are internal project-context docs (for the repo maintainer and their
+# AI tools, fetched directly via GitHub), not public-facing pages. Listing
+# them here excludes them from the deployed asset bundle entirely - they
+# stay in git and are still fetchable via raw.githubusercontent.com, but
+# are never served over HTTP by this Worker.
+schema-explorer/REQUIREMENTS.md
+tabletop/REQUIREMENTS.md

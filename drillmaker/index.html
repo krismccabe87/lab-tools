@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<!-- Apply a stored theme choice before first paint, so there's no flash
+     of the wrong theme while lab-theme.js is still loading. -->
+<script>
+(function(){try{var t=localStorage.getItem('lab-theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();
+</script>
+<!-- Google Analytics - only loads after cookie consent, see banner script below -->
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  function loadGoogleAnalytics(){
+    var s = document.createElement('script');
+    s.async = true;
+    s.src = 'https://www.googletagmanager.com/gtag/js?id=G-QE309XG3DJ';
+    document.head.appendChild(s);
+    gtag('js', new Date());
+    gtag('config', 'G-QE309XG3DJ');
+  }
+</script>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Drillmaker — Incident Exercise &amp; MSEL Inject Generator | Kris McCabe</title>
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32">
+<link rel="icon" href="/favicon-16.png" type="image/png" sizes="16x16">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="description" content="Generate a HSEEP-aligned Master Scenario Events List for a data-incident tabletop exercise, then run it live in Tabletop." />
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Kris's Lab">
+<meta property="og:title" content="Drillmaker — Incident Exercise &amp; MSEL Inject Generator">
+<meta property="og:description" content="Generate a HSEEP-aligned Master Scenario Events List for a data-incident tabletop exercise, then run it live in Tabletop.">
+<meta property="og:url" content="https://lab.krismccabe.com/drillmaker/">
+<meta property="og:image" content="https://lab.krismccabe.com/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Drillmaker — Incident Exercise &amp; MSEL Inject Generator">
+<meta name="twitter:description" content="Generate a HSEEP-aligned Master Scenario Events List for a data-incident tabletop exercise, then run it live in Tabletop.">
+<meta name="twitter:image" content="https://lab.krismccabe.com/og-image.png">
+<link rel="stylesheet" href="/assets/lab.css?v=6">
+<script src="/assets/lab-theme.js?v=1" defer></script>
+<style>
+  .lab-header-inner { max-width: 1000px; display:flex; align-items:center; justify-content:space-between; }
+
+  .hero { padding: 48px 24px 40px; }
+  .hero h1 { color: #fff; font-size: clamp(1.6rem, 4vw, 2.2rem); font-weight: 800; letter-spacing: -0.02em; margin: 0 0 14px; max-width: 680px; margin-left: auto; margin-right: auto; }
+  .hero p { color: #94A3B8; font-size: 15px; max-width: 620px; margin: 0 auto; }
+
+  .wrap { max-width: 1000px; margin: 0 auto; padding: 24px 20px 64px; }
+  .panel h2 { font-size: 17px; font-weight: 700; color: var(--text); margin: 0 0 4px; }
+  .panel .sub { font-size: 13px; color: var(--text-muted); margin: 0 0 18px; }
+
+  .field-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 8px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .field .hint { display: block; font-size: 11px; font-weight: 400; color: var(--text-muted); margin-top: 4px; }
+  select.dm-select { width: 100%; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); padding: 10px 12px; font-family: inherit; font-size: 13px; color: var(--text); font-weight: 500; }
+  select.dm-select:focus { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+  .btn { border: 1px solid var(--border); background: var(--surface); color: var(--text); font-family: inherit; font-size: 14px; font-weight: 700; padding: 12px 20px; border-radius: 8px; cursor: pointer; text-decoration: none; transition: border-color 0.15s ease, background 0.15s ease; display: inline-flex; align-items: center; gap: 6px; }
+  .btn:hover { border-color: var(--accent); background: rgba(37, 99, 235, 0.12); text-decoration: none; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.primary:hover { background: var(--accent-hv); border-color: var(--accent-hv); color: #fff; }
+  .btn.ghost { background: var(--panel-bg); }
+  .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+  .overview-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 16px; }
+  .overview-card { background: var(--surface-2); border-radius: 10px; padding: 16px 18px; }
+  .overview-card h3 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent); margin: 0 0 8px; }
+  .overview-card p, .overview-card li { font-size: 13px; color: var(--text); margin: 0; }
+  .overview-card ul { margin: 0; padding-left: 18px; }
+  .overview-card li { margin-bottom: 4px; }
+
+  .inject-list { display: flex; flex-direction: column; gap: 12px; margin-top: 16px; }
+  .inject-card { border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; background: var(--surface); }
+  .inject-card.wildcard { border-color: var(--amber); background: var(--amber-bg); }
+  .inject-head { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+  .inject-id { font-size: 12px; font-weight: 800; color: var(--text); letter-spacing: 0.02em; }
+  .inject-time { font-size: 12px; font-weight: 700; color: var(--accent); }
+  .inject-card.wildcard .inject-time { color: #92400E; }
+  .inject-source { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 6px; }
+  .inject-body { font-size: 14px; color: var(--text); margin: 0 0 8px; }
+  .inject-action { font-size: 12px; color: var(--text-muted); border-left: 3px solid var(--accent); padding-left: 10px; }
+  .inject-card.wildcard .inject-action { border-left-color: var(--amber); }
+  .wildcard-badge { display: inline-block; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--amber); background: var(--amber-bg); padding: 2px 8px; border-radius: 10px; margin-right: 8px; }
+
+  .action-bar { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+
+  .save-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .save-row input[type="text"] { flex: 1 1 180px; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-family: inherit; font-size: 13px; }
+  .saved-list { margin-top: 12px; }
+  .saved-item { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; background: var(--surface-2); margin-bottom: 6px; font-size: 13px; }
+  .saved-item .name { font-weight: 700; color: var(--text); }
+  .saved-item .meta { font-size: 11px; color: var(--text-muted); }
+  .saved-item .actions { display: flex; gap: 6px; }
+  .saved-item button { border: 1px solid var(--border); background: var(--panel-bg); border-radius: 6px; padding: 5px 10px; font-size: 11px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .saved-item button.danger { color: var(--risk); border-color: var(--risk-bg); }
+
+  .result-empty { text-align: center; padding: 40px 24px; color: var(--text-muted); font-size: 14px; }
+
+  footer { max-width: 1000px; }
+  footer .disclaimer { max-width: 680px; }
+
+  @media (max-width: 640px) { .panel { padding: 20px; } }
+
+  @media print {
+    .no-print { display: none !important; }
+    body { background: #fff; }
+    .wrap { margin-top: 0; padding-top: 24px; }
+    .panel { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; }
+    .inject-card { break-inside: avoid; }
+  }
+</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Drillmaker — Incident Exercise & MSEL Inject Generator",
+  "description": "Generate a HSEEP-aligned Master Scenario Events List for a data-incident tabletop exercise, then run it live in Tabletop.",
+  "url": "https://lab.krismccabe.com/drillmaker/",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Any (runs in browser)",
+  "isAccessibleForFree": true,
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "author": {
+    "@type": "Person",
+    "name": "Kris McCabe",
+    "url": "https://krismccabe.com/"
+  }
+}
+</script>
+<link rel="stylesheet" href="/assets/swiss.css?v=5">
+</head>
+<body>
+<a class="skip-link" href="#main-content">Skip to content</a>
+
+<div class="cookie-banner" id="cookie-banner" role="dialog" aria-label="Cookie consent">
+  <p>This site uses Google Analytics to understand how the tools are used. Nothing loads or is tracked until you accept.</p>
+  <div class="cookie-banner-actions">
+    <button type="button" id="cookie-decline" class="btn small">Decline</button>
+    <button type="button" id="cookie-accept" class="btn primary small">Accept</button>
+  </div>
+</div>
+<script>
+(function(){
+  var consent = localStorage.getItem('cookie-consent');
+  if (consent === 'granted') { loadGoogleAnalytics(); return; }
+  if (consent === 'denied') { return; }
+  var banner = document.getElementById('cookie-banner');
+  banner.style.display = 'flex';
+  document.getElementById('cookie-accept').addEventListener('click', function(){
+    localStorage.setItem('cookie-consent', 'granted');
+    banner.style.display = 'none';
+    loadGoogleAnalytics();
+  });
+  document.getElementById('cookie-decline').addEventListener('click', function(){
+    localStorage.setItem('cookie-consent', 'denied');
+    banner.style.display = 'none';
+  });
+})();
+</script>
+
+  <header class="lab-header no-print">
+    <div class="lab-header-inner">
+      <a class="lab-back" href="/">&#8592; Kris's Lab</a>
+      <div style="display:flex; align-items:center; gap:14px;">
+        <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle dark mode" aria-pressed="false">
+          <svg class="icon-sun" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4.5"/>
+            <path d="M12 2.5v2.5M12 19v2.5M4.2 4.2l1.8 1.8M18 18l1.8 1.8M2.5 12h2.5M19 12h2.5M4.2 19.8l1.8-1.8M18 6l1.8-1.8"/>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 14.2A8.5 8.5 0 1 1 9.8 4a7 7 0 0 0 10.2 10.2Z"/>
+          </svg>
+        </button>
+        <span style="display:flex; align-items:center; gap:8px; color:#fff; font-weight:700; font-size:14px;">
+        <svg viewBox="0 0 40 40" width="22" height="22" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="20" cy="20" r="14" fill="none" stroke="#93C5FD" stroke-width="1.8"/>
+          <circle cx="20" cy="20" r="8" fill="none" stroke="#93C5FD" stroke-width="1.8"/>
+          <circle cx="20" cy="20" r="3" fill="#2563EB"/>
+          <line x1="31" y1="7" x2="22" y2="17" stroke="#DC2626" stroke-width="2" stroke-linecap="round"/>
+          <path d="M31 7 L25.5 8.5 L29.5 12.5 Z" fill="#DC2626"/>
+        </svg>
+        Drillmaker
+      </span>
+      </div>
+    </div>
+  </header>
+
+  <div class="hero" id="main-content">
+    <svg viewBox="0 0 40 40" width="48" height="48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" style="margin-bottom:16px;">
+      <circle cx="20" cy="20" r="14" fill="none" stroke="#93C5FD" stroke-width="1.8"/>
+      <circle cx="20" cy="20" r="8" fill="none" stroke="#93C5FD" stroke-width="1.8"/>
+      <circle cx="20" cy="20" r="3" fill="#2563EB"/>
+      <line x1="31" y1="7" x2="22" y2="17" stroke="#DC2626" stroke-width="2" stroke-linecap="round"/>
+      <path d="M31 7 L25.5 8.5 L29.5 12.5 Z" fill="#DC2626"/>
+    </svg>
+    <p class="eyebrow">Free tool &middot; Kris McCabe</p>
+    <h1>Build a tabletop exercise before you need one for real.</h1>
+    <p>Generates a HSEEP-aligned Master Scenario Events List (MSEL) for a data-incident exercise &mdash; pick a category, a target recovery window, an audience, and a duration, and get a full inject timeline you can run as-is or hand straight to Tabletop.</p>
+  </div>
+
+  <div class="wrap">
+
+    <div class="panel no-print">
+      <h2>Configure the exercise</h2>
+      <p class="sub">Every field below shapes the generated MSEL &mdash; there's no single "correct" combination, just the one that matches what you're actually trying to test.</p>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="dm-category">Incident category</label>
+          <select id="dm-category" class="dm-select"></select>
+          <span class="hint" id="dm-category-hint"></span>
+        </div>
+        <div class="field">
+          <label for="dm-window">Target RTO/RPO window</label>
+          <select id="dm-window" class="dm-select"></select>
+          <span class="hint">Frames the urgency in the briefing and the ticking-clock line &mdash; not a live countdown.</span>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label for="dm-audience">Target audience / maturity level</label>
+          <select id="dm-audience" class="dm-select"></select>
+          <span class="hint" id="dm-audience-hint"></span>
+        </div>
+        <div class="field">
+          <label for="dm-duration">Inject frequency / exercise duration</label>
+          <select id="dm-duration" class="dm-select"></select>
+          <span class="hint">Sets how many injects are generated and how they're spaced across the session.</span>
+        </div>
+      </div>
+
+      <button class="btn primary" id="generate-btn" style="margin-top:8px;">Generate Exercise MSEL &rarr;</button>
+    </div>
+
+    <div class="panel" id="result-panel" aria-live="polite">
+      <div class="result-empty"><p>Configure the exercise above and generate an MSEL to see it here.</p></div>
+    </div>
+
+  </div>
+
+  <footer>
+    <div class="links">
+      <a href="/tabletop/" target="_blank" rel="noopener">Tabletop &mdash; Incident Command practice exercise &rarr;</a>
+      <a href="/recoverly/" target="_blank" rel="noopener">Recoverly &mdash; data recovery maturity assessment &rarr;</a>
+      <a href="/redline/" target="_blank" rel="noopener">Redline &mdash; the True Cost of Downtime calculator &rarr;</a>
+      <a href="/schema-explorer/" target="_blank" rel="noopener">Schema Explorer &mdash; what breaks if you delete this? &rarr;</a>
+      <a href="/agent-impact/" target="_blank" rel="noopener">Agent-Impact &mdash; AI agent Blast Radius &amp; guardrail simulator &rarr;</a>
+      <a href="https://krismccabe.com" target="_blank" rel="noopener">krismccabe.com</a>
+    </div>
+    <p class="disclaimer">An independent tool by Kris McCabe. Grounded in the publicly documented DHS/FEMA Homeland Security Exercise and Evaluation Program (HSEEP) and its Master Scenario Events List (MSEL) methodology &mdash; not derived from any employer's internal or proprietary exercise materials. Generated scenarios, injects, and timings are illustrative starting points for discussion and practice, not a certified HSEEP exercise plan, a substitute for a trained Exercise Planning Team, or legal/regulatory guidance.</p>
+  </footer>
+
+<script>
+  // ---------------------------------------------------------------
+  // DATA — five incident categories, each with a pool of MSEL-style
+  // injects authored in roughly escalating order. The generator samples
+  // a subset (preserving that order) rather than fully shuffling, so a
+  // shorter exercise still reads as one coherent arc, not a random grab
+  // bag. Business-level narrative only, matching the rest of the lab -
+  // no technical exploit detail.
+  // ---------------------------------------------------------------
+  const CATEGORIES = [
+    {
+      id: 'data-integrity', label: 'Data Integrity Incident',
+      desc: 'Silent corruption or bad writes, discovered well after the fact.',
+      objective: 'Test whether the team can size up silent data corruption before assuming it’s a one-off, escalate accurately once the real scope is known, and coordinate the technical correction with stakeholder communication.',
+      scope: 'Detection through stakeholder notification and closure. Not a substitute for a live data-recovery drill against real production systems.',
+      injects: [
+        { source: 'Monitoring Alert', body: 'A data quality monitor flags a 4% spike in anomalous record updates on the CRM sync job over the last hour.', action: 'Confirm this is real and not a monitoring false positive before escalating further.' },
+        { source: 'Customer Support Escalation', body: 'Support has fielded three tickets this morning from customers reporting incorrect account balances.', action: 'Determine whether these are connected to the sync anomaly or unrelated.' },
+        { source: 'Internal Engineering', body: 'The on-call engineer reports the anomaly traces back six days, not six hours — the exact start time is still unclear.', action: 'Reassess the scope of affected records now that the window has grown.' },
+        { source: 'Executive / Board', body: 'The VP of Sales asks directly in the incident channel: "Is my pipeline data trustworthy right now, yes or no?"', action: 'Give the Incident Commander a clear, honest answer without overstating current certainty.' },
+        { source: 'External Regulator', body: 'Legal flags that, depending on which records were affected, this may trigger a data accuracy disclosure obligation.', action: 'Assign someone specifically to track the regulatory question, separate from the technical fix.' },
+        { source: 'Vendor / Partner', body: 'The integration vendor’s status page shows no reported incident on their end.', action: 'Decide whether to keep pursuing a vendor-side cause or refocus internally.' },
+        { source: 'Monitoring Alert', body: 'A second, unrelated data quality alert fires on a different object type.', action: 'Determine if this is the same root cause spreading, or a coincidental second issue.' },
+        { source: 'Media / Social', body: 'A customer posts on social media asking why their dashboard numbers "don’t add up."', action: 'Decide whether and how Communications should respond publicly.' },
+        { source: 'Internal Engineering', body: 'The proposed fix is ready, but nobody has independently verified it matches the original, uncorrupted data.', action: 'Confirm a second person checks the fix before it goes live.' },
+        { source: 'Executive / Board', body: 'Leadership asks for a written summary of exactly which customers and records were affected, for tomorrow’s board update.', action: 'Confirm the incident record can actually answer that question yet.' }
+      ]
+    },
+    {
+      id: 'api-outage', label: 'API / Integration Outage',
+      desc: 'A critical integration between two systems fails mid-flow.',
+      objective: 'Test detection and triage of a failed integration, coordination between the owning team and dependent downstream teams, and a clear customer-facing communication decision made under uncertainty.',
+      scope: 'Detection through service restoration and post-incident communication. Assumes the underlying platform itself is healthy.',
+      injects: [
+        { source: 'Monitoring Alert', body: 'API error rate on the order-sync integration jumps from 0.1% to 38% over five minutes.', action: 'Confirm blast radius: which downstream systems and customers actually depend on this integration.' },
+        { source: 'Customer Support Escalation', body: 'Two enterprise customers report that orders placed in the last hour aren’t appearing in their fulfilment system.', action: 'Confirm whether this maps to the same integration or a separate issue.' },
+        { source: 'Internal Engineering', body: 'The team that owns the receiving system says they’ve made no changes on their end today.', action: 'Decide who leads root-cause investigation given both sides say it isn’t them.' },
+        { source: 'Vendor / Partner', body: 'The third-party API provider’s status page is still green, despite your own error logs showing consistent failures.', action: 'Decide whether to open a support ticket with the vendor now or keep investigating internally first.' },
+        { source: 'Executive / Board', body: 'Sales leadership asks whether today’s enterprise renewal call should be rescheduled given the outage.', action: 'Give a clear recommendation, not just a status update.' },
+        { source: 'Monitoring Alert', body: 'The error rate briefly drops to normal for twelve minutes, then spikes again.', action: 'Decide whether this counts as resolved-then-recurring, or was never actually fixed.' },
+        { source: 'Internal Engineering', body: 'A queued backlog of failed sync attempts is growing, and nobody has confirmed what happens if it’s replayed all at once when the fix lands.', action: 'Assign someone to plan the backlog replay before flipping the fix live.' },
+        { source: 'Customer Support Escalation', body: 'Support asks for an approved customer-facing statement, since customers are now asking support directly instead of waiting for status page updates.', action: 'Decide who owns approving external-facing language, and how fast.' },
+        { source: 'External Regulator', body: 'One affected customer is in a regulated industry and asks whether this outage constitutes a reportable service disruption under their contract.', action: 'Route this to whoever actually owns that contractual question, not whoever’s online.' },
+        { source: 'Monitoring Alert', body: 'The integration recovers, but reconciliation shows roughly 200 orders processed out of sequence.', action: 'Confirm the fix and the data are both actually correct, not just that traffic looks normal again.' }
+      ]
+    },
+    {
+      id: 'cloud-region', label: 'Cloud Region Failure',
+      desc: 'Your primary application region becomes unreachable, no ETA given.',
+      objective: 'Test failover decision-making, coordination during extended uncertainty with no vendor ETA, and reconciliation planning for any interim manual work.',
+      scope: 'From the initial regional alert through service restoration and reconciliation of any manual workaround. Not a test of the underlying cloud vendor’s own recovery.',
+      injects: [
+        { source: 'Monitoring Alert', body: 'Uptime monitoring shows your primary application region as unreachable across all health checks.', action: 'Confirm scope: is this genuinely regional, or a narrower issue that looks regional?' },
+        { source: 'Vendor / Partner', body: 'The cloud provider’s status page confirms a regional incident but gives no estimated time to resolution.', action: 'Decide how long to wait before manual workarounds are authorised.' },
+        { source: 'Internal Engineering', body: 'Failover to the secondary region is technically possible, but hasn’t been tested in the last two quarters.', action: 'Weigh the real risk of an untested failover against continued full outage.' },
+        { source: 'Customer Support Escalation', body: 'Support reports a wave of tickets, and a few customers are threatening to invoke SLA credit clauses.', action: 'Decide what customers should actually be told, and by when.' },
+        { source: 'Internal Engineering', body: 'Someone has already started manually re-entering urgent orders into a spreadsheet to keep the business moving.', action: 'Decide now how that manual work will be reconciled once the platform returns — not later.' },
+        { source: 'Executive / Board', body: 'Leadership asks whether this is bad enough to trigger the formal Business Continuity Plan.', action: 'Make and own that call, rather than letting it linger unanswered.' },
+        { source: 'Vendor / Partner', body: 'The vendor’s status page updates to "identified," but still with no ETA.', action: 'Decide whether "identified" changes anything about your current plan.' },
+        { source: 'Monitoring Alert', body: 'The region comes back up, but health checks show it flapping between healthy and unhealthy for several minutes.', action: 'Confirm real stability before declaring recovery, not just a first green check.' },
+        { source: 'Internal Engineering', body: 'Traffic is failing back to the primary region automatically, faster than the team can verify data consistency.', action: 'Decide whether to let automatic failback proceed or intervene manually.' },
+        { source: 'Customer Support Escalation', body: 'Support asks for one final, agreed timeline of what happened, since customers are getting different answers depending on who they ask.', action: 'Confirm one consistent version of events exists before it goes external.' }
+      ]
+    },
+    {
+      id: 'vendor-disruption', label: 'Vendor / SaaS Disruption',
+      desc: 'A critical third-party platform your team depends on goes down.',
+      objective: 'Test the team’s ability to respond to a critical vendor outage outside its own control, decide on contingency measures, and manage stakeholder expectations without a clear resolution timeline.',
+      scope: 'From the initial vendor disruption through service restoration and any necessary contractual follow-up. Assumes your own infrastructure is unaffected.',
+      injects: [
+        { source: 'Monitoring Alert', body: 'The critical SaaS platform your team depends on for case management returns server errors for all requests.', action: 'Confirm this is vendor-side and not a configuration issue on your end.' },
+        { source: 'Vendor / Partner', body: 'The vendor’s support line says they’re "aware and investigating," with no further detail.', action: 'Decide what to do while genuinely waiting on someone else.' },
+        { source: 'Customer Support Escalation', body: 'Support can’t log or update customer cases at all while the platform is down.', action: 'Agree on a manual, temporary fallback process right now, not after the backlog grows.' },
+        { source: 'Executive / Board', body: 'Leadership asks if this is a reason to accelerate the vendor contract renegotiation already underway.', action: 'Note the question, but don’t let it distract from the live incident response.' },
+        { source: 'Internal Engineering', body: 'A workaround exists using a different, less complete internal tool, but almost no one currently on shift is trained on it.', action: 'Decide whether the workaround is worth the training gap right now.' },
+        { source: 'Vendor / Partner', body: 'The vendor announces resolution, but your team’s own testing still shows intermittent errors.', action: 'Decide whose word to trust: the vendor’s status page, or your own testing.' },
+        { source: 'Customer Support Escalation', body: 'The manual fallback process has created a backlog of cases logged on paper or in a spreadsheet.', action: 'Assign clear ownership of reconciling that backlog once the platform is stable again.' },
+        { source: 'External Regulator', body: 'One customer’s contract includes a specific uptime guarantee tied to this exact vendor dependency.', action: 'Route the contractual question to whoever actually owns it, rather than guessing an answer live.' },
+        { source: 'Monitoring Alert', body: 'The platform stabilises, but a specific feature used by your highest-value customers is still broken.', action: 'Confirm "mostly working" isn’t quietly declared as "fully resolved."' },
+        { source: 'Executive / Board', body: 'Leadership asks for a same-day written account of vendor dependency risk, given how much this incident depended on someone else’s outage.', action: 'Confirm whether that’s realistic today, or needs to be scheduled properly.' }
+      ]
+    },
+    {
+      id: 'ransomware', label: 'Ransomware / Security Boundary Event',
+      desc: 'A suspected security boundary event with regulatory and legal exposure.',
+      objective: 'Test coordinated response to a suspected security boundary event, including the decision points around legal/regulatory exposure, evidence preservation, and technical recovery happening in parallel rather than in conflict.',
+      scope: 'Business-level decision-making only. Does not simulate specific technical exploitation, malware behaviour, or attacker techniques.',
+      injects: [
+        { source: 'Monitoring Alert', body: 'Multiple endpoints report unusual encryption activity outside normal business hours.', action: 'Confirm scope and stop further spread before anything else.' },
+        { source: 'Internal Engineering', body: 'IT reports a ransom note has appeared on at least one affected system.', action: 'Immediately treat this as a security incident, not a routine IT outage.' },
+        { source: 'Executive / Board', body: 'Leadership asks whether law enforcement should be contacted, and by whom.', action: 'Assign clear ownership of that decision rather than letting it drift.' },
+        { source: 'External Regulator', body: 'Legal confirms that, depending on what data was on the affected systems, this may trigger a regulatory notification obligation.', action: 'Assign someone specifically to confirm what data was actually exposed, separate from the technical recovery.' },
+        { source: 'Internal Engineering', body: 'Backups exist, but nobody present can confirm with certainty when they were last successfully tested.', action: 'Decide how much to trust the backups before relying on them for recovery.' },
+        { source: 'Vendor / Partner', body: 'An external security vendor offers rapid incident-response support, at significant cost, with a decision needed within the hour.', action: 'Route that spend decision to whoever actually has the authority to approve it.' },
+        { source: 'Customer Support Escalation', body: 'Support asks what, if anything, customers should be told right now.', action: 'Decide on a holding statement rather than saying nothing until every fact is confirmed.' },
+        { source: 'Monitoring Alert', body: 'A second, separate system shows signs of compromise, distinct from the first.', action: 'Reassess whether this is one incident or two, and adjust scope accordingly.' },
+        { source: 'Internal Engineering', body: 'The recovery team wants to bring systems back online before full forensic evidence has been captured.', action: 'Weigh recovery speed against the risk of losing evidence needed for the regulatory and legal follow-up.' },
+        { source: 'Executive / Board', body: 'Leadership asks for a single, confirmed timeline of events for a board briefing this evening.', action: 'Confirm whether the incident record can actually support that yet, or needs more time.' }
+      ]
+    }
+  ];
+
+  const WINDOWS = [
+    { id: '4h', label: '4 hours (aggressive)', hours: 4, framing: 'a tight 4-hour recovery window' },
+    { id: '12h', label: '12 hours', hours: 12, framing: 'a 12-hour recovery window' },
+    { id: '24h', label: '24 hours (one business day)', hours: 24, framing: 'a 24-hour recovery window' },
+    { id: '72h', label: '72 hours (regulatory-adjacent)', hours: 72, framing: 'a 72-hour recovery window, close to common regulatory notification deadlines' }
+  ];
+
+  const AUDIENCES = [
+    { id: 'technical-leads', label: 'Technical Leads', note: 'Assumes system-level fluency — injects can reference specific technical detail without translation.', roles: ['Incident Commander (Technical)', 'Engineering Lead', 'Site Reliability / Operations', 'QA / Validation Owner'] },
+    { id: 'executive-ic', label: 'Executive Incident Command', note: 'Framed for decision-makers who need the business impact and the ask, not the technical mechanism.', roles: ['Executive Incident Commander', 'Communications Lead', 'Legal / Compliance Liaison', 'Business Unit Owner'] },
+    { id: 'cross-functional', label: 'Cross-functional (mixed)', note: 'Assumes a mixed room — every inject needs to make sense to both technical and non-technical roles.', roles: ['Incident Commander', 'Operations Lead', 'Communications / PIO', 'Planning / Documentation Lead'] }
+  ];
+
+  const DURATIONS = [
+    { id: '1h-4', label: '1 hour / 4 injects', minutes: 60, count: 4 },
+    { id: '2h-6', label: '2 hours / 6 injects', minutes: 120, count: 6 },
+    { id: 'halfday-8', label: 'Half-day / 8 injects', minutes: 240, count: 8 },
+    { id: 'fullday-10', label: 'Full-day / 10 injects', minutes: 480, count: 10 }
+  ];
+
+  const WILDCARDS = [
+    'The one engineer who knows this system best is unreachable — out of signal range for the next two hours.',
+    'The primary incident chat channel is accidentally archived mid-response, and nobody notices for ten minutes.',
+    'A second, completely unrelated alert fires at the same time, splitting the team’s attention.',
+    'Half the response team is already offsite at a company event when this starts.',
+    'The incident bridge call has a dial-in limit, and three people can’t get on.',
+    'A journalist emails asking for comment, an hour before anyone planned to say anything publicly.',
+    'The person who normally owns customer communications is on leave, with no clear backup named.',
+    'A senior stakeholder joins the call and starts giving direct instructions that bypass the Incident Commander.',
+    'The runbook everyone assumed existed for this scenario turns out to be six months out of date.',
+    'Time zones split the team roughly in half, with part of the room asleep when the last inject landed.',
+    'The incident tracking document is accidentally being edited by two people at once, and conflicting versions appear.',
+    'IT security asks the team to pause all changes pending their own review, right as a fix is about to ship.'
+  ];
+
+  // ---------------------------------------------------------------
+  // GENERATOR
+  // ---------------------------------------------------------------
+  function shuffledIndices(n) {
+    const arr = Array.from({ length: n }, (_, i) => i);
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function fmtOffset(minutes) {
+    minutes = Math.round(minutes);
+    if (minutes === 0) return 'T+00';
+    if (minutes < 60) return 'T+' + minutes + 'm';
+    const h = Math.floor(minutes / 60), m = minutes % 60;
+    return 'T+' + h + 'h' + (m > 0 ? m + 'm' : '');
+  }
+
+  let currentResult = null;
+
+  function generate() {
+    const category = CATEGORIES.find(c => c.id === document.getElementById('dm-category').value);
+    const windowDef = WINDOWS.find(w => w.id === document.getElementById('dm-window').value);
+    const audience = AUDIENCES.find(a => a.id === document.getElementById('dm-audience').value);
+    const duration = DURATIONS.find(d => d.id === document.getElementById('dm-duration').value);
+
+    // Sample a random subset, but restore ascending pool order afterward -
+    // the pool is authored as one escalating arc, so a shorter exercise
+    // should read as a compressed version of that arc, not a shuffled grab
+    // bag of unrelated beats.
+    const order = shuffledIndices(category.injects.length).slice(0, duration.count).sort((a, b) => a - b);
+    const injects = order.map((poolIdx, i) => {
+      const src = category.injects[poolIdx];
+      const offsetMinutes = duration.count > 1 ? (duration.minutes * i) / (duration.count - 1) : 0;
+      return {
+        id: 'INJ-' + String(i + 1).padStart(2, '0'),
+        time: fmtOffset(offsetMinutes),
+        source: src.source,
+        body: src.body,
+        action: src.action,
+        wildcard: false
+      };
+    });
+
+    currentResult = { category, windowDef, audience, duration, injects, wildcard: null };
+    renderResult();
+  }
+
+  function rollWildcard() {
+    if (!currentResult) return;
+    const text = WILDCARDS[Math.floor(Math.random() * WILDCARDS.length)];
+    const offsetMinutes = currentResult.duration.minutes * 0.7;
+    currentResult.wildcard = {
+      id: 'INJ-WC',
+      time: fmtOffset(offsetMinutes),
+      source: 'Wildcard — Exercise Controller',
+      body: text,
+      action: 'There’s no prepared answer for this — see how the team actually responds, then capture it for the After-Action Review.',
+      wildcard: true
+    };
+    renderResult();
+  }
+
+  function briefingSummary(r) {
+    return 'A ' + r.category.label.toLowerCase() + ' exercise, scoped for ' + r.audience.label.toLowerCase() +
+      ', built around ' + r.windowDef.framing + '. Run over ' + r.duration.label.toLowerCase() + '.';
+  }
+
+  function clockLine(r) {
+    return 'The team is working against ' + r.windowDef.framing + ' — every inject below lands with that clock already running.';
+  }
+
+  function renderResult() {
+    const panel = document.getElementById('result-panel');
+    if (!currentResult) {
+      panel.innerHTML = '<div class="result-empty"><p>Configure the exercise above and generate an MSEL to see it here.</p></div>';
+      return;
+    }
+    const r = currentResult;
+    let html = '<h2>' + r.category.label + ' Tabletop Exercise</h2>';
+    html += '<p class="sub">' + briefingSummary(r) + '</p>';
+
+    html += '<div class="overview-grid">';
+    html += '<div class="overview-card"><h3>Objective</h3><p>' + r.category.objective + '</p></div>';
+    html += '<div class="overview-card"><h3>Scope</h3><p>' + r.category.scope + '</p></div>';
+    html += '<div class="overview-card"><h3>Target roles</h3><ul>' + r.audience.roles.map(role => '<li>' + role + '</li>').join('') + '</ul></div>';
+    html += '</div>';
+
+    html += '<div class="inject-list">';
+    r.injects.forEach(inj => { html += injectCardHtml(inj); });
+    if (r.wildcard) html += injectCardHtml(r.wildcard);
+    html += '</div>';
+
+    html += '<p class="sub no-print" style="margin-top:20px; margin-bottom:0;">Roll a curveball to test adaptability, print this MSEL for the room, or launch it live in Tabletop — that carries this exact scenario over, not just a link to its homepage.</p>';
+    html += '<div class="action-bar no-print">';
+    html += '<button class="btn ghost" id="wildcard-btn">&#127922; Roll a Wildcard Inject</button>';
+    html += '<a class="btn primary" id="launch-tabletop-btn" href="/tabletop/" target="_blank" rel="noopener">Launch in Tabletop &rarr;</a>';
+    html += '<button class="btn ghost" id="print-btn">&#128424; Export Printable MSEL</button>';
+    html += '<button class="btn ghost" id="download-md-btn">&#8681; Download Markdown Guide</button>';
+    html += '</div>';
+
+    html += '<div class="save-row no-print">';
+    html += '<input type="text" id="save-name-input" placeholder="Name this MSEL to save it (e.g. “Q3 ransomware drill”)">';
+    html += '<button class="btn" id="save-msel-btn">Save this MSEL</button>';
+    html += '</div>';
+    html += '<div class="saved-list no-print" id="saved-list"></div>';
+
+    panel.innerHTML = html;
+
+    document.getElementById('wildcard-btn').addEventListener('click', rollWildcard);
+    document.getElementById('print-btn').addEventListener('click', () => window.print());
+    document.getElementById('download-md-btn').addEventListener('click', () => downloadMarkdown(r));
+    document.getElementById('save-msel-btn').addEventListener('click', saveCurrentMsel);
+    document.getElementById('launch-tabletop-btn').href = buildTabletopUrl(r);
+
+    renderSavedList();
+  }
+
+  function injectCardHtml(inj) {
+    let html = '<div class="inject-card' + (inj.wildcard ? ' wildcard' : '') + '">';
+    html += '<div class="inject-head"><span class="inject-id">' + (inj.wildcard ? '<span class="wildcard-badge">Wildcard</span>' : '') + inj.id + '</span><span class="inject-time">' + inj.time + '</span></div>';
+    html += '<p class="inject-source">' + inj.source + '</p>';
+    html += '<p class="inject-body">' + inj.body + '</p>';
+    html += '<p class="inject-action"><strong>Expected action:</strong> ' + inj.action + '</p>';
+    html += '</div>';
+    return html;
+  }
+
+  // ---------------------------------------------------------------
+  // TABLETOP HANDOFF — mirrors Redline's URL-param handoff to Recoverly:
+  // one generated set of facts, not two tools quietly disagreeing.
+  // ---------------------------------------------------------------
+  function b64EncodeUnicode(str) {
+    return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode('0x' + p1)));
+  }
+
+  function buildTabletopUrl(r) {
+    const opening = r.injects[0];
+    const midIndex = Math.min(r.injects.length - 1, Math.ceil(r.injects.length / 2));
+    const complicationSource = r.wildcard || r.injects[midIndex];
+    const payload = {
+      name: r.category.label + ' (from Drillmaker)',
+      desc: briefingSummary(r),
+      trigger: opening.source + ': "' + opening.body + '"',
+      clock: clockLine(r),
+      complication: complicationSource.source + ': "' + complicationSource.body + '"'
+    };
+    const encoded = encodeURIComponent(b64EncodeUnicode(JSON.stringify(payload)));
+    return '/tabletop/?scenario=' + encoded;
+  }
+
+  // ---------------------------------------------------------------
+  // MARKDOWN EXPORT — client-side Blob download, no server round-trip.
+  // ---------------------------------------------------------------
+  function downloadMarkdown(r) {
+    const lines = [];
+    lines.push('# ' + r.category.label + ' — Tabletop Exercise MSEL');
+    lines.push('');
+    lines.push('**Generated:** ' + new Date().toISOString().slice(0, 10));
+    lines.push('**Audience:** ' + r.audience.label);
+    lines.push('**Target RTO/RPO window:** ' + r.windowDef.label);
+    lines.push('**Duration:** ' + r.duration.label);
+    lines.push('');
+    lines.push('## Briefing');
+    lines.push('');
+    lines.push(briefingSummary(r));
+    lines.push('');
+    lines.push('## Objective');
+    lines.push('');
+    lines.push(r.category.objective);
+    lines.push('');
+    lines.push('## Scope');
+    lines.push('');
+    lines.push(r.category.scope);
+    lines.push('');
+    lines.push('## Target roles');
+    lines.push('');
+    r.audience.roles.forEach(role => lines.push('- ' + role));
+    lines.push('');
+    lines.push('## Master Scenario Events List (MSEL)');
+    lines.push('');
+    lines.push('| Inject | Time | Source | Message | Expected action |');
+    lines.push('|---|---|---|---|---|');
+    r.injects.forEach(inj => {
+      lines.push('| ' + inj.id + ' | ' + inj.time + ' | ' + inj.source + ' | ' + inj.body.replace(/\|/g, '\\|') + ' | ' + inj.action.replace(/\|/g, '\\|') + ' |');
+    });
+    if (r.wildcard) {
+      lines.push('| ' + r.wildcard.id + ' (Wildcard) | ' + r.wildcard.time + ' | ' + r.wildcard.source + ' | ' + r.wildcard.body.replace(/\|/g, '\\|') + ' | ' + r.wildcard.action.replace(/\|/g, '\\|') + ' |');
+    }
+    lines.push('');
+    lines.push('## Disclaimer');
+    lines.push('');
+    lines.push('Grounded in the publicly documented DHS/FEMA Homeland Security Exercise and Evaluation Program (HSEEP) and its Master Scenario Events List (MSEL) methodology. This generated exercise is a starting point for discussion and practice — not a certified HSEEP exercise plan, a substitute for a trained Exercise Planning Team, or legal/regulatory guidance.');
+
+    const blob = new Blob([lines.join('\n')], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = r.category.id + '-msel.md';
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  // ---------------------------------------------------------------
+  // OPT-IN SAVED MSELs — explicit save/load/delete only, same pattern
+  // as Recoverly's saved assessments and Schema Explorer's saved schema.
+  // ---------------------------------------------------------------
+  const SAVED_KEY = 'drillmaker_saved_msels_v1';
+
+  function loadSavedMsels() {
+    try {
+      const raw = localStorage.getItem(SAVED_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch (e) { return []; }
+  }
+
+  function saveCurrentMsel() {
+    if (!currentResult) return;
+    const nameInput = document.getElementById('save-name-input');
+    const name = (nameInput.value || '').trim() || (currentResult.category.label + ' — ' + new Date().toLocaleDateString());
+    const saved = loadSavedMsels();
+    saved.push({ name, savedAt: new Date().toISOString(), result: currentResult });
+    try {
+      localStorage.setItem(SAVED_KEY, JSON.stringify(saved));
+      nameInput.value = '';
+      renderSavedList();
+    } catch (e) {
+      console.warn('Could not save MSEL to local storage:', e);
+    }
+  }
+
+  function deleteSavedMsel(index) {
+    const saved = loadSavedMsels();
+    saved.splice(index, 1);
+    try { localStorage.setItem(SAVED_KEY, JSON.stringify(saved)); } catch (e) { /* ignore */ }
+    renderSavedList();
+  }
+
+  function loadSavedMsel(index) {
+    const saved = loadSavedMsels();
+    const entry = saved[index];
+    if (!entry) return;
+    currentResult = entry.result;
+    renderResult();
+    document.getElementById('result-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function renderSavedList() {
+    const el = document.getElementById('saved-list');
+    if (!el) return;
+    const saved = loadSavedMsels();
+    if (saved.length === 0) { el.innerHTML = ''; return; }
+    el.innerHTML = saved.map((entry, i) =>
+      '<div class="saved-item"><span><span class="name">' + entry.name + '</span><br><span class="meta">' + entry.result.category.label + ' · saved ' + new Date(entry.savedAt).toLocaleDateString() + '</span></span>' +
+      '<span class="actions"><button data-load="' + i + '">Load</button><button class="danger" data-delete="' + i + '">Delete</button></span></div>'
+    ).join('');
+    el.querySelectorAll('[data-load]').forEach(btn => btn.addEventListener('click', () => loadSavedMsel(parseInt(btn.dataset.load, 10))));
+    el.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', () => deleteSavedMsel(parseInt(btn.dataset.delete, 10))));
+  }
+
+  // ---------------------------------------------------------------
+  // INIT
+  // ---------------------------------------------------------------
+  function populateSelect(id, items, labelFn) {
+    document.getElementById(id).innerHTML = items.map(item => '<option value="' + item.id + '">' + labelFn(item) + '</option>').join('');
+  }
+  populateSelect('dm-category', CATEGORIES, c => c.label);
+  populateSelect('dm-window', WINDOWS, w => w.label);
+  populateSelect('dm-audience', AUDIENCES, a => a.label);
+  populateSelect('dm-duration', DURATIONS, d => d.label);
+
+  function updateCategoryHint() {
+    const category = CATEGORIES.find(c => c.id === document.getElementById('dm-category').value);
+    document.getElementById('dm-category-hint').textContent = category ? category.desc : '';
+  }
+  function updateAudienceHint() {
+    const audience = AUDIENCES.find(a => a.id === document.getElementById('dm-audience').value);
+    document.getElementById('dm-audience-hint').textContent = audience ? audience.note : '';
+  }
+  document.getElementById('dm-category').addEventListener('change', updateCategoryHint);
+  document.getElementById('dm-audience').addEventListener('change', updateAudienceHint);
+  updateCategoryHint();
+  updateAudienceHint();
+
+  document.getElementById('generate-btn').addEventListener('click', generate);
+</script>
+
+</body>
+</html>
