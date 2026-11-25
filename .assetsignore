@@ -5,5 +5,7 @@
 # them here excludes them from the deployed asset bundle entirely - they
 # stay in git and are still fetchable via raw.githubusercontent.com, but
 # are never served over HTTP by this Worker.
+CLAUDE.md
+HANDOFF.md
 schema-explorer/REQUIREMENTS.md
 tabletop/REQUIREMENTS.md
